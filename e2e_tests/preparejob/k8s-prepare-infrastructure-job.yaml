@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k8s-itlabs-operator-prepare-infra
+  namespace: k8s-itlabs-operator
+spec:
+  template:
+    metadata:
+      name: k8s-itlabs-operator-prepare-infra
+    spec:
+      serviceAccountName: e2e-k8s-itlabs-operator
+      imagePullSecrets:
+        - name: docker-registry-secret
+      restartPolicy: Never
+      containers:
+        - name: k8s-itlabs-operator
+          image: prepare_infra
+          imagePullPolicy: IfNotPresent
+          command: [ '/bin/sh', '-c', 'python prepare_infra.py' ]
+          env:
+            - name: OPERATOR_VAULT_TOKEN
+              value: myroot
+            - name: VAULT_URL
+              value: "http://vault-e2e:8200"
+            - name: REAL_IP
+              value: $REAL_IP
+            - name: PG_DB_NAME
+              value: $POSTGRES_DB
+            - name: PG_USER_NAME
+              value: $POSTGRES_USER
+            - name: PG_USER_PSWD
+              value: $POSTGRES_PASSWORD
+            - name: PG_HOST
+              value: postgres
+            - name: PG_PORT
+              value: "5432"
+            - name: OPERATOR_USER
+              value: $OPERATOR_USER
+            - name: OPERATOR_PASSWORD
+              value: $OPERATOR_PASSWORD

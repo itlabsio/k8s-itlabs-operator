@@ -1,0 +1,6 @@
+apiVersion: itlabs.io/v1
+kind: SentryConnector
+metadata:
+  name: sentry.itlabs.io
+spec:
+  vaultpath: itlabs/atlas-infra/sentry

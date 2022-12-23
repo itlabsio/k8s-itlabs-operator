@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e2e-k8s-itlabs-operator
+  namespace: k8s-itlabs-operator
+  labels:
+    app: k8s-itlabs-operator
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: k8s-itlabs-operator-auth-delegator
+  labels:
+    k8s-app: k8s-itlabs-operator
+subjects:
+  - kind: ServiceAccount
+    namespace: k8s-itlabs-operator
+    name: e2e-k8s-itlabs-operator
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: system:auth-delegator
+  apiGroup: ""
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: e2e-k8s-itlabs-operator-rb
+  labels:
+    app: k8s-itlabs-operator
+subjects:
+  - kind: ServiceAccount
+    namespace: k8s-itlabs-operator
+    name: e2e-k8s-itlabs-operator
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: e2e-k8s-itlabs-operator-cluster-role
+  apiGroup: ""
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: e2e-k8s-itlabs-operator-cluster-role
+  labels:
+    app: k8s-itlabs-operator
+rules:
+  - apiGroups:
+      - "*"
+    resources:
+      - "*"
+    verbs:
+      - "*"

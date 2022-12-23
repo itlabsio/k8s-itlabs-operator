@@ -1,0 +1,83 @@
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: k8s-itlabs-operator-rb
+  labels:
+    app: k8s-itlabs-operator
+subjects:
+  - kind: ServiceAccount
+    namespace: k8s-itlabs-operator
+    name: k8s-itlabs-operator
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: k8s-itlabs-operator-cluster-role
+  apiGroup: ""
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: k8s-itlabs-operator-cluster-role
+  labels:
+    app: k8s-itlabs-operator
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+      - create
+      - patch
+      - update
+  - apiGroups:
+      - ""
+    resources:
+      - pods/status
+      - services/status
+    verbs:
+      - patch
+      - update
+  - apiGroups:
+      - itlabs.io
+    resources:
+      - keycloakconnectors
+      - postgresconnectors
+      - sentryconnectors
+      - rabbitconnectors
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - servicemonitors
+    verbs:
+      - get
+      - create
+      - delete

@@ -1,0 +1,77 @@
+version: '3.6'
+
+services:
+
+  vault:
+    image: vault:1.10.0
+    container_name: vault-e2e
+    networks:
+      - kind
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: http://0.0.0.0:8200
+      VAULT_API_ADDR: http://0.0.0.0:8200
+      VAULT_ADDRESS: http://0.0.0.0:8200
+      VAULT_DEV_ROOT_TOKEN_ID: myroot
+    cap_add:
+      - IPC_LOCK
+
+  postgres:
+    build: ./sentry
+    container_name: postgres
+    networks:
+      - kind
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # задаем пароль для superuser postgres
+
+  rabbit:
+    image: rabbitmq:3.10-management
+    container_name: rabbitmq
+    networks:
+      - kind
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:19.0.1
+    container_name: keycloak
+    networks:
+      - kind
+    ports:
+      - "8080:8080"
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ROOT_USERNAME}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ROOT_PASSWORD}
+    command:
+      - start-dev
+
+  redis:
+    image: redis
+    networks:
+      - kind
+
+  sentry:
+    platform: linux/x86_64
+    container_name: sentry
+    image: sentry
+    networks:
+      - kind
+    links:
+      - redis
+      - postgres
+    ports:
+      - 9000:9000
+    environment:
+      SENTRY_SECRET_KEY: '!!!SECRET!!!'
+      SENTRY_POSTGRES_HOST: postgres
+      SENTRY_DB_USER: ${POSTGRES_USER}
+      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      SENTRY_REDIS_HOST: redis
+
+networks:
+  kind:
+    external: true

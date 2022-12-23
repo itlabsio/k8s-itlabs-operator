@@ -1,0 +1,9 @@
+apiVersion: itlabs.io/v1
+kind: RabbitConnector
+metadata:
+  name: rabbit.itlabs.io
+spec:
+  - name: rabbit
+    vaultpath: itlabs/atlas-infra/rabbit/ennergiia/prod/default
+  - name: e2-rabbit
+    vaultpath: itlabs/atlas-infra/rabbit/ennergiia/prod/e2-rabbit

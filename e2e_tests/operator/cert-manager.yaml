@@ -1,0 +1,55 @@
+---
+kind: ClusterIssuer
+apiVersion: cert-manager.io/v1
+metadata:
+  name: ca-admission-root
+spec:
+  ca:
+    secretName: ca-admission-root
+---
+kind: ClusterIssuer
+apiVersion: cert-manager.io/v1
+metadata:
+  name: ca-admission
+spec:
+  selfSigned: {}
+---
+kind: Certificate
+apiVersion: cert-manager.io/v1
+metadata:
+  name: ca-admission-root
+  namespace: cert-manager
+spec:
+  secretName: ca-admission-root
+  isCA: true
+  commonName: ca-admission-root
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  issuerRef:
+    kind: ClusterIssuer
+    name: ca-admission
+---
+kind: Certificate
+apiVersion: cert-manager.io/v1
+metadata:
+  name: k8s-itlabs-operator
+  namespace: k8s-itlabs-operator
+spec:
+  issuerRef:
+    name: ca-admission-root
+    kind: ClusterIssuer
+  secretName: k8s-itlabs-operator
+  duration: 2160h
+  renewBefore: 360h
+  dnsNames:
+    - k8s-itlabs-operator
+    - k8s-itlabs-operator.k8s-itlabs-operator.svc
+    - k8s-itlabs-operator.k8s-itlabs-operator.svc.cluster.local
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - client auth
+    - server auth

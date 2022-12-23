@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: keycloak-sample
+  name: keycloak-sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak-sample
+  template:
+    metadata:
+      labels:
+        app: keycloak-sample
+      annotations:
+        keycloak.connector.itlabs.io/instance-name: keycloak.itlabs.io
+        keycloak.connector.itlabs.io/vault-path: itlabs/prod/itteams/keycloak-client-credentials
+        keycloak.connector.itlabs.io/client-id: itteams
+    spec:
+      containers:
+        - image: alpine:3.15
+          name: alpine

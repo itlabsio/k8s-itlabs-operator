@@ -1,0 +1,9 @@
+apiVersion: itlabs.io/v1
+kind: PostgresConnector
+metadata:
+  name: postgres.itlabs.io
+spec:
+  - name: postres
+    vaultpath: itlabs/atlas-infra/postgres/ennergiia/prod/default
+  - name: e2-postres
+    vaultpath: itlabs/atlas-infra/postgres/ennergiia/prod/e2-postgres

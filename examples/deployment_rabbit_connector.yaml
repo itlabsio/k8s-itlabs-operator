@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: rabbit-sample
+  name: rabbit-sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbit-sample
+  template:
+    metadata:
+      labels:
+        app: rabbit-sample
+      annotations:
+        rabbit.connector.itlabs.io/pg_instance_name: rabbit
+        rabbit.connector.itlabs.io/vaultpath: itlabs/prod/itteams/rabbit-credentials
+    spec:
+      containers:
+        - image: alpine:3.15
+          name: alpine

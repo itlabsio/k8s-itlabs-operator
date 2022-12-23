@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sentry-sample
+  name: sentry-sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sentry-sample
+  template:
+    metadata:
+      labels:
+        app: sentry-sample
+        itlabs.io/environment: development
+      annotations:
+        sentry.connector.itlabs.io/instance_name: sentry.itlabs.io
+        sentry.connector.itlabs.io/vaultpath: itlabs/prod/itteams/sentry-credentials
+        sentry.connector.itlabs.io/project: "sentry-sample"
+        sentry.connector.itlabs.io/team: "sentry-sample"
+    spec:
+      containers:
+        - image: alpine:3.15
+          name: alpine

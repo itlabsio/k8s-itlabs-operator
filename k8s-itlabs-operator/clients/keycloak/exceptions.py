@@ -1,0 +1,2 @@
+class KeycloakError(Exception):
+    pass

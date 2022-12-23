@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sample
+  name: sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample
+  template:
+    metadata:
+      labels:
+        app: sample
+      annotations:
+        postgres.connector.itlabs.io/pg_instance_name: postres
+        postgres.connector.itlabs.io/vaultpath: itlabs/prod/itteams/postgres-credentials
+        postgres.connector.itlabs.io/db_name: mydb
+        postgres.connector.itlabs.io/db_username: myuser
+    spec:
+      containers:
+      - image: alpine:3.15
+        name: alpine

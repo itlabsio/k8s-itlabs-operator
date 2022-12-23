@@ -1,0 +1,64 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-tests
+  namespace: k8s-itlabs-operator
+  labels:
+    k8s-app: k8s-itlabs-operator
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: e2e-tests
+      labels:
+        k8s-app: k8s-itlabs-operator
+    spec:
+      serviceAccountName: e2e-k8s-itlabs-operator
+      imagePullSecrets:
+        - name: docker-registry-secret
+      restartPolicy: Never
+      containers:
+        - name: e2e-tests
+          image: $DOCKER_IMAGE
+          imagePullPolicy: IfNotPresent
+          command: [ '/bin/sh', '-c', 'poetry run pytest -m e2e' ]
+          env:
+            - name: OPERATOR_VAULT_TOKEN
+              value: myroot
+            - name: VAULT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-itlabs-operator-config
+                  key: vault_url
+            - name: VAULT_K8S_AUTH_METHOD
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-itlabs-operator-config
+                  key: vault_k8s_auth_method
+            - name: VAULT_K8S_ROLE
+              valueFrom:
+                configMapKeyRef:
+                  name: k8s-itlabs-operator-config
+                  key: vault_k8s_role
+            - name: REAL_IP
+              value: $REAL_IP
+            - name: SENTRY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  key: sentry_token
+                  name: sentry-creds
+            - name: SENTRY_ORGANIZATION
+              valueFrom:
+                secretKeyRef:
+                  key: sentry_organization
+                  name: sentry-creds
+            - name: KEYCLOAK_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: keycloak-creds
+            - name: KEYCLOAK_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: keycloak-creds
