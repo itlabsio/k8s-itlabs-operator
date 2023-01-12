@@ -1,16 +1,20 @@
-name: CI to Docker Hub
+name: CI
 
 on:
   push:
+    branches:
+      - 'master'
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
 
 jobs:
-  push_to_registry:
+
+  push-to-registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
     steps:
-      - name: Check out the repo
+      - name: Checkout the repo
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
@@ -32,9 +36,14 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-  trigger_pipeline:
-    name: Trigger GitLab pipeline
+
+  trigger-pipeline:
+    name: Trigger Gitlab pipeline
     runs-on: ubuntu-latest
     steps:
       - name: Run pipeline
-        run: curl -X POST --fail -F token=${{ secrets.GITLAB_TOKEN }} -F ref=github ${{ secrets.GITLAB_URL }}
+        run: |
+          curl -X POST --fail -F token=${INPUT_TOKEN} -F ref=github ${INPUT_URL}
+        with:
+          url: ${{ secrets.GITLAB_URL }}
+          token: ${{ secrets.GITLAB_TOKEN }}
