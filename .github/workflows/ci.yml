@@ -42,8 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run pipeline
+        env:
+          URL: ${{ secrets.GITLAB_URL }}
+          TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
-          curl -X POST --fail -F token=${INPUT_TOKEN} -F ref=github ${INPUT_URL}
-        with:
-          url: ${{ secrets.GITLAB_URL }}
-          token: ${{ secrets.GITLAB_TOKEN }}
+          curl -X POST --fail -F token=${TOKEN} -F ref=github ${URL}
