@@ -18,6 +18,9 @@ pytest = "7.1.1"
 pytest-mock = "3.7.0"
 factory-boy = "3.2.1"
 
+[tool.poetry.group.dev.dependencies]
+pylint = "^2.15.10"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
