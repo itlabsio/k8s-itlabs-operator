@@ -63,7 +63,7 @@ jobs:
           SENTRY_ORGANIZATION: ${{ secrets.SENTRY_ORGANIZATION }}
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         run: |
-          apk add --no-cache procps
+          apt add --no-cache procps
           chmod +x e2e_tests/e2e-tests.sh
           ./e2e_tests/e2e-tests.sh
 
