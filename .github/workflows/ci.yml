@@ -45,11 +45,33 @@ jobs:
       - run: poetry install
       - run: poetry run pytest -m unit ./k8s-itlabs-operator
 
+  e2e-tests:
+    name: Run e2e-tests
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - env:
+          KUBECTL: v1.23.5
+          KIND: v0.14.0
+          DOCKER_IMAGE: operator:${{ github.ref_name }}
+          MANIFEST_FOLDER: ./manifests
+          KEYCLOAK_ROOT_USERNAME: ${{ secrets.KEYCLOAK_ROOT_USERNAME }}
+          KEYCLOAK_ROOT_PASSWORD: ${{ secrets.KEYCLOAK_ROOT_PASSWORD }}
+          SENTRY_ORGANIZATION: ${{ secrets.SENTRY_ORGANIZATION }}
+          SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
+        run: |
+          apk add --no-cache procps
+          chmod +x e2e_tests/e2e-tests.sh
+          ./e2e_tests/e2e-tests.sh
+
   push-to-registry:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag'
-    needs: [lint, unit-tests]
+    needs: [lint, unit-tests, e2e-tests]
     steps:
       - name: Checkout the repo
         uses: actions/checkout@v3
@@ -78,7 +100,7 @@ jobs:
   trigger-pipeline:
     name: Trigger Gitlab pipeline
     runs-on: ubuntu-latest
-    needs: [lint, unit-tests]
+    needs: [lint, unit-tests, e2e-tests]
     steps:
       - name: Run pipeline
         env:
