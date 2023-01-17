@@ -63,7 +63,6 @@ jobs:
           SENTRY_ORGANIZATION: ${{ secrets.SENTRY_ORGANIZATION }}
           SENTRY_TOKEN: ${{ secrets.SENTRY_TOKEN }}
         run: |
-          apt install -y procps && rm -rf /var/lib/apt/lists/*
           chmod +x e2e_tests/e2e-tests.sh
           ./e2e_tests/e2e-tests.sh
 
