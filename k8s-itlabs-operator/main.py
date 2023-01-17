@@ -10,8 +10,9 @@ from utils import logger
 import settings as operator_settings
 from observability.metrics.metrics import app_up
 from observability.metrics.request_wrapper import wrap_request
-from operators import atlasconnector, postgresconnector, rabbitconnector, monitoringconnector, sentry, \
-    keycloak  # noqa: F401
+
+from operators import atlasconnector, postgresconnector, rabbitconnector, \
+    monitoringconnector, sentry, keycloak  # pylint: disable=unused-import
 
 if operator_settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -52,5 +53,5 @@ try:
 except config.ConfigException:
     try:
         config.load_kube_config(context=operator_settings.KUBERNETES_LOCAL_CONTEXT)
-    except config.ConfigException:
-        raise Exception("Could not configure kubernetes client")
+    except config.ConfigException as e:
+        raise Exception("Could not configure kubernetes client") from e

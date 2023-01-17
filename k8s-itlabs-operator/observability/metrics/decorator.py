@@ -12,6 +12,7 @@ class LabeledTimer(Timer):
     def __init__(self, metric, callback_name, connector_type):
         super().__init__(metric, callback_name)
         self._connector_type = connector_type
+        self._start = 0
 
     def _new_timer(self):
         return self.__class__(self._metric, self._callback_name, self._connector_type)

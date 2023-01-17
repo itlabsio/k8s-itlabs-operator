@@ -9,6 +9,7 @@ from clients.keycloak.auth import BearerAuth
 from clients.keycloak.dto import ClientDto, Token
 from clients.keycloak.dto_factories import ClientDtoFactory, TokenDtoFactory, \
     ErrorDtoFactory
+from clients.keycloak.settings import KEYCLOAK_TIMEOUT
 from clients.keycloak.exceptions import KeycloakError
 from clients.keycloak.url_patterns import URL_ADMIN_CLIENT, URL_ADMIN_CLIENTS, \
     URL_TOKEN, URL_ADMIN_CLIENT_SECRET
@@ -44,12 +45,16 @@ class KeycloakClient(AbstractKeycloakClient):
     def _get_token(self) -> Token:
         path = self._build_path(URL_TOKEN.format(realm_id=self._realm))
         try:
-            response = requests.post(path, data={
-                "client_id": "admin-cli",
-                "grant_type": "password",
-                "username": self._username,
-                "password": self._password,
-            })
+            response = requests.post(
+                path,
+                data={
+                    "client_id": "admin-cli",
+                    "grant_type": "password",
+                    "username": self._username,
+                    "password": self._password,
+                },
+                timeout=KEYCLOAK_TIMEOUT,
+            )
             if response.status_code != http.client.OK:
                 error = ErrorDtoFactory.dto_from_dict(response.json())
                 raise InfrastructureServiceProblem("Keycloak", KeycloakError(error))
@@ -66,7 +71,11 @@ class KeycloakClient(AbstractKeycloakClient):
             realm_id=self._realm, client_id=client_id
         ))
         try:
-            response = requests.get(path, auth=self._get_auth())
+            response = requests.get(
+                path,
+                auth=self._get_auth(),
+                timeout=KEYCLOAK_TIMEOUT,
+            )
             if response.status_code != http.client.OK:
                 error = ErrorDtoFactory.dto_from_dict(response.json())
                 raise InfrastructureServiceProblem("Keycloak", KeycloakError(error))
@@ -75,7 +84,7 @@ class KeycloakClient(AbstractKeycloakClient):
             except IndexError:
                 # Keycloak is return empty list if client not found. In this
                 # case will be returning None.
-                return
+                return None
         except Exception as e:
             raise InfrastructureServiceProblem("Keycloak", e)
 
@@ -83,7 +92,12 @@ class KeycloakClient(AbstractKeycloakClient):
         path = self._build_path(URL_ADMIN_CLIENTS.format(realm_id=self._realm))
         data = ClientDtoFactory.dict_from_dto(client)
         try:
-            response = requests.post(path, auth=self._get_auth(), json=data)
+            response = requests.post(
+                path,
+                auth=self._get_auth(),
+                json=data,
+                timeout=KEYCLOAK_TIMEOUT,
+            )
             if response.status_code != http.client.CREATED:
                 error = ErrorDtoFactory.dto_from_dict(response.json())
                 raise InfrastructureServiceProblem("Keycloak", KeycloakError(error))
@@ -95,7 +109,11 @@ class KeycloakClient(AbstractKeycloakClient):
             realm_id=self._realm, client_id=client_id
         ))
         try:
-            response = requests.post(path, auth=self._get_auth())
+            response = requests.post(
+                path,
+                auth=self._get_auth(),
+                timeout=KEYCLOAK_TIMEOUT,
+            )
             if response.status_code != http.client.OK:
                 error = ErrorDtoFactory.dto_from_dict(response.json())
                 raise InfrastructureServiceProblem("Keycloak", KeycloakError(error))

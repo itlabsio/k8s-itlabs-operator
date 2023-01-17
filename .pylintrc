@@ -14,30 +14,38 @@ output-format=colorized
 
 [MESSAGES CONTROL]
 
-disable=simplifiable-if-expression, # R1719 does not exist in sonar
-        missing-docstring, # C0111 deprecated used sonar rule S1720
-        empty-docstring, # C0112 deprecated used sonar rule S1720
-        line-too-long, # C0301 deprecated used sonar rule LineLength
-        too-many-lines, # C0302 deprecated used sonar rule S104
-        trailing-whitespace, # C0303 deprecated used sonar rule S1131
-        missing-final-newline, # C0304 deprecated used sonar rule S113
-        multiple-statements, # C0321 deprecated used sonar rule OneStatementPerLine
-        superfluous-parens, # C0325 deprecated used sonar rule S1110
-        init-is-generator, # E0100 deprecated used sonar rule S2734
-        return-in-init, # E0101 deprecated used sonar rule S2734
-        not-in-loop, # E0103 deprecated used sonar rule S1716
-        return-outside-function, # E0104 deprecated used sonar rule S2711
-        yield-outside-function, # E0105 deprecated used sonar rule S2711
-        nonexistent-operator, # E0107 deprecated used sonar rule PreIncrementDecrement
-        no-self-use, # R0201 deprecated used sonar rule S2325
-        duplicate-code, # R0801 deprecated used sonar rule DuplicatedBlocks
-        too-many-return-statements, # R0911 deprecated used sonar rule S1142
-        too-many-branches, # R0912 deprecated used sonar rule FunctionComplexity
-        too-many-arguments, # R0913 deprecated used sonar rule S107
-        unreachable, # W0101 deprecated used sonar rule S1763
-        unnecessary-pass, # W0107 deprecated used sonar rule S2772
-        exec-used, # W0122 deprecated used sonar rule ExecStatementUsage
-        anomalous-backslash-in-string, # W1401 deprecated used sonar rule S1717
+disable=simplifiable-if-expression, # R1719
+        missing-docstring, # C0111
+        empty-docstring, # C0112
+        line-too-long, # C0301
+        too-many-lines, # C0302
+        trailing-whitespace, # C0303
+        missing-final-newline, # C0304
+        multiple-statements, # C0321
+        superfluous-parens, # C0325
+        init-is-generator, # E0100
+        return-in-init, # E0101
+        not-in-loop, # E0103
+        return-outside-function, # E0104
+        yield-outside-function, # E0105
+        nonexistent-operator, # E0107
+        duplicate-code, # R0801
+        too-many-return-statements, # R0911
+        too-many-branches, # R0912
+        too-many-arguments, # R0913
+        unreachable, # W0101
+        unnecessary-pass, # W0107
+        exec-used, # W0122
+        anomalous-backslash-in-string, # W1401
+        invalid-name, # C0103
+        too-few-public-methods, # R0903
+        raise-missing-from, # W0707
+        logging-fstring-interpolation, # W1203
+        broad-except, # W0703
+        inconsistent-return-statements, # R1710
+        unused-argument, # W0613
+        lost-exception, # W0150
+        unspecified-encoding, # W1514
 
 [DESIGN]
 

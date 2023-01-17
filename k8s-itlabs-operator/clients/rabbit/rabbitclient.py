@@ -1,11 +1,11 @@
+from abc import ABCMeta, abstractmethod
 import base64
 import logging
-
-import ujson
-from abc import ABCMeta, abstractmethod
-
 import requests
 
+import ujson
+
+from clients.rabbit.settings import RABBIT_TIMEOUT
 from clients.rabbit.exceptions import RabbitClientError
 from exceptions import InfrastructureServiceProblem
 from utils.common import join
@@ -96,13 +96,20 @@ class RabbitClient(AbstractRabbitClient):
             "content-type": "application/json"
         }
         try:
-            response = requests.request(method=method, url=endpoint, data=ujson.dumps(data), headers=headers)
+            response = requests.request(
+                method=method,
+                url=endpoint,
+                data=ujson.dumps(data),
+                headers=headers,
+                timeout=RABBIT_TIMEOUT,
+            )
 
             if response.ok:
                 return response.json() if method == 'GET' else None
-            elif response.status_code == 404:
+
+            if response.status_code == 404:
                 return None
-            else:
-                raise InfrastructureServiceProblem('Rabbit', RabbitClientError(response))
+
+            raise InfrastructureServiceProblem('Rabbit', RabbitClientError(response))
         except Exception as e:
             raise InfrastructureServiceProblem('Rabbit', e)

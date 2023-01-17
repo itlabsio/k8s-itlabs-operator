@@ -17,6 +17,7 @@ wrapt = "1.14.1"
 pytest = "7.1.1"
 pytest-mock = "3.7.0"
 factory-boy = "3.2.1"
+environs = "9.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.15.10"

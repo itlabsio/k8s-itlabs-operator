@@ -1,10 +1,12 @@
-import requests
-import ujson
 from abc import ABCMeta, abstractmethod
 from typing import Optional, List
+from http import HTTPStatus
+import requests
+import ujson
 
 from exceptions import InfrastructureServiceProblem
 from utils.common import join
+from clients.sentry.settings import SENTRY_TIMEOUT
 from clients.sentry.exceptions import SentryClientError
 from clients.sentry.dto import SentryTeam, SentryProject, SentryProjectKey
 from clients.sentry.dto_factories import SentryTeamDtoFactory, SentryProjectDtoFactory, SentryProjectKeyDtoFactory
@@ -60,16 +62,21 @@ class SentryClient(AbstractSentryClient):
             "content-type": "application/json"
         }
         try:
-            response = requests.request(method=method, url=endpoint, data=ujson.dumps(data), headers=headers)
-            if response.ok:
-                if response.status_code == 204:
-                    return
-                else:
-                    return response.json()
-            elif response.status_code == 404:
+            response = requests.request(
+                method=method,
+                url=endpoint,
+                headers=headers,
+                data=ujson.dumps(data),
+                timeout=SENTRY_TIMEOUT
+            )
+
+            if response.status_code == HTTPStatus.OK:
+                return response.json()
+
+            if response.status_code in (HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND):
                 return None
-            else:
-                raise InfrastructureServiceProblem('Sentry', SentryClientError(response))
+
+            raise InfrastructureServiceProblem('Sentry', SentryClientError(response))
         except Exception as e:
             raise InfrastructureServiceProblem('Sentry', e)
 
@@ -77,6 +84,7 @@ class SentryClient(AbstractSentryClient):
         response = self._send_request(endpoint=f"/teams/{self.organization}/{team_slug}/")
         if response:
             return SentryTeamDtoFactory.dto_from_dict(response)
+        return None
 
     def create_sentry_team(self, team_name: str, team_slug: Optional[str] = None) -> SentryTeam:
         data = SentryTeamDtoFactory.dict_from_dto(SentryTeam(name=team_name, slug=team_slug))
@@ -90,6 +98,7 @@ class SentryClient(AbstractSentryClient):
         response = self._send_request(endpoint=f"/projects/{self.organization}/{project_slug}/")
         if response:
             return SentryProjectDtoFactory.dto_from_dict(response)
+        return None
 
     def create_sentry_project(self, team_slug: str, project_name: str,
                               project_slug: Optional[str] = None) -> SentryProject:

@@ -21,9 +21,8 @@ class AbstractVaultClient:
     def create_secret(self, path: str, data: dict):
         raise NotImplementedError
 
-    @classmethod
     @abstractmethod
-    def get_prefix_path(cls):
+    def get_prefix_path(self) -> str:
         raise NotImplementedError
 
     @abstractmethod

@@ -40,8 +40,7 @@ class AtlasConnectorAnnotations:
     def ms_name(self) -> str:
         if self._annotations[specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION]:
             return self._annotations[specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION]
-        else:
-            raise AtlasAnnotationsEmptyValueException(annotation_name=specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION)
+        raise AtlasAnnotationsEmptyValueException(annotation_name=specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION)
 
     @property
     def gitlab_project_id(self) -> int:

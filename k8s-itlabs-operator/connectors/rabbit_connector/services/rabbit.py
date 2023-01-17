@@ -36,20 +36,20 @@ class RabbitService(AbstractRabbitService):
 
         rabbit_user_response = self.rabbit_client.get_rabbit_user(user=secret.broker_user)
         if rabbit_user_response:
-            app_logger.warn(f"User '{secret.broker_user}' already exist, password ignored.")
+            app_logger.warning(f"User '{secret.broker_user}' already exist, password ignored.")
         else:
             self.rabbit_client.create_rabbit_user(user=secret.broker_user, password=secret.broker_password)
 
         rabbit_vhost_response = self.rabbit_client.get_rabbit_vhost('vhost')
         if rabbit_vhost_response:
-            app_logger.warn(f"Vhost '{secret.broker_vhost}' already exist.")
+            app_logger.warning(f"Vhost '{secret.broker_vhost}' already exist.")
         else:
             self.rabbit_client.create_rabbit_vhost(vhost=secret.broker_vhost)
 
         rabbit_permissions_response = self.rabbit_client.get_user_vhost_permissions(user=secret.broker_user,
                                                                                     vhost=secret.broker_vhost)
         if rabbit_permissions_response:
-            app_logger.warn(f"User '{secret.broker_user}' already have configured permissions to vhost "
-                            f"'{secret.broker_vhost}', permission granting ignored.")
+            app_logger.warning(f"User '{secret.broker_user}' already have configured permissions to vhost "
+                               f"'{secret.broker_vhost}', permission granting ignored.")
         else:
             self.rabbit_client.create_user_vhost_permissions(user=secret.broker_user, vhost=secret.broker_vhost)

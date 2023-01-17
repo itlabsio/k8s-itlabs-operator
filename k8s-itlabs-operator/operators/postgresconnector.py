@@ -10,13 +10,6 @@ from connectors.postgres_connector.factories.dto_factory import PgConnectorMicro
 from connectors.postgres_connector.factories.service_factories.postgres_connector import PostgresConnectorServiceFactory
 from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
 
-"""
-TODO:
-1. следить, чтобы был только один crd в рамках ограничений
-2. определиться с ограничениями. Например, один на кластер, по идее 1 - на бизнес, чтобы как-то их разграничивать
-по подключениям к инстансам, если они для каждого бизнеса - свой.
-"""
-
 
 @kopf.on.create('postgresconnectors')
 def create_fn(body, **kwargs):
