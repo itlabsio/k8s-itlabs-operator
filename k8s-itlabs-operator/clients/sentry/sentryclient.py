@@ -70,10 +70,12 @@ class SentryClient(AbstractSentryClient):
                 timeout=SENTRY_TIMEOUT
             )
 
-            if response.status_code == HTTPStatus.OK:
+            if response.ok:
+                if response.status_code == HTTPStatus.NO_CONTENT:
+                    return None
                 return response.json()
 
-            if response.status_code in (HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND):
+            if response.status_code == HTTPStatus.NOT_FOUND:
                 return None
 
             raise InfrastructureServiceProblem('Sentry', SentryClientError(response))
