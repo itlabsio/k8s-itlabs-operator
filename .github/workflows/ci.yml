@@ -30,7 +30,7 @@ jobs:
   unit-tests:
     name: Run unit-tests
     permissions:
-      content: read
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
