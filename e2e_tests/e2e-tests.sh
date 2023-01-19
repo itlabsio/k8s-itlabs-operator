@@ -19,7 +19,7 @@ prepare_infrastructure() {
   export OPERATOR_PASSWORD='operator_pwd'
   docker-compose -p e2e-infrastructure -f e2e_tests/services/docker-compose-infra.yaml up -d
   # wait additional time all containers will be ready to use
-  sleep 240
+  sleep 300
 
   envsubst < e2e_tests/preparejob/k8s-prepare-infrastructure-job.yaml > k8s-prepare-infrastructure-job-no-var.yaml
   kubectl apply -f e2e_tests/kind/e2e-rbac.yaml
@@ -42,7 +42,7 @@ e2e_tests() {
   # deploy operator into kind
   kubectl apply -k "${MANIFEST_FOLDER}"
   kubectl apply -f e2e_tests/operator/cert-manager.yaml
-  kubectl wait deployment -n k8s-itlabs-operator --all --for condition=Available=True --timeout=180s
+  kubectl wait deployment -n k8s-itlabs-operator --all --for condition=Available=True --timeout=300s
 
   # wait until coredns will be ready
   kubectl rollout status deployment coredns -n kube-system
