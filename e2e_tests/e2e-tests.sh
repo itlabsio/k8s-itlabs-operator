@@ -67,6 +67,8 @@ e2e_tests() {
     --from-literal=username="admin" \
     --from-literal=password="admin"
 
+  sleep 300
+
   # start e2e tests
   envsubst < e2e_tests/tester/job-e2e-tests.yaml > job-e2e-tests-no-var.yaml
   kubectl apply -f job-e2e-tests-no-var.yaml
