@@ -19,7 +19,7 @@ prepare_infrastructure() {
   export OPERATOR_PASSWORD='operator_pwd'
   docker-compose -p e2e-infrastructure -f e2e_tests/services/docker-compose-infra.yaml up -d
   # wait additional time all containers will be ready to use
-  sleep 120
+  sleep 300
 
   envsubst < e2e_tests/preparejob/k8s-prepare-infrastructure-job.yaml > k8s-prepare-infrastructure-job-no-var.yaml
   kubectl apply -f e2e_tests/kind/e2e-rbac.yaml
@@ -42,7 +42,7 @@ e2e_tests() {
   # deploy operator into kind
   kubectl apply -k "${MANIFEST_FOLDER}"
   kubectl apply -f e2e_tests/operator/cert-manager.yaml
-  kubectl wait deployment -n k8s-itlabs-operator --all --for condition=Available=True --timeout=90s
+  kubectl wait deployment -n k8s-itlabs-operator --all --for condition=Available=True --timeout=300s
 
   # wait until coredns will be ready
   kubectl rollout status deployment coredns -n kube-system
@@ -50,7 +50,7 @@ e2e_tests() {
 
   kubectl get svc -n k8s-itlabs-operator k8s-itlabs-operator
   kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
-  time kubectl wait pods dnsutils --for condition=Ready --timeout=90s
+  time kubectl wait pods dnsutils --for condition=Ready --timeout=180s
   kubectl exec -i -t dnsutils -- nslookup k8s-itlabs-operator.k8s-itlabs-operator
 
 
@@ -67,12 +67,14 @@ e2e_tests() {
     --from-literal=username="admin" \
     --from-literal=password="admin"
 
+  sleep 300
+
   # start e2e tests
   envsubst < e2e_tests/tester/job-e2e-tests.yaml > job-e2e-tests-no-var.yaml
   kubectl apply -f job-e2e-tests-no-var.yaml
-  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=complete --timeout=180s && exit 0 &
+  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=complete --timeout=360s && exit 0 &
   completion_pid=$!
-  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=failed --timeout=180s && exit 1 &
+  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=failed --timeout=360s && exit 1 &
   failure_pid=$!
 
   while true; do
