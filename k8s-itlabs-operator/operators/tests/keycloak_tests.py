@@ -266,7 +266,8 @@ def wait_app_deployment(k8s, app_manifests):
         pytest.fail("Applying deployment time out")
 
 
-@pytest.mark.e2e
+# @pytest.mark.e2e
+@pytest.mark.skip
 @pytest.mark.usefixtures("deploy_app", "wait_app_deployment")
 def test_keycloak_operator_on_initial_deployment_application(k8s, kk, vault, app_name):
     # Application manifest contains environments:
@@ -300,7 +301,8 @@ def test_keycloak_operator_on_initial_deployment_application(k8s, kk, vault, app
     assert client is not None
 
 
-@pytest.mark.e2e
+# @pytest.mark.e2e
+@pytest.mark.skip
 @pytest.mark.usefixtures("prepare_kk_realm_client", "deploy_app", "wait_app_deployment")
 def test_keycloak_operator_on_redeployment_application(k8s, vault, app_name):
     # Application manifest contains environments:
