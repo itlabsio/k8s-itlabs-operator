@@ -1,7 +1,7 @@
 import pytest
 
 from connectors.monitoring_connector import specifications
-from connectors.monitoring_connector.factory import MonitoringConnectorMicroserviceDtoFactory
+from connectors.monitoring_connector.factories.dto_factory import MonitoringConnectorMicroserviceDtoFactory
 
 
 @pytest.mark.unit
