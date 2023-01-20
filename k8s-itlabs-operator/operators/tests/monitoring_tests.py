@@ -4,6 +4,8 @@ from typing import Optional
 import pytest
 from kubernetes.client import CustomObjectsApi, ApiException, CoreV1Api, ApiClient
 
+from connectors.monitoring_connector.service import KubernetesService
+
 APP_DEPLOYMENT_NAMESPACE = "k8s-itlabs-operator"
 
 
@@ -34,6 +36,73 @@ def app_manifest(app_name) -> dict:
             ],
         },
     }
+
+
+@pytest.fixture
+def simple_service(app_name) -> dict:
+    return {
+        "apiVersion": "v1",
+        "kind": "Service",
+        "metadata": {
+            "name": app_name,
+            "namespace": APP_DEPLOYMENT_NAMESPACE,
+            "labels": {
+                "app": app_name
+            }
+        },
+        "spec": {
+            "selector": {
+                "app": app_name,
+            },
+            "ports": [
+                {
+                    "name": "metrics",
+                    "protocol": "TCP",
+                    "port": 80,
+                    "targetPort": 80,
+                }
+            ],
+        },
+    }
+
+
+@pytest.fixture
+def simple_servicemonitor(app_name) -> dict:
+    return {
+        "apiVersion": "monitoring.coreos.com/v1",
+        "kind": "ServiceMonitor",
+        "metadata": {
+            "name": app_name,
+            "namespace": APP_DEPLOYMENT_NAMESPACE,
+        },
+        "spec": {
+            "endpoints": [{
+                "port": "metrics"
+            }],
+            "selector": {
+                "matchLabels": {
+                    "app": app_name
+                }
+            }
+        },
+    }
+
+
+@pytest.fixture
+def simple_case(simple_service, simple_servicemonitor):
+    return simple_service, simple_servicemonitor
+
+
+@pytest.fixture
+def servicemonitor_by_operator(simple_servicemonitor) -> dict:
+    sm = simple_servicemonitor
+    if sm["metadata"].get("labels"):
+        sm["metadata"]["labels"]["by-itlabs-operator"] = "yes"
+    else:
+        sm["metadata"]["labels"] = {
+            "by-itlabs-operator": "yes",
+        }
+    return sm
 
 
 @pytest.fixture
@@ -144,5 +213,28 @@ def test_monitoring_on_deleting_application(k8s, app_manifest):
     if service_monitor is not None:
         pytest.fail(
             f"ServiceMonitor was not deleted by name {app_name} "
+            f"in namespace {app_namespace}"
+        )
+
+
+@pytest.mark.e2e
+def test_monitoring_on_deleting_simple_service(k8s, simple_case):
+    kubernetes_service = KubernetesService(k8s)
+
+    svc, sm = simple_case
+    app_name = svc["metadata"].get("name")
+    app_namespace = svc["metadata"].get("namespace")
+    # prepare state
+    kubernetes_service.create_service_monitor(namespace=app_namespace, body=sm)
+    # after creating service servicemonitor should not be deleted
+    CoreV1Api(k8s).create_namespaced_service(
+        namespace=app_namespace,
+        body=svc,
+    )
+    time.sleep(10)
+    service_monitor = get_service_monitor(k8s, app_name, app_namespace)
+    if service_monitor is None:
+        pytest.fail(
+            f"ServiceMonitor was not found by name {app_name} "
             f"in namespace {app_namespace}"
         )
