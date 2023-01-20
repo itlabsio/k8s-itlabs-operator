@@ -2,10 +2,10 @@ import logging
 
 import kopf
 
+from connectors.monitoring_connector.factories.dto_factory import MonitoringConnectorMicroserviceDtoFactory
 from connectors.monitoring_connector.factories.service_factories.monitoring_connector import \
     MonitoringConnectorServiceFactory
 from observability.metrics.decorator import monitoring
-from connectors.monitoring_connector.factories.dto_factory import MonitoringConnectorMicroserviceDtoFactory
 from operators.dto import ConnectorStatus
 
 
