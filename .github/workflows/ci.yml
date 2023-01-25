@@ -100,6 +100,55 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  build-manifests:
+    name: Build installation manifests
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    needs: [lint, unit-tests, e2e-tests]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Prepare manifest
+        env:
+          DOCKER_IMAGE: itlabsio/k8s-itlabs-operator:${{ github.ref_name }}
+          MANIFEST_FOLDER: ./manifests/
+        run: |
+          chmod +x scripts/update-manifests.sh
+          ./scripts/update-manifests.sh
+
+      - name: Create manifests pack
+        run: |
+          zip -r manifests.zip manifests
+
+      - name: Upload manifests
+        uses: actions/upload-artifact@v3
+        with:
+          name: manifests
+          path: manifests
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./manifests.zip
+          asset_name: manifests.zip
+          asset_content_type: application/zip
+
   trigger-pipeline:
     name: Trigger Gitlab pipeline
     runs-on: ubuntu-latest
