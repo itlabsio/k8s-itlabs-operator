@@ -1,4 +1,4 @@
-# k8s-itlabs-operator <sup>[RU](./docs/ru.md)</sup>
+# k8s-itlabs-operator <sup>[RU](docs/ru/index.md)</sup>
 
 ## Requirements
 
