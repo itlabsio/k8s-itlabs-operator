@@ -59,7 +59,7 @@ jobs:
         env:
           KUBECTL: v1.23.5
           KIND: v0.14.0
-          DOCKER_IMAGE: operator:${{ github.ref_name }}
+          DOCKER_IMAGE: operator:test
           MANIFEST_FOLDER: ./manifests
           KEYCLOAK_ROOT_USERNAME: ${{ secrets.KEYCLOAK_ROOT_USERNAME }}
           KEYCLOAK_ROOT_PASSWORD: ${{ secrets.KEYCLOAK_ROOT_PASSWORD }}
