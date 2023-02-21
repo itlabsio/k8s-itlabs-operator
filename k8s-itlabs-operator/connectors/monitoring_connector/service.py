@@ -82,7 +82,14 @@ class KubernetesService:
     def get_service_monitor(self, namespace: str, name: str) -> Optional:
         if not self.service_monitor_api_resource:
             return
-        return self.crd_client.get(resource=self.service_monitor_api_resource, name=name, namespace=namespace)
+        try:
+            return self.crd_client.get(
+                resource=self.service_monitor_api_resource,
+                name=name,
+                namespace=namespace
+            )
+        except ApiException:
+            return None
 
     def delete_service_monitor(self, namespace: str, name: str):
         if not self.service_monitor_api_resource:
@@ -108,6 +115,9 @@ class MonitoringConnectorService:
     def delete_service_monitor(self, namespace: str, service_name: str):
         """connector can delete only own servicemonitors"""
         sm = self.kubernetes_service.get_service_monitor(namespace=namespace, name=service_name)
+        if sm is None:
+            return
+
         labels = sm.get('metadata').get('labels')
         if labels.get(MONITORING_ENABLED_LABEL_NAME) == MONITORING_ENABLED_VALUE:
             self.kubernetes_service.delete_service_monitor(namespace=namespace, name=service_name)
