@@ -23,7 +23,7 @@ spec:
         - name: k8s-itlabs-operator
           image: $DOCKER_IMAGE
           imagePullPolicy: IfNotPresent
-          command: [ '/bin/sh', '-c', 'poetry run kopf run --debug /app/main.py' ]
+          command: [ '/bin/sh', '-c', 'poetry run kopf run /app/main.py' ]
           ports:
             - name: awh
               containerPort: 443
