@@ -3,9 +3,12 @@ name: CI
 on:
   push:
     branches:
-      - 'main'
+      - '**'
     tags:
       - 'v*.*.*'
+  pull_request:
+    branches:
+      - '**'
 
 jobs:
   lint:
@@ -56,7 +59,7 @@ jobs:
         env:
           KUBECTL: v1.23.5
           KIND: v0.14.0
-          DOCKER_IMAGE: operator:${{ github.ref_name }}
+          DOCKER_IMAGE: operator:test
           MANIFEST_FOLDER: ./manifests
           KEYCLOAK_ROOT_USERNAME: ${{ secrets.KEYCLOAK_ROOT_USERNAME }}
           KEYCLOAK_ROOT_PASSWORD: ${{ secrets.KEYCLOAK_ROOT_PASSWORD }}
@@ -96,6 +99,89 @@ jobs:
           file: ./docker/Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    needs: [lint, unit-tests, e2e-tests]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Build changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          configurationJson: |
+            {
+              "template": "#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": ["feature"]
+                },
+                {
+                  "title": "## 🐛 Fixes",
+                  "labels": ["fix"]
+                },
+                {
+                  "title": "## 🔧 Refactoring",
+                  "labels": ["refactor"]
+                },
+                {
+                  "title": "## 🧪 Tests",
+                  "labels": ["test"]
+                },
+                {
+                  "title": "## 💬 Other",
+                  "labels": ["other"]
+                }
+              ]
+            }
+
+      - name: Prepare manifest
+        env:
+          DOCKER_IMAGE: itlabsio/k8s-itlabs-operator:${{ github.ref_name }}
+          MANIFEST_FOLDER: ./manifests/
+        run: |
+          chmod +x scripts/update-manifests.sh
+          ./scripts/update-manifests.sh
+
+      - name: Create manifests pack
+        run: |
+          zip -r manifests.zip manifests
+
+      - name: Upload manifests
+        uses: actions/upload-artifact@v3
+        with:
+          name: manifests
+          path: manifests
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: ${{ steps.build_changelog.outputs.changelog }}
+
+      - name: Upload release asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./manifests.zip
+          asset_name: manifests.zip
+          asset_content_type: application/zip
 
   trigger-pipeline:
     name: Trigger Gitlab pipeline
