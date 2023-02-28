@@ -1,6 +1,7 @@
 import logging
 from abc import ABCMeta, abstractmethod
 from typing import Optional
+from warnings import warn
 
 import hvac
 
@@ -15,6 +16,15 @@ class AbstractVaultClient:
 
     @abstractmethod
     def read_secret_version_data(self, path: str) -> Optional[dict]:
+        warn(
+            "Function `read_secret_version_data` will be "
+            "deprecated soon. Use `read_secret`",
+            PendingDeprecationWarning, stacklevel=2
+        )
+        raise NotImplementedError
+
+    @abstractmethod
+    def read_secret(self, path: str) -> Optional[dict]:
         raise NotImplementedError
 
     @abstractmethod
@@ -27,6 +37,15 @@ class AbstractVaultClient:
 
     @abstractmethod
     def delete_secret_all_versions(self, path: str):
+        warn(
+            "Function `delete_secret_all_versions` will be"
+            "deprecated soon. Use `delete_secret`",
+            PendingDeprecationWarning, stacklevel=2
+        )
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_secret(self, path: str):
         raise NotImplementedError
 
 
@@ -65,11 +84,13 @@ class VaultClient(AbstractVaultClient):
         return result
 
     def read_secret_version_data(self, path: str) -> Optional[dict]:
-        result = None
+        return self.read_secret(path)
+
+    def read_secret(self, path: str) -> Optional[dict]:
         raw_response = self._read_secret_version(path=path)
         if raw_response:
-            result = raw_response['data']['data']
-        return result
+            return raw_response["data"]["data"]
+        return None
 
     def _create_or_update_secret(self, path: str, data: dict, update_allowed: bool = False) -> dict:
         secured_data = {k: self._get_secured_value(k, v) for k, v in data.items()}
@@ -91,6 +112,9 @@ class VaultClient(AbstractVaultClient):
         return f'vault:{self.mount_point}/data'
 
     def delete_secret_all_versions(self, path: str):
+        return self.delete_secret(path)
+
+    def delete_secret(self, path: str):
         try:
             logger.info(f"Delete secret'{path}' from Vault")
             self.client.secrets.kv.v2.delete_metadata_and_all_versions(path=path)
