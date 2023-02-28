@@ -1,9 +1,9 @@
 apiVersion: itlabs.io/v1
 kind: KeycloakConnector
 metadata:
-  name: keycloak.itlabs.io
+  name: keycloak
 spec:
-  url: "https://keycloak.itlabs.io:8080"
-  realm: "itlabs"
-  username: itlabs/atlas-infra/keycloak#USERNAME
-  password: itlabs/atlas-infra/keycloak#PASSWORD
+  url: "https://keycloak.default:8080"
+  realm: "master"
+  username: vault:secret/data/infrastructure/keycloak#USERNAME
+  password: vault:secret/data/infrastructure/keycloak#PASSWORD
