@@ -46,3 +46,10 @@ spec:
                 password:
                   description: Path to Vault secret key containing password
                   type: string
+      additionalPrinterColumns:
+        - name: URL
+          type: string
+          jsonPath: .spec.url
+        - name: Realm
+          type: string
+          jsonPath: .spec.realm
