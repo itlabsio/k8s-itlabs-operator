@@ -32,10 +32,6 @@ class AbstractVaultClient:
         raise NotImplementedError
 
     @abstractmethod
-    def get_prefix_path(self) -> str:
-        raise NotImplementedError
-
-    @abstractmethod
     def delete_secret_all_versions(self, path: str):
         warn(
             "Function `delete_secret_all_versions` will be"
@@ -107,9 +103,6 @@ class VaultClient(AbstractVaultClient):
 
     def create_secret(self, path: str, data: dict):
         self._create_or_update_secret(path=path, data=data)
-
-    def get_prefix_path(self) -> str:
-        return f'vault:{self.mount_point}/data'
 
     def delete_secret_all_versions(self, path: str):
         return self.delete_secret(path)

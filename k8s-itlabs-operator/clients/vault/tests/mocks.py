@@ -27,6 +27,3 @@ class MockedVaultClient(AbstractVaultClient):
 
     def delete_secret_all_versions(self, path: str):
         pass
-
-    def get_prefix_path(self):
-        return 'vault:secret/data'
