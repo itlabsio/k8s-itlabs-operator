@@ -20,4 +20,4 @@ class VaultClientFactory:
         )['auth']['client_token']
         if not client.is_authenticated():
             logger.error("Vault auth failed ")
-        return VaultClient(client, settings.VAULT_KV_MOUNT_POINT)
+        return VaultClient(client)

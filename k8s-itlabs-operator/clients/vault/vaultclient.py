@@ -49,9 +49,8 @@ class VaultClient(AbstractVaultClient):
     _SECURED_VALUE = "******"
     _SECURED_KEYS = ["pass", "token", "BROKER_PASSWORD", 'DATABASE_PASSWORD', 'SENTRY_DSN']
 
-    def __init__(self, hvac_vault_client: hvac.Client, mount_point: str):
+    def __init__(self, hvac_vault_client: hvac.Client):
         self.client = hvac_vault_client
-        self.mount_point = mount_point
 
     def _get_secured_value(self, key: str, value: str) -> str:
         """
