@@ -82,7 +82,7 @@ class VaultClient(AbstractVaultClient):
             )
             return result
         except Exception as e:
-            InfrastructureServiceProblem('Vault', e)
+            raise InfrastructureServiceProblem('Vault', e)
 
     def create_secret(self, path: str, data: dict):
         self._create_or_update_secret(path=path, data=data)

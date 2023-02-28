@@ -2,10 +2,10 @@ import logging
 
 import kopf
 import sentry_sdk
-from kubernetes import config
 from prometheus_client import start_http_server
 from sentry_sdk.integrations.aiohttp import AioHttpIntegration
 
+from clients.k8s.k8s_client import KubernetesClient
 from utils import logger
 import settings as operator_settings
 from observability.metrics.metrics import app_up
@@ -45,13 +45,7 @@ def configure(settings: kopf.OperatorSettings, **_):
         settings.posting.level = logging.INFO
 
 
-try:
-    wrap_request()
-    app_up.labels(application='k8s-itlabs-operator').set(1)
-    start_http_server(8080)
-    config.load_incluster_config()
-except config.ConfigException:
-    try:
-        config.load_kube_config(context=operator_settings.KUBERNETES_LOCAL_CONTEXT)
-    except config.ConfigException as e:
-        raise Exception("Could not configure kubernetes client") from e
+wrap_request()
+app_up.labels(application='k8s-itlabs-operator').set(1)
+start_http_server(8080)
+KubernetesClient.configure_kubernetes()
