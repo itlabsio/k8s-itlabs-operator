@@ -62,3 +62,13 @@ spec:
                 secretKeyRef:
                   key: password
                   name: keycloak-creds
+            - name: POSTGRES_HOST
+              value: postgres
+            - name: VAULT_HOST
+              value: vault-e2e
+            - name: RABBIT_HOST
+              value: rabbitmq
+            - name: KEYCLOAK_HOST
+              value: keycloak
+            - name: SENTRY_HOST
+              value: sentry
