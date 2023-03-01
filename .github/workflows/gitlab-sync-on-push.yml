@@ -1,16 +1,12 @@
-name: gitlab-sync
+name: gitlab-sync-on-push
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-    types: [ closed ]
 
 jobs:
-  trigger-pipeline:
+  trigger-pipeline-on-push:
     name: Trigger Gitlab pipeline
     runs-on: ubuntu-latest
     steps:
