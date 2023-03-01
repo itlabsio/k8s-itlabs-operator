@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 from clients.vault.vaultclient import AbstractVaultClient
@@ -12,18 +11,10 @@ class VaultService:
         self.client = client
 
     def get_kk_api_secret(self, path: str) -> Optional[str]:
-        separator = "#"
-        if separator not in path:
-            return
-
-        location, key = path.rsplit(separator, maxsplit=1)
-        secret = self.client.read_secret_version_data(location)
-        logging.info(f"Getting kk_api_secret_key by {path}: {secret or ''}")
-        if secret:
-            return secret.get(key)
+        return self.client.read_secret_key(path)
 
     def get_kk_ms_secret(self, path: str) -> Optional[KeycloakMsSecretDto]:
-        data = self.client.read_secret_version_data(path)
+        data = self.client.read_secret(path)
         if data:
             return KeycloakMsSecretDtoFactory.dto_from_dict(data)
 
