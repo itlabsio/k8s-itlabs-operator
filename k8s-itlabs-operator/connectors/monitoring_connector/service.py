@@ -1,6 +1,5 @@
 import http
 import logging
-from distutils.util import strtobool
 from typing import Optional
 
 from kubernetes import client, dynamic
@@ -11,6 +10,7 @@ from kubernetes.dynamic.exceptions import ResourceNotFoundError
 from connectors.monitoring_connector import specifications
 from connectors.monitoring_connector.dto import MonitoringConnectorMicroserviceDto
 from connectors.monitoring_connector.specifications import MONITORING_ENABLED_VALUE, MONITORING_ENABLED_LABEL_NAME
+from utils.common import strtobool
 
 logger = logging.getLogger('servicemonitorconnector')
 

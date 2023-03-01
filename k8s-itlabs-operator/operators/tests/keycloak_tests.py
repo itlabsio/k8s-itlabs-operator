@@ -13,7 +13,7 @@ from clients.keycloak.dto import ClientDto
 from connectors.keycloak_connector import specifications
 
 
-KEYCLOAK_HOST = getenv('REAL_IP')
+KEYCLOAK_HOST = getenv('KEYCLOAK_HOST')
 KEYCLOAK_API_URL = f"http://{KEYCLOAK_HOST}:8080"
 KEYCLOAK_INSTANCE_NAME = "keycloak"
 

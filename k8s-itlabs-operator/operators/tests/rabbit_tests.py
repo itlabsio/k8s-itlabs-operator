@@ -22,7 +22,7 @@ REQUIRED_POD_ENVIRONMENTS = {
     in specifications.RABBIT_VAR_NAMES
 }
 
-RABBIT_HOST = getenv('REAL_IP')
+RABBIT_HOST = getenv('RABBIT_HOST')
 
 
 @pytest.fixture

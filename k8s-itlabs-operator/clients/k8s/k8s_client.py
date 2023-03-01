@@ -49,5 +49,5 @@ class KubernetesClient:
         except config.ConfigException:
             try:
                 config.load_kube_config(context=operator_settings.KUBERNETES_LOCAL_CONTEXT)
-            except config.ConfigException:
-                raise Exception("Could not configure kubernetes client")
+            except config.ConfigException as e:
+                raise config.ConfigException("Could not configure kubernetes client") from e

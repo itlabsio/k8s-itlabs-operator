@@ -23,7 +23,7 @@ REQUIRED_POD_ENVIRONMENTS = {
     in specifications.DATABASE_VAR_NAMES
 }
 
-PG_HOST = getenv('REAL_IP')
+POSTGRES_HOST = getenv('POSTGRES_HOST')
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def app_secrets(app_name) -> Dict[str, dict]:
     # Used by fixture `create_secrets` (see conftest.py)
     return {
         f"vault:secret/data/{app_name}/postgres-credentials": {
-            "DATABASE_HOST": f"{POSTGRES_INSTANCE_NAME}",
+            "DATABASE_HOST": f"{POSTGRES_HOST}",
             "DATABASE_PORT": 5432,
             "DATABASE_NAME": app_name,
             "DATABASE_USER": app_name,
@@ -108,12 +108,12 @@ def wait_app_deployment(k8s, app_manifests):
 @pytest.fixture(scope="session")
 def pg_secret() -> dict:
     return {
-        "DATABASE_HOST": PG_HOST,
+        "DATABASE_HOST": POSTGRES_HOST,
         "DATABASE_PORT": "5432",
         "DATABASE_NAME": "postgres",
         "DATABASE_USER": "operator",
         "DATABASE_PASSWORD": "operator_pwd",
-        "DATABASE_KUBE_DOMAIN": PG_HOST,
+        "DATABASE_KUBE_DOMAIN": POSTGRES_HOST,
     }
 
 

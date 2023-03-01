@@ -7,6 +7,8 @@ services:
     container_name: vault-e2e
     networks:
       - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8200:8200"
     environment:
@@ -22,6 +24,8 @@ services:
     container_name: postgres
     networks:
       - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5432:5432"
     environment:
@@ -32,6 +36,8 @@ services:
     container_name: rabbitmq
     networks:
       - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -41,6 +47,8 @@ services:
     container_name: keycloak
     networks:
       - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
     environment:
@@ -51,6 +59,9 @@ services:
 
   redis:
     image: redis
+    container_name: redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - kind
 
@@ -60,6 +71,8 @@ services:
     image: sentry
     networks:
       - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     links:
       - redis
       - postgres
