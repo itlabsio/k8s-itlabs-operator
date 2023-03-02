@@ -290,7 +290,7 @@ def test_keycloak_operator_on_initial_deployment_application(k8s, kk, vault, app
     # with keys:
     #   - KEYCLOAK_CLIENT_ID
     #   - KEYCLOAK_SECRET_KEY
-    secret = vault.read_secret_version_data(
+    secret = vault.read_secret(
         f"vault:secret/data/{app_name}/keycloak-credentials"
     )
     retrieved_secret_keys = set(secret.keys())

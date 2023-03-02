@@ -34,7 +34,7 @@ class VaultService(AbstractVaultService):
         return self.vault_client.read_secret_key(vault_path)
 
     def get_sentry_ms_credentials(self, vault_path: str) -> Optional[SentryMsSecretDto]:
-        vault_data = self.vault_client.read_secret_version_data(vault_path)
+        vault_data = self.vault_client.read_secret(vault_path)
         if vault_data:
             return SentryMsSecretDtoFactory.dto_from_dict(vault_data)
 

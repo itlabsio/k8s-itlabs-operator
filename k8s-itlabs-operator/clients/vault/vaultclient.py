@@ -1,7 +1,6 @@
 import logging
 from abc import ABCMeta, abstractmethod
 from typing import Optional
-from warnings import warn
 
 import hvac
 
@@ -15,15 +14,6 @@ class AbstractVaultClient:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def read_secret_version_data(self, path: str) -> Optional[dict]:
-        warn(
-            "Function `read_secret_version_data` will be "
-            "deprecated soon. Use `read_secret`",
-            PendingDeprecationWarning, stacklevel=2
-        )
-        raise NotImplementedError
-
-    @abstractmethod
     def read_secret(self, path: str) -> Optional[dict]:
         raise NotImplementedError
 
@@ -33,15 +23,6 @@ class AbstractVaultClient:
 
     @abstractmethod
     def create_secret(self, path: str, data: dict):
-        raise NotImplementedError
-
-    @abstractmethod
-    def delete_secret_all_versions(self, path: str):
-        warn(
-            "Function `delete_secret_all_versions` will be"
-            "deprecated soon. Use `delete_secret`",
-            PendingDeprecationWarning, stacklevel=2
-        )
         raise NotImplementedError
 
     @abstractmethod
@@ -82,9 +63,6 @@ class VaultClient(AbstractVaultClient):
         logger.info(f"Ended reading Vault secret version: {path}")
         return result
 
-    def read_secret_version_data(self, path: str) -> Optional[dict]:
-        return self.read_secret(path)
-
     def read_secret(self, path: str) -> Optional[dict]:
         raw_response = self._read_secret_version(path=path)
         if raw_response:
@@ -119,9 +97,6 @@ class VaultClient(AbstractVaultClient):
 
     def create_secret(self, path: str, data: dict):
         self._create_or_update_secret(path=path, data=data)
-
-    def delete_secret_all_versions(self, path: str):
-        return self.delete_secret(path)
 
     def delete_secret(self, path: str):
         try:

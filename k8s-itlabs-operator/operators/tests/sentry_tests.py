@@ -174,7 +174,7 @@ def test_sentry_operator_on_initial_deployment_application(k8s, vault, sentry, a
     # with keys:
     #   - SENTRY_DSN
     #   - SENTRY_PROJECT_SLUG
-    secret = vault.read_secret_version_data(f"vault:secret/data/{app_name}/sentry-credentials")
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/sentry-credentials")
     retrieved_secret_keys = set(secret.keys())
     assert REQUIRED_VAULT_SECRET_KEYS <= retrieved_secret_keys
 
