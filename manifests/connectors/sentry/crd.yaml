@@ -44,6 +44,7 @@ spec:
                 organization:
                   description: The name of the Sentry organization to which the members belong
                   type: string
+                  default: "sentry"
                 token:
                   description: Path to Vault secret key containing access token
                   type: string
