@@ -25,5 +25,5 @@ class MockedVaultClient(AbstractVaultClient):
         self.write_path = path
         self.write_data = data
 
-    def delete_secret_all_versions(self, path: str):
+    def delete_secret(self, path: str):
         pass
