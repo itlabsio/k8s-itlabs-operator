@@ -57,12 +57,12 @@ spec:
                   description: Path to Vault secret key containing password for connection to the database
                   type: string
       additionalPrinterColumns:
-        - name: host
+        - name: Host
           type: string
           jsonPath: .spec.host
-        - name: port
+        - name: Port
           type: integer
           jsonPath: .spec.port
-        - name: database
+        - name: Database
           type: string
           jsonPath: .spec.database
