@@ -108,11 +108,8 @@ def wait_app_deployment(k8s, app_manifests):
 @pytest.fixture(scope="session")
 def rabbit_secret() -> dict:
     return {
-        "API_URL": f"http://{RABBIT_HOST}:15672",
         "API_USER": "guest",
         "API_PASSWORD": "guest",
-        "BROKER_HOST": RABBIT_HOST,
-        "BROKER_PORT": "5672",
     }
 
 
@@ -125,12 +122,13 @@ def rabbit_cr() -> dict:
         "metadata": {
             "name": RABBIT_INSTANCE_NAME,
         },
-        "spec": [
-            {
-                "name": RABBIT_INSTANCE_NAME,
-                "vaultpath": RABBIT_VAULT_SECRET_PATH,
-            }
-        ],
+        "spec": {
+            "brokerHost": RABBIT_HOST,
+            "brokerPort": 5672,
+            "url": f"http://{RABBIT_HOST}:15672",
+            "username": f"{RABBIT_VAULT_SECRET_PATH}#API_USER",
+            "password": f"{RABBIT_VAULT_SECRET_PATH}#API_PASSWORD",
+        },
     }
 
 
@@ -181,7 +179,7 @@ def test_rabbit_operator_on_initial_deployment_application(k8s, vault, rabbit, a
     #   - BROKER_PASSWORD
     #   - BROKER_VHOST
     #   - BROKER_URL
-    secret = vault.read_secret_version_data(f"vault:secret/data/{app_name}/rabbit-credentials")
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/rabbit-credentials")
     retrieved_secret_keys = set(secret.keys())
     assert REQUIRED_VAULT_SECRET_KEYS <= retrieved_secret_keys
 

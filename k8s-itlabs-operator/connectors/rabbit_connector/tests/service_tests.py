@@ -1,7 +1,8 @@
 import pytest
 
 from connectors.rabbit_connector import specifications
-from connectors.rabbit_connector.dto import RabbitConnector, RabbitConnectorMicroserviceDto
+from connectors.rabbit_connector.dto import RabbitConnector, \
+    RabbitConnectorMicroserviceDto, RabbitApiSecretDto
 from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExist, UnknownVaultPathInRabbitConnector
 from connectors.rabbit_connector.services.rabbit_connector import RabbitConnectorService
 from connectors.rabbit_connector.tests.factories import RabbitConnectorMicroserviceDtoTestFactory, \
@@ -34,7 +35,13 @@ class TestRabbitConnectorService:
             rabbit_connector_service.on_create_deployment(ms_rabbit_con=ms_rabbit_con)
 
     def test_on_create_deployment_no_rabbit_in_crds(self, mocker):
-        rabbit_connector = RabbitConnector()
+        rabbit_connector = RabbitConnector(
+            broker_host="rabbit.default",
+            broker_port=5672,
+            url="https://rabbit.local",
+            username="vault:secret/data/non-exist-secret#USERNAME",
+            password="vault:secret/data/non-exist-secret#PASSWORD",
+        )
         KubernetesServiceMocker.mock_get_rabbit_connector(mocker=mocker, rabbit_connector=rabbit_connector)
         ms_rabbit_con = RabbitConnectorMicroserviceDtoTestFactory()
         rabbit_connector_service = RabbitConnectorService(vault_service=MockedVaultService())
@@ -42,12 +49,14 @@ class TestRabbitConnectorService:
             rabbit_connector_service.on_create_deployment(ms_rabbit_con=ms_rabbit_con)
 
     def test_on_create_deployment(self, mocker):
-        rabbit_api_cred = RabbitApiSecretDtoTestFactory()
+        rabbit_api_cred: RabbitApiSecretDto = RabbitApiSecretDtoTestFactory()
         ms_rabbit_con: RabbitConnectorMicroserviceDto = RabbitConnectorMicroserviceDtoTestFactory()
-        rabbit_connector = RabbitConnector()
-        rabbit_connector.add_rabbit_instance(
-            name=ms_rabbit_con.rabbit_instance_name,
-            vault_path=ms_rabbit_con.vault_path
+        rabbit_connector = RabbitConnector(
+            broker_host=rabbit_api_cred.broker_host,
+            broker_port=rabbit_api_cred.broker_port,
+            url=rabbit_api_cred.api_url,
+            username=rabbit_api_cred.api_user,
+            password=rabbit_api_cred.api_password,
         )
         KubernetesServiceMocker.mock_get_rabbit_connector(mocker=mocker, rabbit_connector=rabbit_connector)
         RabbitServiceFactoryMocker.mock_create_rabbit_service(mocker)

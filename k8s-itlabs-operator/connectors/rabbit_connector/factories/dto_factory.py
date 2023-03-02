@@ -1,5 +1,3 @@
-from typing import List
-
 from connectors.rabbit_connector import specifications
 from connectors.rabbit_connector.crd import RabbitConnectorCrd
 from connectors.rabbit_connector.dto import RabbitConnectorMicroserviceDto, RabbitApiSecretDto, RabbitMsSecretDto, \
@@ -72,9 +70,11 @@ class RabbitMsSecretDtoFactory:
 
 class RabbitConnectorFactory:
     @classmethod
-    def dto_from_rabbit_con_crds(cls, rabbit_con_crds: List[RabbitConnectorCrd]) -> RabbitConnector:
-        rabbit_con_dto = RabbitConnector()
-        for rabbit_con_crd in rabbit_con_crds:
-            for spec in rabbit_con_crd.spec:
-                rabbit_con_dto.add_rabbit_instance(name=spec.name, vault_path=spec.vaultpath)
-        return rabbit_con_dto
+    def dto_from_rabbit_con_crds(cls, rabbit_con_crds: RabbitConnectorCrd) -> RabbitConnector:
+        return RabbitConnector(
+            broker_host=rabbit_con_crds.spec.broker_host,
+            broker_port=rabbit_con_crds.spec.broker_port,
+            url=rabbit_con_crds.spec.url,
+            username=rabbit_con_crds.spec.username,
+            password=rabbit_con_crds.spec.password,
+        )
