@@ -3,8 +3,7 @@ from typing import Optional
 
 from clients.postgres.dto import PgConnectorDbSecretDto
 from clients.vault.vaultclient import AbstractVaultClient
-from connectors.postgres_connector.dto import PgConnectorInstanceSecretDto
-from connectors.postgres_connector.factories.dto_factory import PgConnectorInstanceSecretDtoFactory, \
+from connectors.postgres_connector.factories.dto_factory import \
     PgConnectorDbSecretDtoFactory
 
 
@@ -12,7 +11,7 @@ class AbstractVaultService:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get_pg_instance_credentials(self, vault_path: str) -> PgConnectorInstanceSecretDto:
+    def get_pg_instance_secret(self, vault_path: str) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
@@ -33,12 +32,11 @@ class VaultService(AbstractVaultService):
     def __init__(self, vault_client: AbstractVaultClient):
         self.vault_client = vault_client
 
-    def get_pg_instance_credentials(self, vault_path: str) -> PgConnectorInstanceSecretDto:
-        vault_data = self.vault_client.read_secret_version_data(vault_path)
-        return PgConnectorInstanceSecretDtoFactory.dto_from_dict(vault_data)
+    def get_pg_instance_secret(self, vault_path: str) -> Optional[str]:
+        return self.vault_client.read_secret_key(vault_path)
 
     def get_pg_ms_credentials(self, vault_path: str) -> Optional[PgConnectorDbSecretDto]:
-        vault_data = self.vault_client.read_secret_version_data(vault_path)
+        vault_data = self.vault_client.read_secret(vault_path)
         return PgConnectorDbSecretDtoFactory.dto_from_dict(vault_data) if vault_data else None
 
     def create_pg_ms_credentials(self, vault_path: str, pg_ms_creds: PgConnectorDbSecretDto):

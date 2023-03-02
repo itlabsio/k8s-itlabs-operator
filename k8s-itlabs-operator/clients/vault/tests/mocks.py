@@ -14,7 +14,7 @@ class MockedVaultClient(AbstractVaultClient):
         else:
             self.secret = {"key": "value"} if use_default_secret else None
 
-    def read_secret_version_data(self, path: str) -> dict:
+    def read_secret(self, path: str) -> dict:
         return self.secret
 
     def read_list_secrets_list(self, path: str) -> List[str]:

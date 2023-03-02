@@ -108,12 +108,8 @@ def wait_app_deployment(k8s, app_manifests):
 @pytest.fixture(scope="session")
 def pg_secret() -> dict:
     return {
-        "DATABASE_HOST": POSTGRES_HOST,
-        "DATABASE_PORT": "5432",
-        "DATABASE_NAME": "postgres",
         "DATABASE_USER": "operator",
         "DATABASE_PASSWORD": "operator_pwd",
-        "DATABASE_KUBE_DOMAIN": POSTGRES_HOST,
     }
 
 
@@ -126,18 +122,18 @@ def pg_cr() -> dict:
         "metadata": {
             "name": POSTGRES_INSTANCE_NAME,
         },
-        "spec": [
-            {
-                "name": POSTGRES_INSTANCE_NAME,
-                "vaultpath": POSTGRES_VAULT_SECRET_PATH,
-            }
-        ],
+        "spec": {
+            "host": POSTGRES_HOST,
+            "database": "postgres",
+            "username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_USER",
+            "password": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_PASSWORD",
+        },
     }
 
 
 @pytest.fixture(scope="session", autouse=True)
 def create_postgres_cr(k8s, vault, pg_secret, pg_cr):
-    secret = vault.read_secret_version_data(POSTGRES_VAULT_SECRET_PATH)
+    secret = vault.read_secret(POSTGRES_VAULT_SECRET_PATH)
     if not secret:
         vault.create_secret(
             POSTGRES_VAULT_SECRET_PATH,
@@ -182,7 +178,7 @@ def test_postgres_operator_on_initial_deployment_application(k8s, vault, app_nam
     #   - DATABASE_NAME
     #   - DATABASE_USER
     #   - DATABASE_PASSWORD
-    secret = vault.read_secret_version_data(f"vault:secret/data/{app_name}/postgres-credentials")
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/postgres-credentials")
     retrieved_secret_keys = set(secret.keys())
     assert REQUIRED_VAULT_SECRET_KEYS <= retrieved_secret_keys
 
