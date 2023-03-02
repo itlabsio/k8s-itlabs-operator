@@ -16,4 +16,8 @@ class SentryConnectorCrdFactory:
 
     @staticmethod
     def _connector_spec_from_dict(spec: dict) -> SentryConnectorSpec:
-        return SentryConnectorSpec(vaultpath=spec.get("vaultpath"))
+        return SentryConnectorSpec(
+            url=spec.get("url"),
+            token=spec.get("token"),
+            organization=spec.get("organization", "sentry")
+        )

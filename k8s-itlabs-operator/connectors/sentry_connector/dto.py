@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class SentryApiSecretDto:
     api_token: str
     api_url: str
-    organization: str
+    api_organization: str
 
 
 @dataclass
@@ -16,7 +16,9 @@ class SentryMsSecretDto:
 
 @dataclass
 class SentryConnector:
-    vault_path: str
+    url: str
+    token: str
+    organization: str
 
 
 @dataclass

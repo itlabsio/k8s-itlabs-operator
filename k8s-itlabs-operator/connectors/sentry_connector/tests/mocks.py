@@ -14,9 +14,9 @@ class KubernetesServiceMocker:
 
 
 class MockedVaultService(AbstractVaultService):
-    def __init__(self, sentry_api_secret: Optional[SentryApiSecretDto] = None,
+    def __init__(self, sentry_api_token: Optional[str] = None,
                  sentry_ms_secret: Optional[SentryMsSecretDto] = None):
-        self.sentry_api_secret = sentry_api_secret
+        self.sentry_api_token = sentry_api_token
         self.sentry_ms_secret = sentry_ms_secret
 
         self.get_sentry_api_credentials_calls_total = 0
@@ -24,9 +24,9 @@ class MockedVaultService(AbstractVaultService):
         self.get_vault_env_value_calls_total = 0
         self.create_ms_sentry_credentials_calls_total = 0
 
-    def get_sentry_api_credentials(self, vault_path: str) -> SentryApiSecretDto:
+    def get_sentry_api_secret(self, vault_path: str) -> Optional[str]:
         self.get_sentry_api_credentials_calls_total += 1
-        return self.sentry_api_secret
+        return self.sentry_api_token
 
     def get_sentry_ms_credentials(self, vault_path: str) -> SentryMsSecretDto:
         self.get_sentry_ms_credentials_calls_total += 1

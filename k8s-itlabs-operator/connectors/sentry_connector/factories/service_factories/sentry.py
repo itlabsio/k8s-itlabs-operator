@@ -9,6 +9,6 @@ class SentryServiceFactory:
         sentry_client = SentryClient(
             url=sentry_api_cred.api_url,
             token=sentry_api_cred.api_token,
-            organization=sentry_api_cred.organization
+            organization=sentry_api_cred.api_organization
         )
         return SentryService(sentry_client=sentry_client)

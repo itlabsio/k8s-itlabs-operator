@@ -106,7 +106,8 @@ def sentry_cr() -> dict:
             "name": SENTRY_INSTANCE_NAME,
         },
         "spec": {
-            "vaultpath": SENTRY_VAULT_SECRET_PATH,
+            "url": SENTRY_URL,
+            "token": f"{SENTRY_VAULT_SECRET_PATH}#{specifications.SENTRY_API_TOKEN_KEY}",
         },
     }
 
@@ -116,9 +117,7 @@ def create_sentry_cr(k8s, vault, sentry_cr):
     vault.create_secret(
         SENTRY_VAULT_SECRET_PATH,
         {
-            specifications.SENTRY_API_URL: SENTRY_URL,
             specifications.SENTRY_API_TOKEN_KEY: SENTRY_TOKEN,
-            specifications.SENTRY_ORGANIZATION: SENTRY_ORGANIZATION
         }
     )
 

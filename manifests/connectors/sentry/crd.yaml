@@ -33,7 +33,24 @@ spec:
               type: object
             spec:
               type: object
+              required: [
+                "url",
+                "token"
+              ]
               properties:
-                vaultpath:
-                  description: Path to the secret in vault with token to Sentry instance for operator
+                url:
+                  description: Sentry URL
                   type: string
+                organization:
+                  description: The name of the Sentry organization to which the members belong
+                  type: string
+                token:
+                  description: Path to Vault secret key containing access token
+                  type: string
+      additionalPrinterColumns:
+        - name: URL
+          type: string
+          jsonPath: .spec.url
+        - name: Organization
+          type: string
+          jsonPath: .spec.organization

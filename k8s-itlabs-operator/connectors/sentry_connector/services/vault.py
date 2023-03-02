@@ -2,15 +2,15 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from clients.vault.vaultclient import AbstractVaultClient
-from connectors.sentry_connector.dto import SentryApiSecretDto, SentryMsSecretDto
-from connectors.sentry_connector.factories.dto_factory import SentryApiSecretDtoFactory, SentryMsSecretDtoFactory
+from connectors.sentry_connector.dto import SentryMsSecretDto
+from connectors.sentry_connector.factories.dto_factory import SentryMsSecretDtoFactory
 
 
 class AbstractVaultService:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get_sentry_api_credentials(self, vault_path: str) -> SentryApiSecretDto:
+    def get_sentry_api_secret(self, vault_path: str) -> Optional[str]:
         raise NotImplementedError
 
     @abstractmethod
@@ -30,10 +30,8 @@ class VaultService(AbstractVaultService):
     def __init__(self, vault_client: AbstractVaultClient):
         self.vault_client = vault_client
 
-    def get_sentry_api_credentials(self, vault_path: str) -> Optional[SentryApiSecretDto]:
-        vault_data = self.vault_client.read_secret_version_data(vault_path)
-        if vault_data:
-            return SentryApiSecretDtoFactory.dto_from_dict(vault_data)
+    def get_sentry_api_secret(self, vault_path: str) -> Optional[str]:
+        return self.vault_client.read_secret_key(vault_path)
 
     def get_sentry_ms_credentials(self, vault_path: str) -> Optional[SentryMsSecretDto]:
         vault_data = self.vault_client.read_secret_version_data(vault_path)

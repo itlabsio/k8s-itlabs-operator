@@ -1,18 +1,8 @@
 from connectors.sentry_connector import specifications
-from connectors.sentry_connector.dto import SentryConnector, SentryApiSecretDto, SentryMsSecretDto, \
+from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, \
     SentryConnectorMicroserviceDto
 from connectors.sentry_connector.crd import SentryConnectorCrd
 from connectors.sentry_connector.exceptions import EnvironmentValueError
-
-
-class SentryApiSecretDtoFactory:
-    @staticmethod
-    def dto_from_dict(data: dict) -> SentryApiSecretDto:
-        return SentryApiSecretDto(
-            api_token=data.get(specifications.SENTRY_API_TOKEN_KEY),
-            api_url=data.get(specifications.SENTRY_API_URL),
-            organization=data.get(specifications.SENTRY_ORGANIZATION, 'sentry')
-        )
 
 
 class SentryMsSecretDtoFactory:
@@ -34,7 +24,11 @@ class SentryMsSecretDtoFactory:
 class SentryConnectorFactory:
     @staticmethod
     def dto_from_sentry_connector_crd(sentry_connector_crd: SentryConnectorCrd) -> SentryConnector:
-        return SentryConnector(vault_path=sentry_connector_crd.spec.vaultpath)
+        return SentryConnector(
+            url=sentry_connector_crd.spec.url,
+            token=sentry_connector_crd.spec.token,
+            organization=sentry_connector_crd.spec.organization,
+        )
 
 
 class SentryConnectorMicroserviceDtoFactory:

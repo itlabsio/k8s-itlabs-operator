@@ -77,7 +77,11 @@ class TestSentryConnectorService:
             sentry_conn_service.on_create_deployment(ms_sentry_conn)
 
     def test_on_create_deployment_no_exist_sentry_instance_secret(self, mocker):
-        sentry_conn = SentryConnector(vault_path="vault:secret/data/sentry")
+        sentry_conn = SentryConnector(
+            url="https://sentry.local",
+            token="vault:secret/data/sentry#API_TOKEN",
+            organization="sentry",
+        )
         KubernetesServiceMocker.mock_get_sentry_connector(mocker, sentry_connector=sentry_conn)
         sentry_conn_service = SentryConnectorService(vault_service=MockedVaultService())
         ms_sentry_conn = SentryConnectorMicroserviceDtoTestFactory()
