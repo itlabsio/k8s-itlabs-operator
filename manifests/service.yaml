@@ -18,23 +18,3 @@ spec:
       protocol: TCP
       port: 8080
       targetPort: "metrics"
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  labels:
-    app: k8s-itlabs-operator
-  name: k8s-itlabs-operator
-  namespace: k8s-itlabs-operator
-spec:
-  endpoints:
-    - interval: 10s
-      path: /
-      port: metrics
-  jobLabel: app
-  namespaceSelector:
-    matchNames:
-      - k8s-itlabs-operator
-  selector:
-    matchLabels:
-      app: k8s-itlabs-operator

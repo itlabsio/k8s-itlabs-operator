@@ -1,5 +1,7 @@
 # k8s-itlabs-operator <sup>[RU](docs/ru/index.md)</sup>
 
+Kubernetes operator for configure environment for you deployed microservice
+
 ## Requirements
 
 Please check that next points are done before deploying operator:
@@ -34,3 +36,12 @@ For run e2e-tests locally, execute commands:
 chmod +x scripts/start_local_runner.sh
 ./scripts/start_local_runner.sh
 ```
+
+## Monitoring
+
+To collect operator's metrics, you can send request to service in k8s-cluster
+to named port `metrics` or `8080`
+
+Collected metrics:
+- app_http_request_operator_latency_seconds - to measure incoming requests 
+- app_http_request_operator_client_latency_seconds - to measure outgoing requests
