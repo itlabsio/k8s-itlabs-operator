@@ -124,7 +124,6 @@ def pg_cr() -> dict:
         },
         "spec": {
             "host": POSTGRES_HOST,
-            "database": "postgres",
             "username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_USER",
             "password": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_PASSWORD",
         },

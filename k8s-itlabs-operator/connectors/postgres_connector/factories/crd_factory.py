@@ -10,7 +10,7 @@ class PostgresConnectorCrdFactory:
         return PostgresConnectorSpec(
             host=spec.get("host"),
             port=spec.get("port", 5432),
-            database=spec.get("database"),
+            database=spec.get("database", "postgres"),
             username=spec.get("username"),
             password=spec.get("password"),
         )

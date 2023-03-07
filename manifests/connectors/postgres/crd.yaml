@@ -35,7 +35,6 @@ spec:
               type: object
               required: [
                 "host",
-                "database",
                 "username",
                 "password"
               ]
@@ -50,6 +49,7 @@ spec:
                 database:
                   description: Postgres database name
                   type: string
+                  default: "postgres"
                 username:
                   description: Path to Vault secret key containing username for connection to the databsae
                   type: string
@@ -63,6 +63,3 @@ spec:
         - name: Port
           type: integer
           jsonPath: .spec.port
-        - name: Database
-          type: string
-          jsonPath: .spec.database
