@@ -132,6 +132,10 @@ jobs:
                   "labels": ["test"]
                 },
                 {
+                  "title": "## ❗ Breaking changes",
+                  "labels": ["breaking"]
+                },
+                {
                   "title": "## 💬 Other",
                   "labels": ["other"]
                 }
