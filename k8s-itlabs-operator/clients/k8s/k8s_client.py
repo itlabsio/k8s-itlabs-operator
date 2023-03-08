@@ -1,7 +1,7 @@
-from typing import Dict
+from typing import Dict, Optional
 
 from kubernetes import client, config
-from kubernetes.client import V1ConfigMap
+from kubernetes.client import V1ConfigMap, ApiException
 
 import settings as operator_settings
 
@@ -13,34 +13,17 @@ class KubernetesClient:
         return config_map.data
 
     @staticmethod
-    def get_cluster_custom_object(group: str, version: str, plural: str, name: str) -> Dict:
+    def get_cluster_custom_object(group: str, version: str, plural: str, name: str) -> Optional[Dict]:
         api = client.CustomObjectsApi()
-        return api.get_cluster_custom_object(
-            group=group,
-            version=version,
-            plural=plural,
-            name=name
-        )
-
-    @staticmethod
-    def list_cluster_custom_object(group: str, version: str, plural: str) -> Dict:
-        api = client.CustomObjectsApi()
-        return api.list_cluster_custom_object(
-            group=group,
-            version=version,
-            plural=plural
-        )
-
-    @staticmethod
-    def delete_namespaced_custom_object(group: str, version: str, namespace: str, plural: str, name: str) -> None:
-        api = client.CustomObjectsApi()
-        api.delete_namespaced_custom_object(
-            group=group,
-            version=version,
-            namespace=namespace,
-            plural=plural,
-            name=name
-        )
+        try:
+            return api.get_cluster_custom_object(
+                group=group,
+                version=version,
+                plural=plural,
+                name=name
+            )
+        except ApiException:
+            return None
 
     @staticmethod
     def configure_kubernetes():

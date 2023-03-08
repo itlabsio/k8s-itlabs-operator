@@ -23,7 +23,7 @@ class KubernetesService:
             group="itlabs.io", version="v1", plural="sentryconnectors", name=name
         )
         if not sentry_connector_obj:
-            return
+            return None
 
         sentry_connector_crd = SentryConnectorCrdFactory.crd_from_dict(sentry_connector_obj)
         return SentryConnectorFactory.dto_from_sentry_connector_crd(sentry_connector_crd)

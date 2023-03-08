@@ -26,7 +26,7 @@ class KubernetesService:
             name=name
         )
         if not kk_connector_obj:
-            return
+            return None
 
         kk_connector_crd = KeycloakConnectorCrdFactory.crd_from_dict(kk_connector_obj)
         return KeycloakConnectorFactory.dto_from_kk_connector_crd(kk_connector_crd)
