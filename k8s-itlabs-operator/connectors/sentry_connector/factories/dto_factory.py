@@ -1,6 +1,6 @@
 from connectors.sentry_connector import specifications
 from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, \
-    SentryConnectorMicroserviceDto
+    SentryConnectorMicroserviceDto, SentryApiSecretDto
 from connectors.sentry_connector.crd import SentryConnectorCrd
 from connectors.sentry_connector.exceptions import EnvironmentValueError
 
@@ -51,3 +51,13 @@ class SentryConnectorMicroserviceDtoFactory:
             return specifications.SENTRY_AVAILABLE_ENVIRONMENTS[env].lower()
         except KeyError:
             raise EnvironmentValueError("Environment label contains invalid value")
+
+
+class SentryApiSecretDtoFactory:
+    @classmethod
+    def create_api_secret_dto(cls, sentry_conn_crd: SentryConnector, token: str) -> SentryApiSecretDto:
+        return SentryApiSecretDto(
+            api_url=sentry_conn_crd.url,
+            api_token=token,
+            api_organization=sentry_conn_crd.organization,
+        )

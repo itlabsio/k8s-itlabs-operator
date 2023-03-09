@@ -75,3 +75,15 @@ class PgConnectorDbSecretDtoFactory:
             specifications.DATABASE_HOST_KEY: pg_con_db_cred.host,
             specifications.DATABASE_PORT_KEY: str(pg_con_db_cred.port),
         }
+
+
+class PgConnectorInstanceSecretDtoFactory:
+    @classmethod
+    def create_instance_secret_dto(cls, pg_conn_crd: PgConnector, username: str, password: str) -> PgConnectorInstanceSecretDto:
+        return PgConnectorInstanceSecretDto(
+            host=pg_conn_crd.host,
+            port=pg_conn_crd.port,
+            db_name=pg_conn_crd.database,
+            user=username,
+            password=password,
+        )

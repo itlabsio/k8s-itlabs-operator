@@ -2,6 +2,8 @@ import logging
 from typing import Optional
 
 from connectors.sentry_connector import specifications
+from connectors.sentry_connector.factories.dto_factory import \
+    SentryApiSecretDtoFactory
 from connectors.sentry_connector.services.vault import AbstractVaultService
 from connectors.sentry_connector.dto import SentryConnectorMicroserviceDto, \
     SentryApiSecretDto, SentryConnector
@@ -31,11 +33,7 @@ class SentryConnectorService:
         if not token:
             return None
 
-        return SentryApiSecretDto(
-            api_url=sentry_conn_crd.url,
-            api_token=token,
-            api_organization=sentry_conn_crd.organization,
-        )
+        return SentryApiSecretDtoFactory.create_api_secret_dto(sentry_conn_crd, token)
 
     def on_create_deployment(self, ms_sentry_conn: SentryConnectorMicroserviceDto):
         sentry_conn_crd = KubernetesService.get_sentry_connector(ms_sentry_conn.sentry_instance_name)

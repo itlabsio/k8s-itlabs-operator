@@ -5,7 +5,8 @@ from connectors.rabbit_connector.dto import RabbitConnectorMicroserviceDto, \
     RabbitApiSecretDto, RabbitMsSecretDto, RabbitConnector
 from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExist, UnknownVaultPathInRabbitConnector, \
     NotMatchingUsernames, NotMatchingVhostNames
-from connectors.rabbit_connector.factories.dto_factory import RabbitMsSecretDtoFactory
+from connectors.rabbit_connector.factories.dto_factory import \
+    RabbitMsSecretDtoFactory, RabbitApiSecretDtoFactory
 from connectors.rabbit_connector.factories.service_factories.rabbit import RabbitServiceFactory
 from connectors.rabbit_connector.services.kubernetes import KubernetesService
 from connectors.rabbit_connector.services.vault import AbstractVaultService
@@ -22,13 +23,7 @@ class RabbitConnectorService:
         if not (username and password):
             return None
 
-        return RabbitApiSecretDto(
-            broker_host=rabbit_conn_crd.broker_host,
-            broker_port=rabbit_conn_crd.broker_port,
-            api_url=rabbit_conn_crd.url,
-            api_user=username,
-            api_password=password,
-        )
+        return RabbitApiSecretDtoFactory.create_api_secret_dto(rabbit_conn_crd, username, password)
 
     def on_create_deployment(self, ms_rabbit_con: RabbitConnectorMicroserviceDto):
         rabbit_con_crd = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)

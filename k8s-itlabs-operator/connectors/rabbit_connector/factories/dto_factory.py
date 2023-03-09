@@ -16,6 +16,18 @@ class RabbitApiSecretDtoFactory:
             broker_port=data.get(specifications.RABBIT_BROKER_PORT_KEY),
         )
 
+    @classmethod
+    def create_api_secret_dto(cls, rabbit_conn_crd: RabbitConnector,
+                              username: str,
+                              password: str) -> RabbitApiSecretDto:
+        return RabbitApiSecretDto(
+            broker_host=rabbit_conn_crd.broker_host,
+            broker_port=rabbit_conn_crd.broker_port,
+            api_url=rabbit_conn_crd.url,
+            api_user=username,
+            api_password=password,
+        )
+
 
 class RabbitConnectorMicroserviceDtoFactory:
     @classmethod

@@ -6,7 +6,8 @@ from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, \
     PgConnectorInstanceSecretDto, PgConnector
 from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector, \
     NotMatchingUsernames, NotMatchingDbNames
-from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSecretDtoFactory
+from connectors.postgres_connector.factories.dto_factory import \
+    PgConnectorDbSecretDtoFactory, PgConnectorInstanceSecretDtoFactory
 from connectors.postgres_connector.factories.service_factories.postgres import PostgresServiceFactory
 from connectors.postgres_connector.services.kubernetes import KubernetesService
 from connectors.postgres_connector.services.vault import AbstractVaultService
@@ -24,13 +25,7 @@ class PostgresConnectorService:
         if not(username and password):
             return None
 
-        return PgConnectorInstanceSecretDto(
-            host=pg_conn_crd.host,
-            port=pg_conn_crd.port,
-            db_name=pg_conn_crd.database,
-            user=username,
-            password=password,
-        )
+        return PgConnectorInstanceSecretDtoFactory.create_instance_secret_dto(pg_conn_crd, username, password)
 
     def on_create_deployment(self, ms_pg_con: PgConnectorMicroserviceDto):
         pg_con_crd = KubernetesService.get_pg_connector(ms_pg_con.pg_instance_name)
