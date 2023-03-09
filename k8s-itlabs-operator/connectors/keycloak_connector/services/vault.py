@@ -18,8 +18,8 @@ class VaultService:
         if data:
             return KeycloakMsSecretDtoFactory.dto_from_dict(data)
 
-    def create_kk_ms_secret(self, path: str, kk_ms_creds: KeycloakMsSecretDto):
-        secret = KeycloakMsSecretDtoFactory.dict_from_dto(kk_ms_creds)
+    def create_kk_ms_secret(self, path: str, kk_ms_cred: KeycloakMsSecretDto):
+        secret = KeycloakMsSecretDtoFactory.dict_from_dto(kk_ms_cred)
         self.client.create_secret(path, secret)
 
     @staticmethod

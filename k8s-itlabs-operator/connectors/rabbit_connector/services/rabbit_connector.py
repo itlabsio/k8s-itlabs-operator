@@ -31,11 +31,11 @@ class RabbitConnectorService:
         )
 
     def on_create_deployment(self, ms_rabbit_con: RabbitConnectorMicroserviceDto):
-        rabbit_con_crds = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)
-        if not rabbit_con_crds:
+        rabbit_con_crd = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)
+        if not rabbit_con_crd:
             raise RabbitConnectorCrdDoesNotExist()
 
-        rabbit_instance_cred = self._get_rabbit_instance_cred(rabbit_con_crds)
+        rabbit_instance_cred = self._get_rabbit_instance_cred(rabbit_con_crd)
         if not rabbit_instance_cred:
             raise UnknownVaultPathInRabbitConnector()
 
@@ -49,7 +49,7 @@ class RabbitConnectorService:
             annotation_name in annotations for annotation_name in specifications.RABBIT_CONNECTOR_REQUIRED_ANNOTATIONS
         )
 
-    def get_or_create_rabbit_credentials(self, rabbit_api_creds: RabbitApiSecretDto,
+    def get_or_create_rabbit_credentials(self, rabbit_api_cred: RabbitApiSecretDto,
                                          ms_rabbit_con: RabbitConnectorMicroserviceDto) -> RabbitMsSecretDto:
         rabbit_ms_creds = self.vault_service.get_rabbit_ms_credentials(vault_path=ms_rabbit_con.vault_path)
         if rabbit_ms_creds:
@@ -58,7 +58,7 @@ class RabbitConnectorService:
             if rabbit_ms_creds.broker_vhost != ms_rabbit_con.vhost:
                 raise NotMatchingVhostNames()
         else:
-            rabbit_ms_creds = RabbitMsSecretDtoFactory.dto_from_ms_rabbit_con(rabbit_api_creds, ms_rabbit_con)
+            rabbit_ms_creds = RabbitMsSecretDtoFactory.dto_from_ms_rabbit_con(rabbit_api_cred, ms_rabbit_con)
             self.vault_service.create_ms_rabbit_credentials(ms_rabbit_con.vault_path, rabbit_ms_creds)
         return rabbit_ms_creds
 

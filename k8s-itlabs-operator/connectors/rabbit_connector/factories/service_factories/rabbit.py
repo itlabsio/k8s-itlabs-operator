@@ -5,10 +5,10 @@ from connectors.rabbit_connector.services.rabbit import AbstractRabbitService, R
 
 class RabbitServiceFactory:
     @classmethod
-    def create_rabbit_service(cls, rabbit_api_creds: RabbitApiSecretDto) -> AbstractRabbitService:
+    def create_rabbit_service(cls, rabbit_api_cred: RabbitApiSecretDto) -> AbstractRabbitService:
         rabbit_client = RabbitClient(
-            url=rabbit_api_creds.api_url,
-            user=rabbit_api_creds.api_user,
-            password=rabbit_api_creds.api_password
+            url=rabbit_api_cred.api_url,
+            user=rabbit_api_cred.api_user,
+            password=rabbit_api_cred.api_password
         )
         return RabbitService(rabbit_client=rabbit_client)

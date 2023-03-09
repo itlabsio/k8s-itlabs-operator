@@ -18,7 +18,7 @@ class AbstractVaultService:
         raise NotImplementedError
 
     @abstractmethod
-    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_creds: RabbitMsSecretDto):
+    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_cred: RabbitMsSecretDto):
         raise NotImplementedError
 
     @abstractmethod
@@ -41,8 +41,8 @@ class VaultService(AbstractVaultService):
         vault_data = self.vault_client.read_secret(vault_path)
         return RabbitMsSecretDtoFactory.dto_from_dict(vault_data) if vault_data else None
 
-    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_creds: RabbitMsSecretDto):
-        vault_data = RabbitMsSecretDtoFactory.dict_from_dto(rabbit_ms_creds)
+    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_cred: RabbitMsSecretDto):
+        vault_data = RabbitMsSecretDtoFactory.dict_from_dto(rabbit_ms_cred)
         self.vault_client.create_secret(vault_path, vault_data)
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:

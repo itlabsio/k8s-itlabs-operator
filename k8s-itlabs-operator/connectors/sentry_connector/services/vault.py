@@ -18,7 +18,7 @@ class AbstractVaultService:
         raise NotImplementedError
 
     @abstractmethod
-    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_creds: SentryMsSecretDto):
+    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_cred: SentryMsSecretDto):
         raise NotImplementedError
 
     @abstractmethod
@@ -38,8 +38,8 @@ class VaultService(AbstractVaultService):
         if vault_data:
             return SentryMsSecretDtoFactory.dto_from_dict(vault_data)
 
-    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_creds: SentryMsSecretDto):
-        vault_data = SentryMsSecretDtoFactory.dict_from_dto(sentry_ms_creds)
+    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_cred: SentryMsSecretDto):
+        vault_data = SentryMsSecretDtoFactory.dict_from_dto(sentry_ms_cred)
         self.vault_client.create_secret(vault_path, vault_data)
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:

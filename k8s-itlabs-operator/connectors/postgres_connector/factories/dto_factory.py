@@ -10,13 +10,13 @@ from utils.passgen import generate_password
 
 class PgConnectorFactory:
     @classmethod
-    def dto_from_pg_con_crds(cls, pg_con_crds: PostgresConnectorCrd) -> PgConnector:
+    def dto_from_pg_con_crds(cls, pg_con_crd: PostgresConnectorCrd) -> PgConnector:
         return PgConnector(
-            host=pg_con_crds.spec.host,
-            port=pg_con_crds.spec.port,
-            database=pg_con_crds.spec.database,
-            username=pg_con_crds.spec.username,
-            password=pg_con_crds.spec.password,
+            host=pg_con_crd.spec.host,
+            port=pg_con_crd.spec.port,
+            database=pg_con_crd.spec.database,
+            username=pg_con_crd.spec.username,
+            password=pg_con_crd.spec.password,
         )
 
 

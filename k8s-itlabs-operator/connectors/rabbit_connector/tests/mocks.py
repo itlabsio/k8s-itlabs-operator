@@ -39,7 +39,7 @@ class MockedVaultService(AbstractVaultService):
     def get_rabbit_ms_credentials(self, vault_path: str) -> RabbitMsSecretDto:
         pass
 
-    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_creds: RabbitMsSecretDto):
+    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_cred: RabbitMsSecretDto):
         pass
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:

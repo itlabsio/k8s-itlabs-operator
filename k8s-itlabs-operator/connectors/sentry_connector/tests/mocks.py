@@ -36,5 +36,5 @@ class MockedVaultService(AbstractVaultService):
         self.get_vault_env_value_calls_total += 1
         return f"{vault_path}#{vault_key}"
 
-    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_creds: SentryMsSecretDto):
+    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_cred: SentryMsSecretDto):
         self.create_ms_sentry_credentials_calls_total += 1

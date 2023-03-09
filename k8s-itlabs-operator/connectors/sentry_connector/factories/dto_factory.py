@@ -14,10 +14,10 @@ class SentryMsSecretDtoFactory:
         )
 
     @staticmethod
-    def dict_from_dto(sentry_ms_creds: SentryMsSecretDto) -> dict:
+    def dict_from_dto(sentry_ms_cred: SentryMsSecretDto) -> dict:
         return {
-            specifications.SENTRY_DSN_KEY: sentry_ms_creds.dsn,
-            specifications.SENTRY_PROJECT_SLUG_KEY: sentry_ms_creds.project_slug,
+            specifications.SENTRY_DSN_KEY: sentry_ms_cred.dsn,
+            specifications.SENTRY_PROJECT_SLUG_KEY: sentry_ms_cred.project_slug,
         }
 
 
