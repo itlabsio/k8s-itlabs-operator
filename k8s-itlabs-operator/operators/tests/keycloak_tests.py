@@ -1,6 +1,8 @@
+import os
 import time
 from os import getenv
 from typing import List, Optional
+from unittest import mock
 
 import pytest
 import requests
@@ -15,7 +17,6 @@ from connectors.keycloak_connector import specifications
 
 KEYCLOAK_HOST = getenv('KEYCLOAK_HOST')
 KEYCLOAK_API_URL = f"http://{KEYCLOAK_HOST}:8080"
-KEYCLOAK_INSTANCE_NAME = "keycloak"
 
 KEYCLOAK_ROOT_REALM = "master"
 KEYCLOAK_ROOT_USERNAME = getenv("KEYCLOAK_ROOT_USERNAME")
@@ -43,6 +44,10 @@ URL_ADMIN_USER = "admin/realms/{realm}/users?username={username}"
 URL_ADMIN_CLIENTS = "admin/realms/{realm}/clients?clientId={client}"
 URL_ADMIN_CLIENT_ROLE = "admin/realms/{realm}/clients/{client_id}/roles?search={role}"
 URL_ADMIN_ASSIGN_USER_ROLE_MAPPING = "admin/realms/{realm}/users/{user_id}/role-mappings/clients/{client_id}"
+
+
+def get_keycloak_instance_name():
+    return os.getenv("KEYCLOAK_INSTANCE_NAME", "keycloak")
 
 
 class RootKeycloakClient(KeycloakClient):
@@ -154,7 +159,7 @@ def kk_cr() -> dict:
         "apiVersion": "itlabs.io/v1",
         "kind": "KeycloakConnector",
         "metadata": {
-            "name": KEYCLOAK_INSTANCE_NAME,
+            "name": get_keycloak_instance_name(),
         },
         "spec": {
             "url": KEYCLOAK_API_URL,
@@ -226,7 +231,7 @@ def app_manifests(app_name) -> List[dict]:
                         "app": app_name,
                     },
                     "annotations": {
-                        "keycloak.connector.itlabs.io/instance-name": KEYCLOAK_INSTANCE_NAME,
+                        "keycloak.connector.itlabs.io/instance-name": get_keycloak_instance_name(),
                         "keycloak.connector.itlabs.io/vault-path": f"vault:secret/data/{app_name}/keycloak-credentials",
                         "keycloak.connector.itlabs.io/client-id": app_name,
                     },
@@ -319,3 +324,34 @@ def test_keycloak_operator_on_redeployment_application(k8s, vault, app_name):
         for c in containers:
             retrieved_pod_environments = {env.name for env in c.env}
             assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+
+@pytest.fixture
+def use_non_exist_instance():
+    with mock.patch.dict(os.environ, {"KEYCLOAK_INSTANCE_NAME": "non-exist-instance"}):
+        yield
+
+
+@pytest.mark.e2e
+@pytest.mark.usefixtures("use_non_exist_instance", "deploy_app", "wait_app_deployment")
+def test_keycloak_operator_on_deployment_using_non_exist_custom_resource(k8s, vault, app_name):
+    # Application manifest contains environments:
+    #   - KEYCLOAK_CLIENT_ID
+    #   - KEYCLOAK_SECRET_KEY
+    pods: List[V1Pod] = CoreV1Api(k8s).list_namespaced_pod(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        label_selector=f"app={app_name}",
+        watch=False,
+    ).items
+    for p in pods:
+        containers: List[V1Container] = (
+                p.spec.containers +
+                (p.spec.init_containers or [])
+        )
+        for c in containers:
+            retrieved_pod_environments = {env.name for env in c.env}
+            assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+    # But secret was not created
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/keycloak-credentials")
+    assert secret is None
