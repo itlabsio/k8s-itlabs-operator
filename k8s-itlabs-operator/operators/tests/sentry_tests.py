@@ -224,7 +224,7 @@ def use_non_exist_instance():
 @pytest.mark.e2e
 @pytest.mark.usefixtures("use_non_exist_instance", "deploy_app", "wait_app_deployments")
 def test_sentry_operator_on_deployment_using_non_exist_custom_resource(k8s, vault, app_name):
-    # Application manifest contains environments:
+    # Application manifest does not contain environments:
     #   - SENTRY_DSN
     pods: List[V1Pod] = CoreV1Api(k8s).list_namespaced_pod(
         namespace=APP_DEPLOYMENT_NAMESPACE,
@@ -237,9 +237,10 @@ def test_sentry_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
                 (p.spec.init_containers or [])
         )
         for c in containers:
-            retrieved_pod_environments = {env.name for env in c.env}
-            assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+            environments = c.env or []
+            retrieved_pod_environments = {env.name for env in environments}
+            assert REQUIRED_POD_ENVIRONMENTS not in retrieved_pod_environments
 
-    # But secret was not created
+    # Secret was not created
     secret = vault.read_secret(f"vault:secret/data/{app_name}/sentry-credentials")
     assert secret is None

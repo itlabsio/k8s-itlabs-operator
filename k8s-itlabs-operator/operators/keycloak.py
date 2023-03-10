@@ -25,16 +25,16 @@ def create_pods(patch, spec, annotations, **_):
     ms_keycloak_conn = DtoFactory.dto_from_metadata(annotations)
     try:
         kk_conn_service.on_create_deployment(ms_keycloak_conn)
+        logging.info("Keycloak connector service was processed in infrastructure")
     except KeycloakConnectorError as e:
         logging.error(e)
     except InfrastructureServiceProblem as e:
         logging.error("Problem with infrastructure, "
                       "some changes couldn't be applied",
                       exc_info=e)
-    logging.info("Keycloak connector service was processed in infrastructure")
-
-    if kk_conn_service.mutate_containers(spec, ms_keycloak_conn):
-        patch.spec["containers"] = spec.get("containers", [])
-        patch.spec["initContainers"] = spec.get("initContainers", [])
-        logging.info(f"Keycloak connector service patched containers, "
-                     f"patch.spec: {patch.spec}")
+    else:
+        if kk_conn_service.mutate_containers(spec, ms_keycloak_conn):
+            patch.spec["containers"] = spec.get("containers", [])
+            patch.spec["initContainers"] = spec.get("initContainers", [])
+            logging.info(f"Keycloak connector service patched containers, "
+                         f"patch.spec: {patch.spec}")

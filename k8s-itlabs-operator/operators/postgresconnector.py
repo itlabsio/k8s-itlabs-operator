@@ -40,8 +40,8 @@ def create_pods(patch, spec, annotations, labels, body, **kwargs):
         status.exception = e
     else:
         status.is_enabled = True
-    if pg_con_service.mutate_containers(spec, ms_pg_con):
-        patch.spec['containers'] = spec.get('containers', [])
-        patch.spec['initContainers'] = spec.get('initContainers', [])
-        logging.info(f"Postgres connector service patched containers, patch.spec: {patch.spec}")
+        if pg_con_service.mutate_containers(spec, ms_pg_con):
+            patch.spec['containers'] = spec.get('containers', [])
+            patch.spec['initContainers'] = spec.get('initContainers', [])
+            logging.info(f"Postgres connector service patched containers, patch.spec: {patch.spec}")
     return status
