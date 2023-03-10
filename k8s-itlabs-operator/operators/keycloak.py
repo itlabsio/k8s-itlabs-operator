@@ -2,11 +2,11 @@ import logging
 
 import kopf
 
-from connectors.keycloak_connector.services.keycloak_connector import \
-    KeycloakConnectorService
 from exceptions import InfrastructureServiceProblem
 from observability.metrics.decorator import monitoring
 from operators.dto import ConnectorStatus
+from connectors.keycloak_connector.services.keycloak_connector import \
+    KeycloakConnectorService
 from connectors.keycloak_connector.exceptions import KeycloakConnectorError
 from connectors.keycloak_connector.factories.dto_factory import \
     KeycloakConnectorMicroserviceDtoFactory as DtoFactory
