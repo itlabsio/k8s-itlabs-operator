@@ -1,9 +1,10 @@
 apiVersion: itlabs.io/v1
 kind: RabbitConnector
 metadata:
-  name: rabbit.itlabs.io
+  name: rabbit
 spec:
-  - name: rabbit
-    vaultpath: itlabs/atlas-infra/rabbit/ennergiia/prod/default
-  - name: e2-rabbit
-    vaultpath: itlabs/atlas-infra/rabbit/ennergiia/prod/e2-rabbit
+  brokerHost: rabbit.default
+  brokerPort: 5672
+  url: https://rabbit.local
+  username: vault:secret/data/infrastructure/rabbit#USERNAME
+  password: vault:secret/data/infrastructure/rabbit#PASSWORD

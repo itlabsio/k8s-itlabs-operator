@@ -73,4 +73,4 @@ def create_secrets(vault, app_secrets):
         vault.create_secret(path, secret)
     yield
     for path in app_secrets.keys():
-        vault.delete_secret_all_versions(path)
+        vault.delete_secret(path)

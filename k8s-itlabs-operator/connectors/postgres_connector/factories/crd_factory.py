@@ -6,17 +6,20 @@ from utils.common import deserialize_dict_to_kubeobj
 
 class PostgresConnectorCrdFactory:
     @classmethod
-    def _connector_spec_from_dict(cls, spec_dict: dict) -> PostgresConnectorSpec:
+    def _connector_spec_from_dict(cls, spec: dict) -> PostgresConnectorSpec:
         return PostgresConnectorSpec(
-            name=spec_dict.get('name'),
-            vaultpath=spec_dict.get('vaultpath')
+            host=spec.get("host"),
+            port=spec.get("port", 5432),
+            database=spec.get("database", "postgres"),
+            username=spec.get("username"),
+            password=spec.get("password"),
         )
 
     @classmethod
     def crd_from_dict(cls, crd: dict) -> PostgresConnectorCrd:
         return PostgresConnectorCrd(
-            api_version=crd.get('apiVersion'),
-            kind=crd.get('kind'),
-            metadata=deserialize_dict_to_kubeobj(crd.get('metadata'), V1ObjectMeta),
-            spec=[cls._connector_spec_from_dict(spec) for spec in crd.get('spec')]
+            api_version=crd.get("apiVersion"),
+            kind=crd.get("kind"),
+            metadata=deserialize_dict_to_kubeobj(crd.get("metadata"), V1ObjectMeta),
+            spec=cls._connector_spec_from_dict(crd.get("spec")),
         )

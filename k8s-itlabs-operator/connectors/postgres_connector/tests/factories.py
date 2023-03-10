@@ -13,7 +13,6 @@ class PgConnectorInstanceSecretDtoTestFactory(Factory):
     password = factory.Sequence(lambda n: 'password_%s' % n)
     host = factory.Sequence(lambda n: 'host_%s' % n)
     port = factory.Sequence(lambda n: n + 1)
-    db_kube_domain = factory.Sequence(lambda n: 'db_kube_domain_%s' % n)
 
 
 class PgConnectorMicroserviceDtoTestFactory(Factory):

@@ -16,7 +16,7 @@ class MockedVaultService(AbstractVaultService):
         self.create_pg_ms_credentials_call_count = 0
         self.get_vault_env_value_call_count = 0
 
-    def get_pg_instance_credentials(self, vault_path: str) -> PgConnectorInstanceSecretDto:
+    def get_pg_instance_secret(self, vault_path: str) -> Optional[str]:
         self.get_pg_instance_credentials_call_count += 1
         return self.pg_instance_cred
 
@@ -24,7 +24,7 @@ class MockedVaultService(AbstractVaultService):
         self.get_pg_ms_credentials_call_count += 1
         return self.ms_pg_cred
 
-    def create_pg_ms_credentials(self, vault_path: str, pg_ms_creds: PgConnectorDbSecretDto):
+    def create_pg_ms_credentials(self, vault_path: str, pg_ms_cred: PgConnectorDbSecretDto):
         self.create_pg_ms_credentials_call_count += 1
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:

@@ -1,9 +1,10 @@
 apiVersion: itlabs.io/v1
 kind: PostgresConnector
 metadata:
-  name: postgres.itlabs.io
+  name: postgres
 spec:
-  - name: postres
-    vaultpath: itlabs/atlas-infra/postgres/ennergiia/prod/default
-  - name: e2-postres
-    vaultpath: itlabs/atlas-infra/postgres/ennergiia/prod/e2-postgres
+  host: postgres.default
+  port: 5432
+  database: postgres
+  username: vault:secret/data/infrastructure/postgres#USERNAME
+  password: vault:secret/data/infrastructure/postgres#PASSWORD

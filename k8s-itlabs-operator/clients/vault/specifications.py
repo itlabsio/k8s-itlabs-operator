@@ -1,1 +1,1 @@
-VAULT_SCHEME = "vault"
+VAULT_SCHEME = "vault:"

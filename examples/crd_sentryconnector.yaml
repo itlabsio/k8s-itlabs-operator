@@ -3,4 +3,5 @@ kind: SentryConnector
 metadata:
   name: sentry.itlabs.io
 spec:
-  vaultpath: itlabs/atlas-infra/sentry
+  url: https://sentry.local
+  token: vault:secret/data/infrastructure/sentry#API_TOKEN

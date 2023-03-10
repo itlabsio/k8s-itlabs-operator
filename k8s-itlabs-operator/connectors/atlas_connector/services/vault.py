@@ -18,5 +18,5 @@ class VaultService(AbstractVaultService):
         self.vault_client = vault_client
 
     def get_atlas_token(self, vault_path: str) -> str:
-        vault_data = self.vault_client.read_secret_version_data(vault_path)
+        vault_data = self.vault_client.read_secret(vault_path)
         return vault_data.get(ATLAS_TOKEN_NAME_KEY)

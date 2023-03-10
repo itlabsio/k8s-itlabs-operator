@@ -1,18 +1,8 @@
 from connectors.sentry_connector import specifications
-from connectors.sentry_connector.dto import SentryConnector, SentryApiSecretDto, SentryMsSecretDto, \
-    SentryConnectorMicroserviceDto
+from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, \
+    SentryConnectorMicroserviceDto, SentryApiSecretDto
 from connectors.sentry_connector.crd import SentryConnectorCrd
 from connectors.sentry_connector.exceptions import EnvironmentValueError
-
-
-class SentryApiSecretDtoFactory:
-    @staticmethod
-    def dto_from_dict(data: dict) -> SentryApiSecretDto:
-        return SentryApiSecretDto(
-            api_token=data.get(specifications.SENTRY_API_TOKEN_KEY),
-            api_url=data.get(specifications.SENTRY_API_URL),
-            organization=data.get(specifications.SENTRY_ORGANIZATION, 'sentry')
-        )
 
 
 class SentryMsSecretDtoFactory:
@@ -24,17 +14,21 @@ class SentryMsSecretDtoFactory:
         )
 
     @staticmethod
-    def dict_from_dto(sentry_ms_creds: SentryMsSecretDto) -> dict:
+    def dict_from_dto(sentry_ms_cred: SentryMsSecretDto) -> dict:
         return {
-            specifications.SENTRY_DSN_KEY: sentry_ms_creds.dsn,
-            specifications.SENTRY_PROJECT_SLUG_KEY: sentry_ms_creds.project_slug,
+            specifications.SENTRY_DSN_KEY: sentry_ms_cred.dsn,
+            specifications.SENTRY_PROJECT_SLUG_KEY: sentry_ms_cred.project_slug,
         }
 
 
 class SentryConnectorFactory:
     @staticmethod
     def dto_from_sentry_connector_crd(sentry_connector_crd: SentryConnectorCrd) -> SentryConnector:
-        return SentryConnector(vault_path=sentry_connector_crd.spec.vaultpath)
+        return SentryConnector(
+            url=sentry_connector_crd.spec.url,
+            token=sentry_connector_crd.spec.token,
+            organization=sentry_connector_crd.spec.organization,
+        )
 
 
 class SentryConnectorMicroserviceDtoFactory:
@@ -57,3 +51,13 @@ class SentryConnectorMicroserviceDtoFactory:
             return specifications.SENTRY_AVAILABLE_ENVIRONMENTS[env].lower()
         except KeyError:
             raise EnvironmentValueError("Environment label contains invalid value")
+
+
+class SentryApiSecretDtoFactory:
+    @classmethod
+    def create_api_secret_dto(cls, sentry_conn_crd: SentryConnector, token: str) -> SentryApiSecretDto:
+        return SentryApiSecretDto(
+            api_url=sentry_conn_crd.url,
+            api_token=token,
+            api_organization=sentry_conn_crd.organization,
+        )

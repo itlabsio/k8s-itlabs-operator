@@ -32,14 +32,37 @@ spec:
             metadata:
               type: object
             spec:
-              type: array
-              items:
-                description: Rabbit connector defines instance of Postgres.
-                type: object
-                properties:
-                  name:
-                    description: name of rabbit connector, should be unique for cluster.
-                    type: string
-                  vaultpath:
-                    description: path to the secret in vault with credentials to rabbit instance for operator
-                    type: string
+              type: object
+              required: [
+                "url",
+                "username",
+                "password",
+                "brokerHost"
+              ]
+              properties:
+                brokerHost:
+                  description: RabbitMQ host name
+                  type: string
+                brokerPort:
+                  description: RabbitMQ port number
+                  type: integer
+                  default: 5672
+                url:
+                  description: RabbitMQ admin URL
+                  type: string
+                username:
+                  description: Path to Vault secret key containing username
+                  type: string
+                password:
+                  description: Path to Vault secret key containing password
+                  type: string
+      additionalPrinterColumns:
+        - name: BrokerHost
+          type: string
+          jsonPath: .spec.brokerHost
+        - name: BrokerPort
+          type: integer
+          jsonPath: .spec.brokerPort
+        - name: URL
+          type: string
+          jsonPath: .spec.url

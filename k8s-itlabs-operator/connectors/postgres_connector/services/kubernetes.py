@@ -13,12 +13,15 @@ class KubernetesService:
     _k8s_client = KubernetesClient
 
     @classmethod
-    def get_pg_connector(cls) -> Optional[PgConnector]:
-        pg_con_crds_dict = cls._k8s_client.list_cluster_custom_object(
-            group='itlabs.io', version='v1', plural='postgresconnectors'
+    def get_pg_connector(cls, name: str) -> Optional[PgConnector]:
+        pg_conn_obj = cls._k8s_client.get_cluster_custom_object(
+            group="itlabs.io",
+            version="v1",
+            plural="postgresconnectors",
+            name=name,
         )
-        pg_con_crd_dto = None
-        if pg_con_crds_dict.get('items'):
-            pg_con_crds = [PostgresConnectorCrdFactory.crd_from_dict(crd) for crd in pg_con_crds_dict.get('items')]
-            pg_con_crd_dto = PgConnectorFactory.dto_from_pg_con_crds(pg_con_crds)
-        return pg_con_crd_dto
+        if not pg_conn_obj:
+            return None
+
+        pg_conn_crd = PostgresConnectorCrdFactory.crd_from_dict(pg_conn_obj)
+        return PgConnectorFactory.dto_from_pg_con_crds(pg_conn_crd)

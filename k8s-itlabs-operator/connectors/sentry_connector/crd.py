@@ -5,7 +5,9 @@ from kubernetes.client import V1ObjectMeta
 
 @dataclass
 class SentryConnectorSpec:
-    vaultpath: str
+    url: str
+    token: str
+    organization: str
 
 
 @dataclass

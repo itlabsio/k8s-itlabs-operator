@@ -1,3 +1,5 @@
+from typing import Optional
+
 from clients.k8s.k8s_client import KubernetesClient
 from connectors.rabbit_connector.dto import RabbitConnector
 from connectors.rabbit_connector.factories.crd_factory import RabbitConnectorCrdFactory
@@ -8,13 +10,15 @@ class KubernetesService:
     _k8s_client = KubernetesClient
 
     @classmethod
-    def get_rabbit_connector(cls) -> RabbitConnector:
-        rabbit_con_crds_dict = cls._k8s_client.list_cluster_custom_object(
-            group='itlabs.io', version='v1', plural='rabbitconnectors'
+    def get_rabbit_connector(cls, name: str) -> Optional[RabbitConnector]:
+        rabbit_conn_obj = cls._k8s_client.get_cluster_custom_object(
+            group='itlabs.io',
+            version='v1',
+            plural='rabbitconnectors',
+            name=name,
         )
-        rabbit_con_crd_dto = None
-        if rabbit_con_crds_dict.get('items'):
-            rabbit_con_crds = [RabbitConnectorCrdFactory.crd_from_dict(crd) for crd in
-                               rabbit_con_crds_dict.get('items')]
-            rabbit_con_crd_dto = RabbitConnectorFactory.dto_from_rabbit_con_crds(rabbit_con_crds)
-        return rabbit_con_crd_dto
+        if not rabbit_conn_obj:
+            return None
+
+        rabbit_conn_crd = RabbitConnectorCrdFactory.crd_from_dict(rabbit_conn_obj)
+        return RabbitConnectorFactory.dto_from_rabbit_con_crds(rabbit_conn_crd)

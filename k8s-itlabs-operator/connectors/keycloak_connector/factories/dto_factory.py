@@ -9,7 +9,7 @@ from connectors.keycloak_connector.specifications import (
 )
 
 from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
-    KeycloakConnector, KeycloakMsSecretDto
+    KeycloakConnector, KeycloakMsSecretDto, KeycloakApiSecretDto
 
 
 class KeycloakConnectorMicroserviceDtoFactory:
@@ -50,3 +50,14 @@ class KeycloakMsSecretDtoFactory:
             KEYCLOAK_CLIENT_ID_KEY: dto.client_id,
             KEYCLOAK_SECRET_KEY: dto.secret,
         }
+
+
+class KeycloakApiSecretDtoFactory:
+    @classmethod
+    def create_api_secret_dto(cls, kk_conn_crd: KeycloakConnector, username: str, password: str) -> KeycloakApiSecretDto:
+        return KeycloakApiSecretDto(
+            url=kk_conn_crd.url,
+            realm=kk_conn_crd.realm,
+            username=username,
+            password=password,
+        )

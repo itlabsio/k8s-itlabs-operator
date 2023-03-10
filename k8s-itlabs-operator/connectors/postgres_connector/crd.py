@@ -1,13 +1,15 @@
 from dataclasses import dataclass
-from typing import List
 
 from kubernetes.client import V1ObjectMeta
 
 
 @dataclass
 class PostgresConnectorSpec:
-    name: str
-    vaultpath: str
+    host: str
+    port: int
+    database: str
+    username: str
+    password: str
 
 
 @dataclass
@@ -15,4 +17,4 @@ class PostgresConnectorCrd:
     api_version: str
     kind: str
     metadata: V1ObjectMeta
-    spec: List[PostgresConnectorSpec]
+    spec: PostgresConnectorSpec

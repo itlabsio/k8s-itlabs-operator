@@ -6,6 +6,8 @@ from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, 
     KeycloakApiSecretDto, KeycloakConnector
 from connectors.keycloak_connector.exceptions import KeycloakConnectorCrdDoesNotExist, \
     NonExistSecretForSentryConnector
+from connectors.keycloak_connector.factories.dto_factory import \
+    KeycloakApiSecretDtoFactory
 from connectors.keycloak_connector.factories.service_factories.keycloak import \
     KeycloakServiceFactory
 from connectors.keycloak_connector.services.kubernetes import KubernetesService
@@ -29,13 +31,10 @@ class KeycloakConnectorService:
         username = self.vault_service.get_kk_api_secret(kk_conn_crd.username_secret)
         password = self.vault_service.get_kk_api_secret(kk_conn_crd.password_secret)
 
-        if username and password:
-            return KeycloakApiSecretDto(
-                url=kk_conn_crd.url,
-                realm=kk_conn_crd.realm,
-                username=username,
-                password=password,
-            )
+        if not(username and password):
+            return None
+
+        return KeycloakApiSecretDtoFactory.create_api_secret_dto(kk_conn_crd, username, password)
 
     def on_create_deployment(self, ms_kk_conn: KeycloakConnectorMicroserviceDto):
         kk_conn_crd = KubernetesService.get_keycloak_connector(ms_kk_conn.keycloak_instance_name)

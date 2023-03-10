@@ -7,7 +7,7 @@ from clients.vault.tests.mocks import MockedVaultClient
 from connectors.postgres_connector import specifications
 from connectors.postgres_connector.dto import PgConnectorInstanceSecretDto, PgConnectorMicroserviceDto, PgConnector
 from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector
-from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSecretDtoFactory, PgInstanceDtoFactory
+from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSecretDtoFactory
 from connectors.postgres_connector.services.postgres import PostgresService
 from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
 from connectors.postgres_connector.services.vault import VaultService
@@ -25,7 +25,7 @@ class TestPostgresConnectorService:
             db_name=pg_instance_cred.db_name,
             db_username=pg_instance_cred.user
         )
-        ms_pg_cred = PgConnectorDbSecretDtoFactory.dto_from_ms_pg_con(pg_instance_creds=pg_instance_cred,
+        ms_pg_cred = PgConnectorDbSecretDtoFactory.dto_from_ms_pg_con(pg_instance_cred=pg_instance_cred,
                                                                       ms_pg_con=ms_pg_con)
         pg_con_service = PostgresConnectorService(
             vault_service=MockedVaultService(
@@ -33,7 +33,7 @@ class TestPostgresConnectorService:
                 ms_pg_cred=ms_pg_cred
             )
         )
-        db_creds = pg_con_service.get_or_create_db_credentials(pg_instance_creds=pg_instance_cred, ms_pg_con=ms_pg_con)
+        db_creds = pg_con_service.get_or_create_db_credentials(pg_instance_cred=pg_instance_cred, ms_pg_con=ms_pg_con)
         assert isinstance(db_creds, PgConnectorDbSecretDto)
         assert ms_pg_cred.host == db_creds.host
         assert ms_pg_cred.port == db_creds.port
@@ -53,9 +53,9 @@ class TestPostgresConnectorService:
                 pg_instance_cred=pg_instance_cred
             )
         )
-        db_creds = pg_con_service.get_or_create_db_credentials(pg_instance_creds=pg_instance_cred, ms_pg_con=ms_pg_con)
+        db_creds = pg_con_service.get_or_create_db_credentials(pg_instance_cred=pg_instance_cred, ms_pg_con=ms_pg_con)
         assert isinstance(db_creds, PgConnectorDbSecretDto)
-        assert pg_instance_cred.db_kube_domain == db_creds.host
+        assert pg_instance_cred.host == db_creds.host
         assert pg_instance_cred.port == db_creds.port
         assert ms_pg_con.db_username == db_creds.user
         assert ms_pg_con.db_name == db_creds.db_name
@@ -69,7 +69,13 @@ class TestPostgresConnectorService:
             pg_con_service.on_create_deployment(ms_pg_con=ms_pg_con)
 
     def test_on_create_deployment_no_pg_instance_name_in_crds(self, mocker):
-        pg_connector = PgConnector()
+        pg_connector = PgConnector(
+            host="local",
+            port=5432,
+            database="test",
+            username="vault:secret/data/non-exist-secret#USERNAME",
+            password="vault:secret/data/non-exist-secret#PASSWORD",
+        )
         KubernetesServiceMocker.mock_get_pg_connector(mocker, pg_connector)
         pg_con_service = PostgresConnectorService(vault_service=MockedVaultService())
         ms_pg_con: PgConnectorMicroserviceDto = PgConnectorMicroserviceDtoTestFactory()
@@ -82,10 +88,14 @@ class TestPostgresConnectorService:
             db_name=pg_instance_cred.db_name,
             db_username=pg_instance_cred.user
         )
-        pg_instance_dto = PgInstanceDtoFactory.dto_from_pg_con_ms_dto(pg_con_ms_dto=ms_pg_con)
-        pg_connector = PgConnector()
-        pg_connector.add_pg_instance(pg_instance_dto)
-        ms_pg_cred = PgConnectorDbSecretDtoFactory.dto_from_ms_pg_con(pg_instance_creds=pg_instance_cred,
+        pg_connector = PgConnector(
+            host=pg_instance_cred.host,
+            port=pg_instance_cred.port,
+            database=ms_pg_con.db_name,
+            username=ms_pg_con.vault_path,
+            password=ms_pg_con.vault_path,
+        )
+        ms_pg_cred = PgConnectorDbSecretDtoFactory.dto_from_ms_pg_con(pg_instance_cred=pg_instance_cred,
                                                                       ms_pg_con=ms_pg_con)
         kube_mocker = KubernetesServiceMocker.mock_get_pg_connector(mocker, pg_connector)
         mocked_pg_service = MockedPostgresService()
@@ -99,7 +109,7 @@ class TestPostgresConnectorService:
         )
         pg_con_service.on_create_deployment(ms_pg_con=ms_pg_con)
         assert kube_mocker.call_count == 1
-        assert mocked_vault_service.get_pg_instance_credentials_call_count == 1
+        assert mocked_vault_service.get_pg_instance_credentials_call_count == 2
         assert mocked_vault_service.get_pg_ms_credentials_call_count == 1
         assert mocked_vault_service.create_pg_ms_credentials_call_count == 0
         assert mocked_pg_service.create_database_call_count == 1
