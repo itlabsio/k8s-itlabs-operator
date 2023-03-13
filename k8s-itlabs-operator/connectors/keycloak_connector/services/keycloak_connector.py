@@ -5,7 +5,7 @@ from connectors.keycloak_connector import specifications
 from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
     KeycloakApiSecretDto, KeycloakConnector
 from connectors.keycloak_connector.exceptions import KeycloakConnectorCrdDoesNotExist, \
-    NonExistSecretForSentryConnector
+    NonExistSecretForKeycloakConnector
 from connectors.keycloak_connector.factories.dto_factory import \
     KeycloakApiSecretDtoFactory
 from connectors.keycloak_connector.factories.service_factories.keycloak import \
@@ -46,7 +46,7 @@ class KeycloakConnectorService:
 
         kk_api_cred = self.__get_kk_api_secret(kk_conn_crd)
         if not kk_api_cred:
-            raise NonExistSecretForSentryConnector(
+            raise NonExistSecretForKeycloakConnector(
                 "Couldn't find keycloak credentials"
             )
 

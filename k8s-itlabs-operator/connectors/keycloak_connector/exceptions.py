@@ -6,5 +6,5 @@ class KeycloakConnectorCrdDoesNotExist(KeycloakConnectorError):
     pass
 
 
-class NonExistSecretForSentryConnector(KeycloakConnectorError):
+class NonExistSecretForKeycloakConnector(KeycloakConnectorError):
     pass
