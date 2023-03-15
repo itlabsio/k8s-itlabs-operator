@@ -1,6 +1,6 @@
 import datetime
-import kopf
 import random
+import kopf
 
 
 @kopf.on.probe(id='now')
