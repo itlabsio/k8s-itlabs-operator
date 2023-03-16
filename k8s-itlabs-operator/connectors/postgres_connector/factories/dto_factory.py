@@ -1,40 +1,23 @@
-from typing import List
-
 from clients.postgres.dto import PgConnectorDbSecretDto
 from connectors.postgres_connector import specifications
-from connectors.postgres_connector.crd import PostgresConnectorSpec, PostgresConnectorCrd
-from connectors.postgres_connector.dto import PgInstanceDto, PgConnectorMicroserviceDto, PgConnector, \
+from connectors.postgres_connector.crd import PostgresConnectorCrd
+from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, PgConnector, \
     PgConnectorInstanceSecretDto
 from connectors.postgres_connector.specifications import PG_INSTANCE_NAME_ANNOTATION, VAULTPATH_NAME_ANNOTATION, \
     DB_NAME_ANNOTATION, USER_NAME_ANNOTATION, APP_NAME_LABEL
 from utils.passgen import generate_password
 
 
-class PgInstanceDtoFactory:
-    @classmethod
-    def dto_from_pg_con_spec_crd(cls, pg_con_spec: PostgresConnectorSpec) -> PgInstanceDto:
-        return PgInstanceDto(
-            pg_instance_name=pg_con_spec.name,
-            vault_path=pg_con_spec.vaultpath
-        )
-
-    @classmethod
-    def dto_from_pg_con_ms_dto(cls, pg_con_ms_dto: PgConnectorMicroserviceDto):
-        return PgInstanceDto(
-            pg_instance_name=pg_con_ms_dto.pg_instance_name,
-            vault_path=pg_con_ms_dto.vault_path
-        )
-
-
 class PgConnectorFactory:
     @classmethod
-    def dto_from_pg_con_crds(cls, pg_con_crds: List[PostgresConnectorCrd]) -> PgConnector:
-        pg_con_dto = PgConnector()
-        for pg_con_crd in pg_con_crds:
-            for spec in pg_con_crd.spec:
-                pg_instance_dto = PgInstanceDtoFactory.dto_from_pg_con_spec_crd(pg_con_spec=spec)
-                pg_con_dto.add_pg_instance(pg_instance_dto)
-        return pg_con_dto
+    def dto_from_pg_con_crds(cls, pg_con_crd: PostgresConnectorCrd) -> PgConnector:
+        return PgConnector(
+            host=pg_con_crd.spec.host,
+            port=pg_con_crd.spec.port,
+            database=pg_con_crd.spec.database,
+            username=pg_con_crd.spec.username,
+            password=pg_con_crd.spec.password,
+        )
 
 
 class PgConnectorMicroserviceDtoFactory:
@@ -51,26 +34,26 @@ class PgConnectorMicroserviceDtoFactory:
 
 class PgConnectorDbSecretDtoFactory:
     @classmethod
-    def dto_from_ms_pg_con(cls, pg_instance_creds: PgConnectorInstanceSecretDto,
+    def dto_from_ms_pg_con(cls, pg_instance_cred: PgConnectorInstanceSecretDto,
                            ms_pg_con: PgConnectorMicroserviceDto) -> PgConnectorDbSecretDto:
         """Create PgConnectorDbSecretDto for microservice database connection"""
         return PgConnectorDbSecretDto(
             db_name=ms_pg_con.db_name,
             user=ms_pg_con.db_username,
             password=generate_password(),
-            host=pg_instance_creds.db_kube_domain,
-            port=pg_instance_creds.port
+            host=pg_instance_cred.host,
+            port=pg_instance_cred.port
         )
 
     @classmethod
-    def dto_from_pg_instance_cred(cls, pg_instance_creds: PgConnectorInstanceSecretDto) -> PgConnectorDbSecretDto:
+    def dto_from_pg_instance_cred(cls, pg_instance_cred: PgConnectorInstanceSecretDto) -> PgConnectorDbSecretDto:
         """Create PgConnectorDbSecretDto for database connection in Postgres"""
         return PgConnectorDbSecretDto(
-            db_name=pg_instance_creds.db_name,
-            user=pg_instance_creds.user,
-            password=pg_instance_creds.password,
-            host=pg_instance_creds.host,
-            port=pg_instance_creds.port
+            db_name=pg_instance_cred.db_name,
+            user=pg_instance_cred.user,
+            password=pg_instance_cred.password,
+            host=pg_instance_cred.host,
+            port=pg_instance_cred.port
         )
 
     @classmethod
@@ -96,12 +79,11 @@ class PgConnectorDbSecretDtoFactory:
 
 class PgConnectorInstanceSecretDtoFactory:
     @classmethod
-    def dto_from_dict(cls, data: dict) -> PgConnectorInstanceSecretDto:
+    def create_instance_secret_dto(cls, pg_conn_crd: PgConnector, username: str, password: str) -> PgConnectorInstanceSecretDto:
         return PgConnectorInstanceSecretDto(
-            db_name=data.get(specifications.DATABASE_NAME_KEY),
-            user=data.get(specifications.DATABASE_USER_KEY),
-            password=data.get(specifications.DATABASE_PASSWORD_KEY),
-            host=data.get(specifications.DATABASE_HOST_KEY),
-            port=int(data.get(specifications.DATABASE_PORT_KEY)),
-            db_kube_domain=data.get(specifications.DATABASE_KUBE_DOMAIN_KEY),
+            host=pg_conn_crd.host,
+            port=pg_conn_crd.port,
+            db_name=pg_conn_crd.database,
+            user=username,
+            password=password,
         )

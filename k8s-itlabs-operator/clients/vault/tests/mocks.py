@@ -14,7 +14,7 @@ class MockedVaultClient(AbstractVaultClient):
         else:
             self.secret = {"key": "value"} if use_default_secret else None
 
-    def read_secret_version_data(self, path: str) -> dict:
+    def read_secret(self, path: str) -> dict:
         return self.secret
 
     def read_list_secrets_list(self, path: str) -> List[str]:
@@ -25,8 +25,5 @@ class MockedVaultClient(AbstractVaultClient):
         self.write_path = path
         self.write_data = data
 
-    def delete_secret_all_versions(self, path: str):
+    def delete_secret(self, path: str):
         pass
-
-    def get_prefix_path(self):
-        return 'vault:secret/data'

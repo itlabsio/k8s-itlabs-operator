@@ -32,14 +32,34 @@ spec:
             metadata:
               type: object
             spec:
-              type: array
-              items:
-                description: Postgres connector defines instance of Postgres.
-                type: object
-                properties:
-                  name:
-                    description: name of Postgres connector, should be unique for cluster.
-                    type: string
-                  vaultpath:
-                    description: path to the secret in vault with credentials to pg instance for operator
-                    type: string
+              type: object
+              required: [
+                "host",
+                "username",
+                "password"
+              ]
+              properties:
+                host:
+                  description: Postgres host name
+                  type: string
+                port:
+                  description: Postgres port number
+                  type: integer
+                  default: 5432
+                database:
+                  description: Postgres database name
+                  type: string
+                  default: "postgres"
+                username:
+                  description: Path to Vault secret key containing username for connection to the databsae
+                  type: string
+                password:
+                  description: Path to Vault secret key containing password for connection to the database
+                  type: string
+      additionalPrinterColumns:
+        - name: Host
+          type: string
+          jsonPath: .spec.host
+        - name: Port
+          type: integer
+          jsonPath: .spec.port

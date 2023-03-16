@@ -1,8 +1,12 @@
 import logging
+from typing import Optional
 
 from connectors.sentry_connector import specifications
+from connectors.sentry_connector.factories.dto_factory import \
+    SentryApiSecretDtoFactory
 from connectors.sentry_connector.services.vault import AbstractVaultService
-from connectors.sentry_connector.dto import SentryConnectorMicroserviceDto
+from connectors.sentry_connector.dto import SentryConnectorMicroserviceDto, \
+    SentryApiSecretDto, SentryConnector
 from connectors.sentry_connector.services.kubernetes import KubernetesService
 from connectors.sentry_connector.factories.service_factories.sentry import SentryServiceFactory
 from connectors.sentry_connector.exceptions import SentryConnectorCrdDoesNotExist, NonExistSecretForSentryConnector
@@ -24,16 +28,23 @@ class SentryConnectorService:
         )
         return has_required_annotations and has_required_labels
 
+    def _get_sentry_api_cred(self, sentry_conn_crd: SentryConnector) -> Optional[SentryApiSecretDto]:
+        token = self.vault_service.get_sentry_api_secret(sentry_conn_crd.token)
+        if not token:
+            return None
+
+        return SentryApiSecretDtoFactory.create_api_secret_dto(sentry_conn_crd, token)
+
     def on_create_deployment(self, ms_sentry_conn: SentryConnectorMicroserviceDto):
         sentry_conn_crd = KubernetesService.get_sentry_connector(ms_sentry_conn.sentry_instance_name)
         if not sentry_conn_crd:
             raise SentryConnectorCrdDoesNotExist(
                 f"Couldn't find sentryconnector by instance name: {ms_sentry_conn.sentry_instance_name}"
             )
-        sentry_api_cred = self.vault_service.get_sentry_api_credentials(sentry_conn_crd.vault_path)
+        sentry_api_cred = self._get_sentry_api_cred(sentry_conn_crd)
         if not sentry_api_cred:
             raise NonExistSecretForSentryConnector(
-                f"Couldn't find sentry credentials in vault by path: {sentry_conn_crd.vault_path}"
+                "Couldn't find sentry credentials"
             )
 
         sentry_service = SentryServiceFactory.create_sentry_service(sentry_api_cred)

@@ -32,14 +32,14 @@ class MockedVaultService(AbstractVaultService):
         self.get_rabbit_api_credentials_call_count = 0
         self.get_vault_env_value_call_count = 0
 
-    def get_rabbit_api_credentials(self, vault_path: str) -> RabbitApiSecretDto:
+    def get_rabbit_instance_secret(self, vault_path: str) -> RabbitApiSecretDto:
         self.get_rabbit_api_credentials_call_count += 1
         return self.rabbit_api_cred
 
     def get_rabbit_ms_credentials(self, vault_path: str) -> RabbitMsSecretDto:
         pass
 
-    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_creds: RabbitMsSecretDto):
+    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_cred: RabbitMsSecretDto):
         pass
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:

@@ -14,8 +14,8 @@ spec:
       labels:
         app: sample
       annotations:
-        postgres.connector.itlabs.io/pg_instance_name: postres
-        postgres.connector.itlabs.io/vaultpath: itlabs/prod/itteams/postgres-credentials
+        postgres.connector.itlabs.io/instance-name: postgres
+        postgres.connector.itlabs.io/vault-path: vault:secret/data/application/postgres-credentials
         postgres.connector.itlabs.io/db_name: mydb
         postgres.connector.itlabs.io/db_username: myuser
     spec:

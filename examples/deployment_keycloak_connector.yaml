@@ -14,9 +14,9 @@ spec:
       labels:
         app: keycloak-sample
       annotations:
-        keycloak.connector.itlabs.io/instance-name: keycloak.itlabs.io
-        keycloak.connector.itlabs.io/vault-path: itlabs/prod/itteams/keycloak-client-credentials
-        keycloak.connector.itlabs.io/client-id: itteams
+        keycloak.connector.itlabs.io/instance-name: keycloak
+        keycloak.connector.itlabs.io/vault-path: vault:secret/data/application/keycloak-client-credentials
+        keycloak.connector.itlabs.io/client-id: application
     spec:
       containers:
         - image: alpine:3.15

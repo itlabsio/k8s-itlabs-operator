@@ -1,6 +1,8 @@
+import os
 import time
 from os import getenv
 from typing import List
+from unittest import mock
 from urllib.parse import urlparse
 
 import pytest
@@ -14,7 +16,6 @@ SENTRY_HOST = getenv('REAL_IP')
 SENTRY_URL = f"http://{SENTRY_HOST}:9000"
 SENTRY_TOKEN = getenv("SENTRY_TOKEN")
 SENTRY_ORGANIZATION = getenv("SENTRY_ORGANIZATION")
-SENTRY_INSTANCE_NAME = urlparse(SENTRY_URL).hostname
 SENTRY_VAULT_SECRET_PATH = "vault:secret/data/sentry-credentials"
 APP_DEPLOYMENT_NAMESPACE = "k8s-itlabs-operator"
 APP_DEPLOYMENT_ENVIRONMENT = "production"
@@ -26,6 +27,10 @@ REQUIRED_VAULT_SECRET_KEYS = {
 REQUIRED_POD_ENVIRONMENTS = {
     specifications.SENTRY_DSN_KEY,
 }
+
+
+def get_sentry_instance_name():
+    return os.getenv("SENTRY_INSTANCE_NAME", "sentry")
 
 
 @pytest.fixture
@@ -54,7 +59,7 @@ def app_manifests(app_name) -> List[dict]:
                         "app": app_name,
                     },
                     "annotations": {
-                        "sentry.connector.itlabs.io/instance-name": SENTRY_INSTANCE_NAME,
+                        "sentry.connector.itlabs.io/instance-name": get_sentry_instance_name(),
                         "sentry.connector.itlabs.io/environment": APP_DEPLOYMENT_ENVIRONMENT,
                         "sentry.connector.itlabs.io/vault-path": f"vault:secret/data/{app_name}/sentry-credentials",
                         "sentry.connector.itlabs.io/project": app_name,
@@ -103,10 +108,11 @@ def sentry_cr() -> dict:
         "apiVersion": "itlabs.io/v1",
         "kind": "SentryConnector",
         "metadata": {
-            "name": SENTRY_INSTANCE_NAME,
+            "name": get_sentry_instance_name(),
         },
         "spec": {
-            "vaultpath": SENTRY_VAULT_SECRET_PATH,
+            "url": SENTRY_URL,
+            "token": f"{SENTRY_VAULT_SECRET_PATH}#{specifications.SENTRY_API_TOKEN_KEY}",
         },
     }
 
@@ -116,9 +122,7 @@ def create_sentry_cr(k8s, vault, sentry_cr):
     vault.create_secret(
         SENTRY_VAULT_SECRET_PATH,
         {
-            specifications.SENTRY_API_URL: SENTRY_URL,
             specifications.SENTRY_API_TOKEN_KEY: SENTRY_TOKEN,
-            specifications.SENTRY_ORGANIZATION: SENTRY_ORGANIZATION
         }
     )
 
@@ -175,7 +179,7 @@ def test_sentry_operator_on_initial_deployment_application(k8s, vault, sentry, a
     # with keys:
     #   - SENTRY_DSN
     #   - SENTRY_PROJECT_SLUG
-    secret = vault.read_secret_version_data(f"vault:secret/data/{app_name}/sentry-credentials")
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/sentry-credentials")
     retrieved_secret_keys = set(secret.keys())
     assert REQUIRED_VAULT_SECRET_KEYS <= retrieved_secret_keys
 
@@ -209,3 +213,33 @@ def test_sentry_operator_on_redeployment_application(k8s, vault, app_name):
         for c in containers:
             retrieved_pod_environments = {env.name for env in c.env}
             assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+
+@pytest.fixture
+def use_non_exist_instance():
+    with mock.patch.dict(os.environ, {"SENTRY_INSTANCE_NAME": "non-exist-instance"}):
+        yield
+
+
+@pytest.mark.e2e
+@pytest.mark.usefixtures("use_non_exist_instance", "deploy_app", "wait_app_deployments")
+def test_sentry_operator_on_deployment_using_non_exist_custom_resource(k8s, vault, app_name):
+    # Application manifest contains environments:
+    #   - SENTRY_DSN
+    pods: List[V1Pod] = CoreV1Api(k8s).list_namespaced_pod(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        label_selector=f"app={app_name}",
+        watch=False,
+    ).items
+    for p in pods:
+        containers: List[V1Container] = (
+                p.spec.containers +
+                (p.spec.init_containers or [])
+        )
+        for c in containers:
+            retrieved_pod_environments = {env.name for env in c.env}
+            assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+    # But secret was not created
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/sentry-credentials")
+    assert secret is None

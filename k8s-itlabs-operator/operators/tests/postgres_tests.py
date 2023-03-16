@@ -1,6 +1,8 @@
+import os
 import time
 from os import getenv
 from typing import List, Dict
+from unittest import mock
 
 import pytest
 import psycopg2
@@ -10,7 +12,6 @@ from kubernetes.dynamic import DynamicClient
 from connectors.postgres_connector import specifications
 
 APP_DEPLOYMENT_NAMESPACE = "default"
-POSTGRES_INSTANCE_NAME = "postgres"
 POSTGRES_VAULT_SECRET_PATH = "vault:secret/data/postgres-credentials"
 REQUIRED_VAULT_SECRET_KEYS = {
     vault_key
@@ -24,6 +25,10 @@ REQUIRED_POD_ENVIRONMENTS = {
 }
 
 POSTGRES_HOST = getenv('POSTGRES_HOST')
+
+
+def get_postgres_instance_name():
+    return os.getenv("POSTGRES_INSTANCE_NAME", "postgres")
 
 
 @pytest.fixture
@@ -65,7 +70,7 @@ def app_manifests(app_name) -> List[dict]:
                         "app": app_name,
                     },
                     "annotations": {
-                        "postgres.connector.itlabs.io/instance-name": POSTGRES_INSTANCE_NAME,
+                        "postgres.connector.itlabs.io/instance-name": get_postgres_instance_name(),
                         "postgres.connector.itlabs.io/vault-path": f"vault:secret/data/{app_name}/postgres-credentials",
                         "postgres.connector.itlabs.io/db-name": app_name,
                         "postgres.connector.itlabs.io/db-username": app_name,
@@ -108,12 +113,8 @@ def wait_app_deployment(k8s, app_manifests):
 @pytest.fixture(scope="session")
 def pg_secret() -> dict:
     return {
-        "DATABASE_HOST": POSTGRES_HOST,
-        "DATABASE_PORT": "5432",
-        "DATABASE_NAME": "postgres",
         "DATABASE_USER": "operator",
         "DATABASE_PASSWORD": "operator_pwd",
-        "DATABASE_KUBE_DOMAIN": POSTGRES_HOST,
     }
 
 
@@ -124,20 +125,19 @@ def pg_cr() -> dict:
         "apiVersion": "itlabs.io/v1",
         "kind": "PostgresConnector",
         "metadata": {
-            "name": POSTGRES_INSTANCE_NAME,
+            "name": get_postgres_instance_name(),
         },
-        "spec": [
-            {
-                "name": POSTGRES_INSTANCE_NAME,
-                "vaultpath": POSTGRES_VAULT_SECRET_PATH,
-            }
-        ],
+        "spec": {
+            "host": POSTGRES_HOST,
+            "username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_USER",
+            "password": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_PASSWORD",
+        },
     }
 
 
 @pytest.fixture(scope="session", autouse=True)
 def create_postgres_cr(k8s, vault, pg_secret, pg_cr):
-    secret = vault.read_secret_version_data(POSTGRES_VAULT_SECRET_PATH)
+    secret = vault.read_secret(POSTGRES_VAULT_SECRET_PATH)
     if not secret:
         vault.create_secret(
             POSTGRES_VAULT_SECRET_PATH,
@@ -182,7 +182,7 @@ def test_postgres_operator_on_initial_deployment_application(k8s, vault, app_nam
     #   - DATABASE_NAME
     #   - DATABASE_USER
     #   - DATABASE_PASSWORD
-    secret = vault.read_secret_version_data(f"vault:secret/data/{app_name}/postgres-credentials")
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/postgres-credentials")
     retrieved_secret_keys = set(secret.keys())
     assert REQUIRED_VAULT_SECRET_KEYS <= retrieved_secret_keys
 
@@ -219,3 +219,38 @@ def test_postgres_operator_on_redeployment_application(k8s, app_name):
         for c in containers:
             retrieved_pod_environments = {env.name for env in c.env}
             assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+
+@pytest.fixture
+def use_non_exist_instance():
+    with mock.patch.dict(os.environ, {"POSTGRES_INSTANCE_NAME": "non-exist-instance"}):
+        yield
+
+
+@pytest.mark.e2e
+@pytest.mark.usefixtures("use_non_exist_instance", "deploy_app", "wait_app_deployment")
+def test_postgres_operator_on_deployment_using_non_exist_custom_resource(k8s, vault, app_name):
+    # Application manifest contains environments:
+    #   - POSTGRES_DB_HOST
+    #   - POSTGRES_DB_PORT
+    #   - POSTGRES_DB_NAME
+    #   - POSTGRES_DB_USER
+    #   - POSTGRES_DB_PASSWORD
+    pod_list: V1PodList = CoreV1Api(k8s).list_namespaced_pod(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        label_selector=f"app={app_name}",
+        watch=False
+    )
+    pods: List[V1Pod] = pod_list.items
+    for p in pods:
+        containers: List[V1Container] = (
+                p.spec.containers +
+                (p.spec.init_containers or [])
+        )
+        for c in containers:
+            retrieved_pod_environments = {env.name for env in c.env}
+            assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+    # But secret was not created
+    secret = vault.read_secret(f"vault:secret/data/{app_name}/postgres-credentials")
+    assert secret is None
