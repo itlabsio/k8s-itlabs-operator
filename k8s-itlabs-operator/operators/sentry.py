@@ -31,17 +31,19 @@ def create_pods(patch, spec, labels, annotations, **_):
     logging.info("Sentry connector service is created")
     try:
         sentry_conn_service.on_create_deployment(ms_sentry_conn)
-        status.is_enabled = True
+        logging.info("Sentry connector service was processed in infrastructure")
     except SentryConnectorError as e:
         status.exception = e
         status.is_enabled = False
         logging.error(e)
     except InfrastructureServiceProblem as e:
-        status.exception = e
         logging.error('Problem with infrastructure, some changes may not be applied', exc_info=e)
-    logging.info("Sentry connector service was processed in infrastructure")
-    if sentry_conn_service.mutate_containers(spec, ms_sentry_conn):
-        patch.spec["containers"] = spec.get("containers", [])
-        patch.spec["initContainers"] = spec.get("initContainers", [])
-        logging.info(f"Sentry connector service patched containers, patch.spec: {patch.spec}")
+        status.is_enabled = True
+        status.exception = e
+    else:
+        status.is_enabled = True
+        if sentry_conn_service.mutate_containers(spec, ms_sentry_conn):
+            patch.spec["containers"] = spec.get("containers", [])
+            patch.spec["initContainers"] = spec.get("initContainers", [])
+            logging.info(f"Sentry connector service patched containers, patch.spec: {patch.spec}")
     return status

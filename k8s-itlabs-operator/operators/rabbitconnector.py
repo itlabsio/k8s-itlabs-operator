@@ -34,8 +34,8 @@ def create_pods(patch, spec, annotations, labels, body, **kwargs):
         status.exception = e
     else:
         status.is_enabled = True
-    if rabbit_con_service.mutate_containers(spec, ms_rabbit_con):
-        patch.spec['containers'] = spec.get('containers', [])
-        patch.spec['initContainers'] = spec.get('initContainers', [])
-        logging.info(f"Rabbit connector service patched containers, patch.spec: {patch.spec}")
+        if rabbit_con_service.mutate_containers(spec, ms_rabbit_con):
+            patch.spec['containers'] = spec.get('containers', [])
+            patch.spec['initContainers'] = spec.get('initContainers', [])
+            logging.info(f"Rabbit connector service patched containers, patch.spec: {patch.spec}")
     return status
