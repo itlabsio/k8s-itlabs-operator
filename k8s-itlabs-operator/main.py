@@ -12,7 +12,7 @@ from observability.metrics.metrics import app_up
 from observability.metrics.request_wrapper import wrap_request
 
 from operators import atlasconnector, postgresconnector, rabbitconnector, \
-    monitoringconnector, sentry, keycloak  # pylint: disable=unused-import
+    monitoringconnector, sentry, keycloak, healthz  # pylint: disable=unused-import
 
 if operator_settings.SENTRY_DSN:
     sentry_sdk.init(

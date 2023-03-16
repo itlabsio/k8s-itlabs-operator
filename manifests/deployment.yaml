@@ -23,12 +23,18 @@ spec:
         - name: k8s-itlabs-operator
           image: $DOCKER_IMAGE
           imagePullPolicy: IfNotPresent
-          command: [ '/bin/sh', '-c', 'poetry run kopf run /app/main.py' ]
+          command: [ '/bin/sh', '-c', 'poetry run kopf run --liveness=http://0.0.0.0:8090/healthz /app/main.py' ]
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
           ports:
             - name: awh
               containerPort: 443
             - name: metrics
               containerPort: 8080
+            - name: healthz
+              containerPort: 8090
           volumeMounts:
             - name: certs
               readOnly: true
