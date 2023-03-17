@@ -38,7 +38,7 @@ webhooks:
     apiVersions:
     - v1
     operations:
-    - '*'
+    - CREATE
     resources:
     - pods
     scope: '*'
