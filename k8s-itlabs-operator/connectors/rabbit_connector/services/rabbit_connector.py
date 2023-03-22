@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Optional
 
 from connectors.rabbit_connector import specifications
@@ -38,11 +39,25 @@ class RabbitConnectorService:
         rabbit_ms_creds = self.get_or_create_rabbit_credentials(rabbit_instance_cred, ms_rabbit_con)
         rabbit_service.configure_rabbit(rabbit_ms_creds)
 
-    @classmethod
-    def is_rabbit_conn_used_by_object(cls, annotations: dict) -> bool:
+    @staticmethod
+    def is_rabbit_conn_used_by_object(annotations: dict) -> bool:
         return all(
             annotation_name in annotations for annotation_name in specifications.RABBIT_CONNECTOR_REQUIRED_ANNOTATIONS
         )
+
+    @staticmethod
+    def containers_contain_required_envs(spec: dict) -> bool:
+        all_containers = chain(
+            spec.get("containers", []),
+            spec.get("initContainers", [])
+        )
+
+        for container in all_containers:
+            for env_name, _ in specifications.RABBIT_VAR_NAMES:
+                envs = [e.get("name") for e in container.get("env", {})]
+                if env_name not in envs:
+                    return False
+        return True
 
     def get_or_create_rabbit_credentials(self, rabbit_api_cred: RabbitApiSecretDto,
                                          ms_rabbit_con: RabbitConnectorMicroserviceDto) -> RabbitMsSecretDto:

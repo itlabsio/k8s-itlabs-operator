@@ -6,7 +6,8 @@ from unittest import mock
 
 import pytest
 import psycopg2
-from kubernetes.client import AppsV1Api, CoreV1Api, V1Pod, V1Container, ApiException, V1PodList
+from kubernetes.client import AppsV1Api, CoreV1Api, V1Pod, V1Container, \
+    EventsV1Api, ApiException, V1PodList
 from kubernetes.dynamic import DynamicClient
 
 from connectors.postgres_connector import specifications
@@ -80,7 +81,7 @@ def app_manifests(app_name) -> List[dict]:
                     "containers": [
                         {
                             "image": "alpine:3.15",
-                            "name": "alpine",
+                            "name": "postgres-alpine",
                             "command": ["/bin/sh", "-c", "while true; do sleep 10000; done"],
                         }
                     ]
@@ -255,3 +256,17 @@ def test_postgres_operator_on_deployment_using_non_exist_custom_resource(k8s, va
     # Secret was not created
     secret = vault.read_secret(f"vault:secret/data/{app_name}/postgres-credentials")
     assert secret is None
+
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=PostgresConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "PostgresConnector"
+        and event.note == ("Postgres Custom Resource `non-exist-instance` "
+                           "does not exist")
+        and app_name in event.regarding.name
+        for event in events.items
+    )

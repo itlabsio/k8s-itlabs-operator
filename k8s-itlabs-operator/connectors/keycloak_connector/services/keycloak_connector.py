@@ -1,4 +1,5 @@
 import logging
+from itertools import chain
 from typing import Optional
 
 from connectors.keycloak_connector import specifications
@@ -26,6 +27,20 @@ class KeycloakConnectorService:
             map(lambda x: x in annotations, REQUIRED_ANNOTATIONS)
         )
         return has_required_annotations
+
+    @staticmethod
+    def containers_contain_required_envs(spec: dict) -> bool:
+        all_containers = chain(
+            spec.get("containers", []),
+            spec.get("initContainers", [])
+        )
+
+        for container in all_containers:
+            for env_name, _ in specifications.KEYCLOAK_VAR_NAMES:
+                envs = [e.get("name") for e in container.get("env", {})]
+                if env_name not in envs:
+                    return False
+        return True
 
     def __get_kk_api_secret(self, kk_conn_crd: KeycloakConnector) -> Optional[KeycloakApiSecretDto]:
         username = self.vault_service.get_kk_api_secret(kk_conn_crd.username_secret)

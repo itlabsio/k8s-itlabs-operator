@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 import requests
 from kubernetes.client import CoreV1Api, V1Pod, V1Container, AppsV1Api, \
-    ApiException
+    ApiException, EventsV1Api
 from kubernetes.dynamic import DynamicClient
 
 from clients.keycloak.client import KeycloakClient
@@ -28,7 +28,7 @@ KEYCLOAK_REALM_PASSWORD = "test-password"
 
 VAULT_KEYCLOAK_USER_SECRET_PATH = "vault:secret/data/keycloak-credentials"
 
-APP_DEPLOYMENT_NAMESPACE = "k8s-itlabs-operator"
+APP_DEPLOYMENT_NAMESPACE = "default"
 REQUIRED_POD_ENVIRONMENTS = {
     env_name for env_name, _ in specifications.KEYCLOAK_VAR_NAMES
 }
@@ -239,7 +239,7 @@ def app_manifests(app_name) -> List[dict]:
                 "spec": {
                     "containers": [{
                         "image": "alpine:3.15",
-                        "name": "alpine",
+                        "name": "keycloak-alpine",
                         "command": [
                             "/bin/sh", "-c",
                             "while true; do sleep 10000; done",
@@ -356,3 +356,17 @@ def test_keycloak_operator_on_deployment_using_non_exist_custom_resource(k8s, va
     # Secret was not created
     secret = vault.read_secret(f"vault:secret/data/{app_name}/keycloak-credentials")
     assert secret is None
+
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=KeycloakConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "KeycloakConnector"
+        and event.note == ("Keycloak Custom Resource `non-exist-instance` "
+                           "does not exist")
+        and app_name in event.regarding.name
+        for event in events.items
+    )

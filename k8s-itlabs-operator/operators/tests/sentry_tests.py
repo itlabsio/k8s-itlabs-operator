@@ -3,10 +3,10 @@ import time
 from os import getenv
 from typing import List
 from unittest import mock
-from urllib.parse import urlparse
 
 import pytest
-from kubernetes.client import AppsV1Api, ApiException, V1Pod, CoreV1Api, V1Container
+from kubernetes.client import AppsV1Api, ApiException, V1Pod, CoreV1Api, \
+    EventsV1Api, V1Container
 from kubernetes.dynamic import DynamicClient
 
 from connectors.sentry_connector import specifications
@@ -17,7 +17,7 @@ SENTRY_URL = f"http://{SENTRY_HOST}:9000"
 SENTRY_TOKEN = getenv("SENTRY_TOKEN")
 SENTRY_ORGANIZATION = getenv("SENTRY_ORGANIZATION")
 SENTRY_VAULT_SECRET_PATH = "vault:secret/data/sentry-credentials"
-APP_DEPLOYMENT_NAMESPACE = "k8s-itlabs-operator"
+APP_DEPLOYMENT_NAMESPACE = "default"
 APP_DEPLOYMENT_ENVIRONMENT = "production"
 APP_DEPLOYMENT_ENVIRONMENT_SHORT = "prod"
 REQUIRED_VAULT_SECRET_KEYS = {
@@ -70,7 +70,7 @@ def app_manifests(app_name) -> List[dict]:
                     "containers": [
                         {
                             "image": "alpine:3.15",
-                            "name": "alpine",
+                            "name": "sentry-alpine",
                             "command": ["/bin/sh", "-c", "while true; do sleep 10000; done"],
                         }
                     ]
@@ -244,3 +244,17 @@ def test_sentry_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
     # Secret was not created
     secret = vault.read_secret(f"vault:secret/data/{app_name}/sentry-credentials")
     assert secret is None
+
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=SentryConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "SentryConnector"
+        and event.note == ("Sentry Custom Resource `non-exist-instance` "
+                           "does not exist")
+        and app_name in event.regarding.name
+        for event in events.items
+    )
