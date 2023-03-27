@@ -9,6 +9,8 @@ from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist,
 from connectors.postgres_connector.factories.dto_factory import PgConnectorMicroserviceDtoFactory
 from connectors.postgres_connector.factories.service_factories.postgres_connector import PostgresConnectorServiceFactory
 from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
+from connectors.postgres_connector.specifications import \
+    PG_INSTANCE_NAME_ANNOTATION
 
 
 @kopf.on.create('postgresconnectors')
@@ -45,3 +47,18 @@ def create_pods(patch, spec, annotations, labels, body, **kwargs):
             patch.spec['initContainers'] = spec.get('initContainers', [])
             logging.info(f"Postgres connector service patched containers, patch.spec: {patch.spec}")
     return status
+
+
+@kopf.on.create("pods.v1", id="postgres-connector-on-check-creation")
+def check_creation(annotations, body, spec, **_):
+    if not PostgresConnectorService.is_pg_conn_used_by_object(annotations):
+        return None
+
+    if not PostgresConnectorService.containers_contain_required_envs(spec):
+        cr_name = annotations.get(PG_INSTANCE_NAME_ANNOTATION, "")
+        kopf.event(
+            body,
+            type="Error",
+            reason="PostgresConnector",
+            message=f"Postgres Custom Resource `{cr_name}` does not exist",
+        )

@@ -12,6 +12,8 @@ from connectors.keycloak_connector.factories.dto_factory import \
     KeycloakConnectorMicroserviceDtoFactory as DtoFactory
 from connectors.keycloak_connector.factories.service_factories.keycloak_connector import \
     KeycloakConnectorServiceFactory
+from connectors.keycloak_connector.specifications import \
+    KEYCLOAK_INSTANCE_NAME_ANNOTATION
 
 
 @kopf.on.mutate("pods.v1", id="kk-con-on-createpods")
@@ -49,3 +51,18 @@ def create_pods(patch, spec, annotations, **_):
             logging.info(f"Keycloak connector service patched containers, "
                          f"patch.spec: {patch.spec}")
     return status
+
+
+@kopf.on.create("pods.v1", id="keycloak-connector-on-check-creation")
+def check_creation(annotations, body, spec, **_):
+    if not KeycloakConnectorService.is_kk_conn_used_by_obj(annotations):
+        return None
+
+    if not KeycloakConnectorService.containers_contain_required_envs(spec):
+        cr_name = annotations.get(KEYCLOAK_INSTANCE_NAME_ANNOTATION, "")
+        kopf.event(
+            body,
+            type="Error",
+            reason="KeycloakConnector",
+            message=f"Keycloak Custom Resource `{cr_name}` does not exist",
+        )

@@ -5,7 +5,8 @@ from typing import List, Dict
 from unittest import mock
 
 import pytest
-from kubernetes.client import CoreV1Api, V1Pod, V1Container, AppsV1Api, ApiException, V1PodList
+from kubernetes.client import CoreV1Api, V1Pod, V1Container, AppsV1Api, \
+    EventsV1Api, ApiException, V1PodList
 from kubernetes.dynamic import DynamicClient
 
 from connectors.rabbit_connector import specifications
@@ -80,7 +81,7 @@ def app_manifests(app_name) -> List[dict]:
                     "containers": [
                         {
                             "image": "alpine:3.15",
-                            "name": "alpine",
+                            "name": "rabbit-alpine",
                             "command": ["/bin/sh", "-c", "while true; do sleep 10000; done"],
                         }
                     ]
@@ -258,4 +259,18 @@ def test_rabbit_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
     # Secret was not created
     secret = vault.read_secret(f"vault:secret/data/{app_name}/rabbit-credentials")
     assert secret is None
+
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=RabbitConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "RabbitConnector"
+        and event.note == ("Rabbit Custom Resource `non-exist-instance` "
+                           "does not exist")
+        and app_name in event.regarding.name
+        for event in events.items
+    )
 

@@ -9,6 +9,8 @@ from connectors.sentry_connector.services.sentry_connector import SentryConnecto
 from connectors.sentry_connector.factories.dto_factory import SentryConnectorMicroserviceDtoFactory
 from connectors.sentry_connector.factories.service_factories.sentry_connector import SentryConnectorServiceFactory
 from connectors.sentry_connector.exceptions import SentryConnectorError, EnvironmentValueError
+from connectors.sentry_connector.specifications import \
+    SENTRY_INSTANCE_NAME_ANNOTATION
 
 
 @kopf.on.mutate("pods.v1", id="sentry-connector-on-createpods")
@@ -47,3 +49,18 @@ def create_pods(patch, spec, labels, annotations, **_):
             patch.spec["initContainers"] = spec.get("initContainers", [])
             logging.info(f"Sentry connector service patched containers, patch.spec: {patch.spec}")
     return status
+
+
+@kopf.on.create("pods.v1", id="sentry-connector-on-check-creation")
+def check_creation(annotations, labels, body, spec, **_):
+    if not SentryConnectorService.is_sentry_conn_used_by_object(annotations, labels):
+        return None
+
+    if not SentryConnectorService.containers_contain_required_envs(spec):
+        cr_name = annotations.get(SENTRY_INSTANCE_NAME_ANNOTATION, "")
+        kopf.event(
+            body,
+            type="Error",
+            reason="SentryConnector",
+            message=f"Sentry Custom Resource `{cr_name}` does not exist",
+        )
