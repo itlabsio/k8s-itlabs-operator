@@ -3,7 +3,7 @@ import random
 DEFAULT_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz23456789"
 
 
-def generate_password(length: int = 15, chars: str = DEFAULT_PASSWORD_CHARS) -> str:
+def generate_password(length: int = 32, chars: str = DEFAULT_PASSWORD_CHARS) -> str:
     """
     Generate random password with set length using chars.
     """

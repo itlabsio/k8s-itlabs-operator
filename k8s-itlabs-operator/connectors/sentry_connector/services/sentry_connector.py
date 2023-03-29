@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from itertools import chain
 
 from connectors.sentry_connector import specifications
 from connectors.sentry_connector.factories.dto_factory import \
@@ -27,6 +28,20 @@ class SentryConnectorService:
             for label_name in specifications.SENTRY_CONNECTOR_REQUIRED_LABELS
         )
         return has_required_annotations and has_required_labels
+
+    @staticmethod
+    def containers_contain_required_envs(spec: dict) -> bool:
+        all_containers = chain(
+            spec.get("containers", []),
+            spec.get("initContainers", [])
+        )
+
+        for container in all_containers:
+            for env_name, _ in specifications.SENTRY_VAR_NAMES:
+                envs = [e.get("name") for e in container.get("env", {})]
+                if env_name not in envs:
+                    return False
+        return True
 
     def _get_sentry_api_cred(self, sentry_conn_crd: SentryConnector) -> Optional[SentryApiSecretDto]:
         token = self.vault_service.get_sentry_api_secret(sentry_conn_crd.token)

@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Optional
 
 from clients.postgres.dto import PgConnectorDbSecretDto
@@ -43,6 +44,20 @@ class PostgresConnectorService:
     @staticmethod
     def is_pg_conn_used_by_object(annotations: dict) -> bool:
         return all(annotation_name in annotations for annotation_name in PG_CON_REQUIRED_ANNOTATION_NAMES)
+
+    @staticmethod
+    def containers_contain_required_envs(spec: dict) -> bool:
+        all_containers = chain(
+            spec.get("containers", []),
+            spec.get("initContainers", [])
+        )
+
+        for container in all_containers:
+            for env_name, _ in specifications.DATABASE_VAR_NAMES:
+                envs = [e.get("name") for e in container.get("env", {})]
+                if env_name not in envs:
+                    return False
+        return True
 
     def get_or_create_db_credentials(self, pg_instance_cred: PgConnectorInstanceSecretDto,
                                      ms_pg_con: PgConnectorMicroserviceDto) -> PgConnectorDbSecretDto:

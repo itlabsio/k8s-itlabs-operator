@@ -1,11 +1,12 @@
 import logging
+from itertools import chain
 from typing import Optional
 
 from connectors.keycloak_connector import specifications
 from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
     KeycloakApiSecretDto, KeycloakConnector
 from connectors.keycloak_connector.exceptions import KeycloakConnectorCrdDoesNotExist, \
-    NonExistSecretForSentryConnector
+    NonExistSecretForKeycloakConnector
 from connectors.keycloak_connector.factories.dto_factory import \
     KeycloakApiSecretDtoFactory
 from connectors.keycloak_connector.factories.service_factories.keycloak import \
@@ -27,6 +28,20 @@ class KeycloakConnectorService:
         )
         return has_required_annotations
 
+    @staticmethod
+    def containers_contain_required_envs(spec: dict) -> bool:
+        all_containers = chain(
+            spec.get("containers", []),
+            spec.get("initContainers", [])
+        )
+
+        for container in all_containers:
+            for env_name, _ in specifications.KEYCLOAK_VAR_NAMES:
+                envs = [e.get("name") for e in container.get("env", {})]
+                if env_name not in envs:
+                    return False
+        return True
+
     def __get_kk_api_secret(self, kk_conn_crd: KeycloakConnector) -> Optional[KeycloakApiSecretDto]:
         username = self.vault_service.get_kk_api_secret(kk_conn_crd.username_secret)
         password = self.vault_service.get_kk_api_secret(kk_conn_crd.password_secret)
@@ -46,7 +61,7 @@ class KeycloakConnectorService:
 
         kk_api_cred = self.__get_kk_api_secret(kk_conn_crd)
         if not kk_api_cred:
-            raise NonExistSecretForSentryConnector(
+            raise NonExistSecretForKeycloakConnector(
                 "Couldn't find keycloak credentials"
             )
 

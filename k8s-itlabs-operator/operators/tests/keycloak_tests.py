@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 import requests
 from kubernetes.client import CoreV1Api, V1Pod, V1Container, AppsV1Api, \
-    ApiException
+    ApiException, EventsV1Api
 from kubernetes.dynamic import DynamicClient
 
 from clients.keycloak.client import KeycloakClient
@@ -28,7 +28,7 @@ KEYCLOAK_REALM_PASSWORD = "test-password"
 
 VAULT_KEYCLOAK_USER_SECRET_PATH = "vault:secret/data/keycloak-credentials"
 
-APP_DEPLOYMENT_NAMESPACE = "k8s-itlabs-operator"
+APP_DEPLOYMENT_NAMESPACE = "default"
 REQUIRED_POD_ENVIRONMENTS = {
     env_name for env_name, _ in specifications.KEYCLOAK_VAR_NAMES
 }
@@ -239,7 +239,7 @@ def app_manifests(app_name) -> List[dict]:
                 "spec": {
                     "containers": [{
                         "image": "alpine:3.15",
-                        "name": "alpine",
+                        "name": "keycloak-alpine",
                         "command": [
                             "/bin/sh", "-c",
                             "while true; do sleep 10000; done",
@@ -335,7 +335,7 @@ def use_non_exist_instance():
 @pytest.mark.e2e
 @pytest.mark.usefixtures("use_non_exist_instance", "deploy_app", "wait_app_deployment")
 def test_keycloak_operator_on_deployment_using_non_exist_custom_resource(k8s, vault, app_name):
-    # Application manifest contains environments:
+    # Application manifest does not contain environments:
     #   - KEYCLOAK_CLIENT_ID
     #   - KEYCLOAK_SECRET_KEY
     pods: List[V1Pod] = CoreV1Api(k8s).list_namespaced_pod(
@@ -349,9 +349,24 @@ def test_keycloak_operator_on_deployment_using_non_exist_custom_resource(k8s, va
                 (p.spec.init_containers or [])
         )
         for c in containers:
-            retrieved_pod_environments = {env.name for env in c.env}
-            assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+            environments = c.env or []
+            retrieved_pod_environments = {env.name for env in environments}
+            assert REQUIRED_POD_ENVIRONMENTS not in retrieved_pod_environments
 
-    # But secret was not created
+    # Secret was not created
     secret = vault.read_secret(f"vault:secret/data/{app_name}/keycloak-credentials")
     assert secret is None
+
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=KeycloakConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "KeycloakConnector"
+        and event.note == ("Keycloak Custom Resource `non-exist-instance` "
+                           "does not exist")
+        and app_name in event.regarding.name
+        for event in events.items
+    )
