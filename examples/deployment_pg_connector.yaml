@@ -16,8 +16,8 @@ spec:
       annotations:
         postgres.connector.itlabs.io/instance-name: postgres
         postgres.connector.itlabs.io/vault-path: vault:secret/data/application/postgres-credentials
-        postgres.connector.itlabs.io/db_name: mydb
-        postgres.connector.itlabs.io/db_username: myuser
+        postgres.connector.itlabs.io/db-name: mydb
+        postgres.connector.itlabs.io/db-username: myuser
     spec:
       containers:
       - image: alpine:3.15
