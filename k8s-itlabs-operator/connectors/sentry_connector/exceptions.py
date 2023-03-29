@@ -10,9 +10,5 @@ class NonExistSecretForSentryConnector(SentryConnectorError):
     ...
 
 
-class NonExistMicroserviceSecretForSentryConnector(SentryConnectorError):
-    ...
-
-
 class EnvironmentValueError(ValueError):
     ...
