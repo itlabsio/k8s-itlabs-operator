@@ -20,7 +20,7 @@ class AbstractSentryClient:
         raise NotImplementedError
 
     @abstractmethod
-    def create_sentry_team(self, team_name: str, team_slug: Optional[str]) -> SentryTeam:
+    def create_sentry_team(self, team_name: str, team_slug: Optional[str] = None) -> SentryTeam:
         raise NotImplementedError
 
     @abstractmethod

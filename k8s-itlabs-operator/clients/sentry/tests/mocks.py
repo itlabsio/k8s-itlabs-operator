@@ -35,11 +35,12 @@ class MockedSentryClient(AbstractSentryClient):
         self.create_sentry_project_key_call_total += 1
         return SentryProjectKey(name=key_name, dsn="")
 
-    def create_sentry_team(self, team_name: str, team_slug: Optional[str]) -> SentryTeam:
+    def create_sentry_team(self, team_name: str, team_slug: Optional[str] = None) -> SentryTeam:
         self.create_sentry_team_call_total += 1
         return SentryTeam(name=team_name, slug=team_slug)
 
-    def create_sentry_project(self, team_slug: str, project_name: str, project_slug: Optional[str]) -> SentryProject:
+    def create_sentry_project(self, team_slug: str, project_name: str,
+                              project_slug: Optional[str] = None) -> SentryProject:
         self.create_sentry_project_call_total += 1
         return SentryProject(name=project_name, slug=(project_slug or project_name))
 
