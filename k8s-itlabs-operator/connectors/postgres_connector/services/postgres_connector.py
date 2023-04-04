@@ -1,14 +1,11 @@
 from itertools import chain
-from typing import Optional
 
 from clients.postgres.dto import PgConnectorDbSecretDto
 from connectors.postgres_connector import specifications
-from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, \
-    PgConnectorInstanceSecretDto, PgConnector
+from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, PgConnectorInstanceSecretDto
 from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector, \
     NotMatchingUsernames, NotMatchingDbNames
-from connectors.postgres_connector.factories.dto_factory import \
-    PgConnectorDbSecretDtoFactory, PgConnectorInstanceSecretDtoFactory
+from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSecretDtoFactory
 from connectors.postgres_connector.factories.service_factories.postgres import PostgresServiceFactory
 from connectors.postgres_connector.services.kubernetes import KubernetesService
 from connectors.postgres_connector.services.vault import AbstractVaultService
@@ -19,21 +16,12 @@ class PostgresConnectorService:
     def __init__(self, vault_service: AbstractVaultService):
         self.vault_service = vault_service
 
-    def _get_pg_instance_cred(self, pg_conn_crd: PgConnector) -> Optional[PgConnectorInstanceSecretDto]:
-        username = self.vault_service.get_pg_instance_secret(pg_conn_crd.username)
-        password = self.vault_service.get_pg_instance_secret(pg_conn_crd.password)
-
-        if not(username and password):
-            return None
-
-        return PgConnectorInstanceSecretDtoFactory.create_instance_secret_dto(pg_conn_crd, username, password)
-
     def on_create_deployment(self, ms_pg_con: PgConnectorMicroserviceDto):
-        pg_con_crd = KubernetesService.get_pg_connector(ms_pg_con.pg_instance_name)
-        if not pg_con_crd:
+        pg_connector = KubernetesService.get_pg_connector(ms_pg_con.pg_instance_name)
+        if not pg_connector:
             raise PgConnectorCrdDoesNotExist()
 
-        pg_instance_cred = self._get_pg_instance_cred(pg_con_crd)
+        pg_instance_cred = self.vault_service.unvault_pg_connector(pg_connector)
         if not pg_instance_cred:
             raise UnknownVaultPathInPgConnector()
 

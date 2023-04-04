@@ -1,16 +1,11 @@
 import logging
 from itertools import chain
-from typing import Optional
 
 from connectors.keycloak_connector import specifications
-from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
-    KeycloakApiSecretDto, KeycloakConnector
+from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto
 from connectors.keycloak_connector.exceptions import KeycloakConnectorCrdDoesNotExist, \
     NonExistSecretForKeycloakConnector
-from connectors.keycloak_connector.factories.dto_factory import \
-    KeycloakApiSecretDtoFactory
-from connectors.keycloak_connector.factories.service_factories.keycloak import \
-    KeycloakServiceFactory
+from connectors.keycloak_connector.factories.service_factories.keycloak import KeycloakServiceFactory
 from connectors.keycloak_connector.services.kubernetes import KubernetesService
 from connectors.keycloak_connector.services.vault import VaultService
 from connectors.keycloak_connector.specifications import \
@@ -42,24 +37,15 @@ class KeycloakConnectorService:
                     return False
         return True
 
-    def __get_kk_api_secret(self, kk_conn_crd: KeycloakConnector) -> Optional[KeycloakApiSecretDto]:
-        username = self.vault_service.get_kk_api_secret(kk_conn_crd.username_secret)
-        password = self.vault_service.get_kk_api_secret(kk_conn_crd.password_secret)
-
-        if not(username and password):
-            return None
-
-        return KeycloakApiSecretDtoFactory.create_api_secret_dto(kk_conn_crd, username, password)
-
     def on_create_deployment(self, ms_kk_conn: KeycloakConnectorMicroserviceDto):
-        kk_conn_crd = KubernetesService.get_keycloak_connector(ms_kk_conn.keycloak_instance_name)
-        if not kk_conn_crd:
+        kk_connector = KubernetesService.get_keycloak_connector(ms_kk_conn.keycloak_instance_name)
+        if not kk_connector:
             raise KeycloakConnectorCrdDoesNotExist(
                 f"Couldn't find keycloakconnector by "
                 f"instance name: {ms_kk_conn.keycloak_instance_name}"
             )
 
-        kk_api_cred = self.__get_kk_api_secret(kk_conn_crd)
+        kk_api_cred = self.vault_service.unvault_keycloak_connector(kk_connector)
         if not kk_api_cred:
             raise NonExistSecretForKeycloakConnector(
                 "Couldn't find keycloak credentials"

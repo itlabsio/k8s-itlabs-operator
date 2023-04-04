@@ -109,7 +109,6 @@ class TestPostgresConnectorService:
         )
         pg_con_service.on_create_deployment(ms_pg_con=ms_pg_con)
         assert kube_mocker.call_count == 1
-        assert mocked_vault_service.get_pg_instance_credentials_call_count == 2
         assert mocked_vault_service.get_pg_ms_credentials_call_count == 1
         assert mocked_vault_service.create_pg_ms_credentials_call_count == 0
         assert mocked_pg_service.create_database_call_count == 1

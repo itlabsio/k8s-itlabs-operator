@@ -2,16 +2,12 @@ from abc import ABCMeta, abstractmethod
 from typing import Optional
 
 from clients.vault.vaultclient import AbstractVaultClient
-from connectors.rabbit_connector.dto import RabbitApiSecretDto, RabbitMsSecretDto
-from connectors.rabbit_connector.factories.dto_factory import RabbitApiSecretDtoFactory, RabbitMsSecretDtoFactory
+from connectors.rabbit_connector.dto import RabbitMsSecretDto, RabbitConnector, RabbitApiSecretDto
+from connectors.rabbit_connector.factories.dto_factory import RabbitMsSecretDtoFactory, RabbitApiSecretDtoFactory
 
 
 class AbstractVaultService:
     __metaclass__ = ABCMeta
-
-    @abstractmethod
-    def get_rabbit_instance_secret(self, vault_path: str) -> Optional[str]:
-        raise NotImplementedError
 
     @abstractmethod
     def get_rabbit_ms_credentials(self, vault_path: str) -> RabbitMsSecretDto:
@@ -25,17 +21,13 @@ class AbstractVaultService:
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:
         raise NotImplementedError
 
+    def unvault_rabbit_connector(self, rabbit_connector: RabbitConnector) -> Optional[RabbitApiSecretDto]:
+        raise NotImplementedError
+
 
 class VaultService(AbstractVaultService):
     def __init__(self, vault_client: AbstractVaultClient):
         self.vault_client = vault_client
-
-    def get_rabbit_instance_secret(self, vault_path: str) -> Optional[str]:
-        return self.vault_client.read_secret_key(vault_path)
-
-    def get_rabbit_api_credentials(self, vault_path: str) -> RabbitApiSecretDto:
-        vault_data = self.vault_client.read_secret(vault_path)
-        return RabbitApiSecretDtoFactory.dto_from_dict(vault_data)
 
     def get_rabbit_ms_credentials(self, vault_path: str) -> RabbitMsSecretDto:
         vault_data = self.vault_client.read_secret(vault_path)
@@ -47,3 +39,15 @@ class VaultService(AbstractVaultService):
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:
         return f"{vault_path}#{vault_key}"
+
+    def unvault_rabbit_connector(self, rabbit_connector: RabbitConnector) -> Optional[RabbitApiSecretDto]:
+        rabbit_connector = self.vault_client.unvault_object(obj=rabbit_connector)
+        if not (
+                rabbit_connector.username or
+                rabbit_connector.password or
+                rabbit_connector.url or
+                rabbit_connector.broker_port or
+                rabbit_connector.broker_host
+        ):
+            return None
+        return RabbitApiSecretDtoFactory.api_secret_dto_from_connector(rabbit_connector=rabbit_connector)

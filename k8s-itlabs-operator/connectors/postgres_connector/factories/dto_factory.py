@@ -79,11 +79,11 @@ class PgConnectorDbSecretDtoFactory:
 
 class PgConnectorInstanceSecretDtoFactory:
     @classmethod
-    def create_instance_secret_dto(cls, pg_conn_crd: PgConnector, username: str, password: str) -> PgConnectorInstanceSecretDto:
+    def api_secret_dto_from_connector(cls, pg_connector: PgConnector) -> PgConnectorInstanceSecretDto:
         return PgConnectorInstanceSecretDto(
-            host=pg_conn_crd.host,
-            port=pg_conn_crd.port,
-            db_name=pg_conn_crd.database,
-            user=username,
-            password=password,
+            host=pg_connector.host,
+            port=pg_connector.port,
+            db_name=pg_connector.database,
+            user=pg_connector.username,
+            password=pg_connector.password,
         )

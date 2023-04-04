@@ -1,1 +1,3 @@
 VAULT_SCHEME = "vault:"
+DATA_SEPARATOR = "/data/"
+KEY_SEPARATOR = "#"

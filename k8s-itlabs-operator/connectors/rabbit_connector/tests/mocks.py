@@ -29,12 +29,7 @@ class RabbitServiceFactoryMocker:
 class MockedVaultService(AbstractVaultService):
     def __init__(self, rabbit_api_cred: Optional[RabbitApiSecretDto] = None):
         self.rabbit_api_cred = rabbit_api_cred
-        self.get_rabbit_api_credentials_call_count = 0
         self.get_vault_env_value_call_count = 0
-
-    def get_rabbit_instance_secret(self, vault_path: str) -> RabbitApiSecretDto:
-        self.get_rabbit_api_credentials_call_count += 1
-        return self.rabbit_api_cred
 
     def get_rabbit_ms_credentials(self, vault_path: str) -> RabbitMsSecretDto:
         pass
@@ -45,6 +40,9 @@ class MockedVaultService(AbstractVaultService):
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:
         self.get_vault_env_value_call_count += 1
         return f'{vault_path}#{vault_key}'
+
+    def unvault_rabbit_connector(self, rabbit_connector: RabbitConnector) -> Optional[RabbitApiSecretDto]:
+        return self.rabbit_api_cred
 
 
 class KubernetesServiceMocker:

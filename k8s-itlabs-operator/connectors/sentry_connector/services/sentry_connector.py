@@ -1,16 +1,12 @@
 import logging
-from typing import Optional
 from itertools import chain
 
 from connectors.sentry_connector import specifications
-from connectors.sentry_connector.factories.dto_factory import \
-    SentryApiSecretDtoFactory
-from connectors.sentry_connector.services.vault import AbstractVaultService
-from connectors.sentry_connector.dto import SentryConnectorMicroserviceDto, \
-    SentryApiSecretDto, SentryConnector
-from connectors.sentry_connector.services.kubernetes import KubernetesService
-from connectors.sentry_connector.factories.service_factories.sentry import SentryServiceFactory
+from connectors.sentry_connector.dto import SentryConnectorMicroserviceDto
 from connectors.sentry_connector.exceptions import SentryConnectorCrdDoesNotExist, NonExistSecretForSentryConnector
+from connectors.sentry_connector.factories.service_factories.sentry import SentryServiceFactory
+from connectors.sentry_connector.services.kubernetes import KubernetesService
+from connectors.sentry_connector.services.vault import AbstractVaultService
 
 
 class SentryConnectorService:
@@ -43,20 +39,13 @@ class SentryConnectorService:
                     return False
         return True
 
-    def _get_sentry_api_cred(self, sentry_conn_crd: SentryConnector) -> Optional[SentryApiSecretDto]:
-        token = self.vault_service.get_sentry_api_secret(sentry_conn_crd.token)
-        if not token:
-            return None
-
-        return SentryApiSecretDtoFactory.create_api_secret_dto(sentry_conn_crd, token)
-
     def on_create_deployment(self, ms_sentry_conn: SentryConnectorMicroserviceDto):
-        sentry_conn_crd = KubernetesService.get_sentry_connector(ms_sentry_conn.sentry_instance_name)
-        if not sentry_conn_crd:
+        sentry_connector = KubernetesService.get_sentry_connector(ms_sentry_conn.sentry_instance_name)
+        if not sentry_connector:
             raise SentryConnectorCrdDoesNotExist(
                 f"Couldn't find sentryconnector by instance name: {ms_sentry_conn.sentry_instance_name}"
             )
-        sentry_api_cred = self._get_sentry_api_cred(sentry_conn_crd)
+        sentry_api_cred = self.vault_service.unvault_sentry_connector(sentry_connector)
         if not sentry_api_cred:
             raise NonExistSecretForSentryConnector(
                 "Couldn't find sentry credentials"

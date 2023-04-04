@@ -7,25 +7,13 @@ from utils.passgen import generate_password
 
 class RabbitApiSecretDtoFactory:
     @classmethod
-    def dto_from_dict(cls, data: dict) -> RabbitApiSecretDto:
+    def api_secret_dto_from_connector(cls, rabbit_connector: RabbitConnector) -> RabbitApiSecretDto:
         return RabbitApiSecretDto(
-            api_url=data.get(specifications.RABBIT_API_URL_KEY),
-            api_user=data.get(specifications.RABBIT_API_USER_KEY),
-            api_password=data.get(specifications.RABBIT_API_PASSWORD_KEY),
-            broker_host=data.get(specifications.RABBIT_BROKER_HOST_KEY),
-            broker_port=data.get(specifications.RABBIT_BROKER_PORT_KEY),
-        )
-
-    @classmethod
-    def create_api_secret_dto(cls, rabbit_conn_crd: RabbitConnector,
-                              username: str,
-                              password: str) -> RabbitApiSecretDto:
-        return RabbitApiSecretDto(
-            broker_host=rabbit_conn_crd.broker_host,
-            broker_port=rabbit_conn_crd.broker_port,
-            api_url=rabbit_conn_crd.url,
-            api_user=username,
-            api_password=password,
+            broker_host=rabbit_connector.broker_host,
+            broker_port=rabbit_connector.broker_port,
+            api_url=rabbit_connector.url,
+            api_user=rabbit_connector.username,
+            api_password=rabbit_connector.password,
         )
 
 
