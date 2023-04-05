@@ -15,7 +15,7 @@ spec:
         app: sentry-sample
         itlabs.io/environment: development
       annotations:
-        sentry.connector.itlabs.io/instance_name: sentry
+        sentry.connector.itlabs.io/instance-name: sentry
         sentry.connector.itlabs.io/vault-path: vault:secret/data/sentry-sample/sentry-credentials
         sentry.connector.itlabs.io/project: "sentry-sample"
         sentry.connector.itlabs.io/team: "sentry-sample"

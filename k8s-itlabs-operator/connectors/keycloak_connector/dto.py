@@ -5,8 +5,8 @@ from dataclasses import dataclass
 class KeycloakConnector:
     url: str
     realm: str
-    username_secret: str
-    password_secret: str
+    username: str
+    password: str
 
 
 @dataclass

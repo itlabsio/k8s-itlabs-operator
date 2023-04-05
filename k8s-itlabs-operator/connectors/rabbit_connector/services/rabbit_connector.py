@@ -1,13 +1,10 @@
 from itertools import chain
-from typing import Optional
 
 from connectors.rabbit_connector import specifications
-from connectors.rabbit_connector.dto import RabbitConnectorMicroserviceDto, \
-    RabbitApiSecretDto, RabbitMsSecretDto, RabbitConnector
+from connectors.rabbit_connector.dto import RabbitConnectorMicroserviceDto, RabbitApiSecretDto, RabbitMsSecretDto
 from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExist, UnknownVaultPathInRabbitConnector, \
     NotMatchingUsernames, NotMatchingVhostNames
-from connectors.rabbit_connector.factories.dto_factory import \
-    RabbitMsSecretDtoFactory, RabbitApiSecretDtoFactory
+from connectors.rabbit_connector.factories.dto_factory import RabbitMsSecretDtoFactory
 from connectors.rabbit_connector.factories.service_factories.rabbit import RabbitServiceFactory
 from connectors.rabbit_connector.services.kubernetes import KubernetesService
 from connectors.rabbit_connector.services.vault import AbstractVaultService
@@ -17,21 +14,12 @@ class RabbitConnectorService:
     def __init__(self, vault_service: AbstractVaultService):
         self.vault_service = vault_service
 
-    def _get_rabbit_instance_cred(self, rabbit_conn_crd: RabbitConnector) -> Optional[RabbitApiSecretDto]:
-        username = self.vault_service.get_rabbit_instance_secret(rabbit_conn_crd.username)
-        password = self.vault_service.get_rabbit_instance_secret(rabbit_conn_crd.password)
-
-        if not (username and password):
-            return None
-
-        return RabbitApiSecretDtoFactory.create_api_secret_dto(rabbit_conn_crd, username, password)
-
     def on_create_deployment(self, ms_rabbit_con: RabbitConnectorMicroserviceDto):
-        rabbit_con_crd = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)
-        if not rabbit_con_crd:
+        rabbit_connector = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)
+        if not rabbit_connector:
             raise RabbitConnectorCrdDoesNotExist()
 
-        rabbit_instance_cred = self._get_rabbit_instance_cred(rabbit_con_crd)
+        rabbit_instance_cred = self.vault_service.unvault_rabbit_connector(rabbit_connector)
         if not rabbit_instance_cred:
             raise UnknownVaultPathInRabbitConnector()
 

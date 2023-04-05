@@ -55,9 +55,9 @@ class SentryConnectorMicroserviceDtoFactory:
 
 class SentryApiSecretDtoFactory:
     @classmethod
-    def create_api_secret_dto(cls, sentry_conn_crd: SentryConnector, token: str) -> SentryApiSecretDto:
+    def api_secret_dto_from_connector(cls, sentry_connector: SentryConnector) -> SentryApiSecretDto:
         return SentryApiSecretDto(
-            api_url=sentry_conn_crd.url,
-            api_token=token,
-            api_organization=sentry_conn_crd.organization,
+            api_url=sentry_connector.url,
+            api_token=sentry_connector.token,
+            api_organization=sentry_connector.organization,
         )

@@ -19,14 +19,9 @@ class MockedVaultService(AbstractVaultService):
         self.sentry_api_token = sentry_api_token
         self.sentry_ms_secret = sentry_ms_secret
 
-        self.get_sentry_api_credentials_calls_total = 0
         self.get_sentry_ms_credentials_calls_total = 0
         self.get_vault_env_value_calls_total = 0
         self.create_ms_sentry_credentials_calls_total = 0
-
-    def get_sentry_api_secret(self, vault_path: str) -> Optional[str]:
-        self.get_sentry_api_credentials_calls_total += 1
-        return self.sentry_api_token
 
     def get_sentry_ms_credentials(self, vault_path: str) -> SentryMsSecretDto:
         self.get_sentry_ms_credentials_calls_total += 1
@@ -38,3 +33,6 @@ class MockedVaultService(AbstractVaultService):
 
     def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_cred: SentryMsSecretDto):
         self.create_ms_sentry_credentials_calls_total += 1
+
+    def unvault_sentry_connector(self, sentry_connector: SentryConnector) -> Optional[SentryApiSecretDto]:
+        pass

@@ -8,7 +8,7 @@ from clients.k8s.k8s_client import KubernetesClient
 from clients.rabbit.rabbitclient import AbstractRabbitClient, RabbitClient
 from clients.sentry.factories import SentryClientFactory
 from clients.sentry.sentryclient import AbstractSentryClient
-from clients.vault.factory import VaultClientFactory
+from clients.vault.factories.vault_client import VaultClientFactory
 from clients.vault.vaultclient import AbstractVaultClient
 from utils.passgen import generate_password as strgen
 

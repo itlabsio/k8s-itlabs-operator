@@ -31,8 +31,8 @@ class KeycloakConnectorFactory:
         return KeycloakConnector(
             url=kk_connector_crd.spec.url,
             realm=kk_connector_crd.spec.realm,
-            username_secret=kk_connector_crd.spec.username,
-            password_secret=kk_connector_crd.spec.password,
+            username=kk_connector_crd.spec.username,
+            password=kk_connector_crd.spec.password,
         )
 
 
@@ -54,10 +54,10 @@ class KeycloakMsSecretDtoFactory:
 
 class KeycloakApiSecretDtoFactory:
     @classmethod
-    def create_api_secret_dto(cls, kk_conn_crd: KeycloakConnector, username: str, password: str) -> KeycloakApiSecretDto:
+    def api_secret_dto_from_connector(cls, kk_connector: KeycloakConnector) -> KeycloakApiSecretDto:
         return KeycloakApiSecretDto(
-            url=kk_conn_crd.url,
-            realm=kk_conn_crd.realm,
-            username=username,
-            password=password,
+            url=kk_connector.url,
+            realm=kk_connector.realm,
+            username=kk_connector.username,
+            password=kk_connector.password,
         )

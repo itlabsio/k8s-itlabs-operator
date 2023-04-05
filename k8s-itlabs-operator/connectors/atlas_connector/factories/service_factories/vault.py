@@ -1,5 +1,5 @@
 from connectors.atlas_connector.services.vault import VaultService, AbstractVaultService
-from clients.vault.factory import VaultClientFactory
+from clients.vault.factories.vault_client import VaultClientFactory
 
 
 class VaultServiceFactory:

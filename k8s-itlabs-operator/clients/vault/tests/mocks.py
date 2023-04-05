@@ -1,7 +1,7 @@
 from copy import deepcopy
-from typing import List
+from typing import List, Optional
 
-from clients.vault.vaultclient import AbstractVaultClient
+from clients.vault.vaultclient import AbstractVaultClient, AnyObject
 
 
 class MockedVaultClient(AbstractVaultClient):
@@ -27,3 +27,15 @@ class MockedVaultClient(AbstractVaultClient):
 
     def delete_secret(self, path: str):
         pass
+
+    def read_secret_key(self, path: str) -> Optional[str]:
+        pass
+
+    def unvault_object(self, obj: AnyObject) -> AnyObject:
+        pass
+
+
+class VaultClientMocker:
+    @staticmethod
+    def mock_hvac_vault_client(mocker, value):
+        return mocker.patch("clients.vault.vaultclient.VaultClient._read_secret_version", return_value=value)
