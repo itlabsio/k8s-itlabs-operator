@@ -10,6 +10,8 @@ from connectors.keycloak_connector.services.kubernetes import KubernetesService
 from connectors.keycloak_connector.services.vault import VaultService
 from connectors.keycloak_connector.specifications import \
     KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS as REQUIRED_ANNOTATIONS
+from utils.concurrency import ConnectorSourceLock
+from utils.hashing import generate_hash
 
 
 class KeycloakConnectorService:
@@ -56,12 +58,23 @@ class KeycloakConnectorService:
             username=kk_api_cred.username, password=kk_api_cred.password
         )
         kk_ms_cred = self.vault_service.get_kk_ms_secret(ms_kk_conn.vault_path)
-        if kk_ms_cred and kk_service.is_kk_client_exist(client_id=ms_kk_conn.client_id):
-            logging.info("Keycloak client already exist")
-            return
 
-        kk_ms_cred = kk_service.configure_kk(ms_kk_conn)
-        self.vault_service.create_kk_ms_secret(ms_kk_conn.vault_path, kk_ms_cred)
+        source_hash = self.generate_source_hash(
+            url=kk_api_cred.url,
+            realm=kk_api_cred.realm,
+            client_id=ms_kk_conn.client_id,
+        )
+        with ConnectorSourceLock(source_hash):
+            if kk_ms_cred and kk_service.is_kk_client_exist(client_id=ms_kk_conn.client_id):
+                logging.info("Keycloak client already exist")
+                return
+
+            kk_ms_cred = kk_service.configure_kk(ms_kk_conn)
+            self.vault_service.create_kk_ms_secret(ms_kk_conn.vault_path, kk_ms_cred)
+
+    @staticmethod
+    def generate_source_hash(url: str, realm: str, client_id) -> str:
+        return generate_hash(url, realm, client_id)
 
     def mutate_containers(self, spec, ms_keycloak_conn: KeycloakConnectorMicroserviceDto) -> bool:
         mutated = False
