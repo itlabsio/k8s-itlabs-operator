@@ -366,8 +366,7 @@ def test_keycloak_operator_on_deployment_using_non_exist_custom_resource(k8s, va
     assert any(
         event.type == "Error"
         and event.reason == "KeycloakConnector"
-        and event.note == ("Keycloak Custom Resource `non-exist-instance` "
-                           "does not exist")
+        and event.note == "Keycloak Connector not applied"
         and app_name in event.regarding.name
         for event in events.items
     )

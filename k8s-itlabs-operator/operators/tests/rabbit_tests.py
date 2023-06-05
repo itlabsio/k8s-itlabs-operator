@@ -270,8 +270,7 @@ def test_rabbit_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
     assert any(
         event.type == "Error"
         and event.reason == "RabbitConnector"
-        and event.note == ("Rabbit Custom Resource `non-exist-instance` "
-                           "does not exist")
+        and event.note == "Rabbit Connector not applied"
         and app_name in event.regarding.name
         for event in events.items
     )

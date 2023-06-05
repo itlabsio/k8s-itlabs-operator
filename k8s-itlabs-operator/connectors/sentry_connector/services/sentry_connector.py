@@ -45,12 +45,14 @@ class SentryConnectorService:
         sentry_connector = KubernetesService.get_sentry_connector(ms_sentry_conn.sentry_instance_name)
         if not sentry_connector:
             raise SentryConnectorCrdDoesNotExist(
-                f"Couldn't find sentryconnector by instance name: {ms_sentry_conn.sentry_instance_name}"
+                f"Sentry Custom Resource `{ms_sentry_conn.sentry_instance_name}`"
+                " does not exist"
             )
+
         sentry_api_cred = self.vault_service.unvault_sentry_connector(sentry_connector)
         if not sentry_api_cred:
             raise NonExistSecretForSentryConnector(
-                "Couldn't find sentry credentials"
+                "Couldn't getting root credentials for connecting to Sentry"
             )
 
         sentry_service = SentryServiceFactory.create_sentry_service(sentry_api_cred)

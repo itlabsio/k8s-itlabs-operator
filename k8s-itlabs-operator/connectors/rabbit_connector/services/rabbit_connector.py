@@ -19,11 +19,16 @@ class RabbitConnectorService:
     def on_create_deployment(self, ms_rabbit_con: RabbitConnectorMicroserviceDto):
         rabbit_connector = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)
         if not rabbit_connector:
-            raise RabbitConnectorCrdDoesNotExist()
+            raise RabbitConnectorCrdDoesNotExist(
+                f"Rabbit Custom Resource `{ms_rabbit_con.rabbit_instance_name}`"
+                " does not exist"
+            )
 
         rabbit_instance_cred = self.vault_service.unvault_rabbit_connector(rabbit_connector)
         if not rabbit_instance_cred:
-            raise UnknownVaultPathInRabbitConnector()
+            raise UnknownVaultPathInRabbitConnector(
+                "Couldn't getting root credentials for connecting to Rabbit"
+            )
 
         rabbit_service = RabbitServiceFactory.create_rabbit_service(rabbit_instance_cred)
         source_hash = self.generate_source_hash(
