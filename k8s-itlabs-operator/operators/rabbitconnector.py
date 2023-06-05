@@ -57,5 +57,5 @@ def check_creation(annotations, body, spec, **_):
             body,
             type="Error",
             reason="RabbitConnector",
-            message=f"Rabbit Connector not applied",
+            message="Rabbit Connector not applied",
         )

@@ -63,5 +63,5 @@ def check_creation(annotations, labels, body, spec, **_):
             body,
             type="Error",
             reason="SentryConnector",
-            message=f"Sentry Connector not applied",
+            message="Sentry Connector not applied",
         )

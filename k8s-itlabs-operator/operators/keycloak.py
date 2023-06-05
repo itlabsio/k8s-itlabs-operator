@@ -66,5 +66,5 @@ def check_creation(annotations, body, spec, **_):
             body,
             type="Error",
             reason="KeycloakConnector",
-            message=f"Keycloak Connector not applied",
+            message="Keycloak Connector not applied",
         )

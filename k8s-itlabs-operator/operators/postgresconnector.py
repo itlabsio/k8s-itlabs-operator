@@ -63,5 +63,5 @@ def check_creation(annotations, body, spec, **_):
             body,
             type="Error",
             reason="PostgresConnector",
-            message=f"Postgres Connector not applied",
+            message="Postgres Connector not applied",
         )
