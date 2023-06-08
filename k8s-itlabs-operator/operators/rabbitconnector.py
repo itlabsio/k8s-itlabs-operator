@@ -15,6 +15,8 @@ from utils.common import OwnerReferenceDto, get_owner_reference
 @kopf.on.mutate('pods.v1', id='rabbit-connector-on-createpods')
 @monitoring(connector_type='rabbit_connector')
 def create_pods(body, patch, spec, annotations, labels, **_):
+    # At the time of the creation of Pod, the name and uid were not yet
+    # set in the manifest, so in the logs we refer to its owner.
     owner_ref: OwnerReferenceDto = get_owner_reference(body)
     owner_fmt = f"{owner_ref.kind}: {owner_ref.name}" if owner_ref else ""
 

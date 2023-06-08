@@ -20,6 +20,8 @@ def create_fn(body, **_):
 @kopf.on.mutate('pods.v1', id='pg-con-on-createpods')
 @monitoring(connector_type='postgres_connector')
 def create_pods(body, patch, spec, annotations, labels, **_):
+    # At the time of the creation of Pod, the name and uid were not yet
+    # set in the manifest, so in the logs we refer to its owner.
     owner_ref: OwnerReferenceDto = get_owner_reference(body)
     owner_fmt = f"{owner_ref.kind}: {owner_ref.name}" if owner_ref else ""
 
