@@ -43,7 +43,7 @@ class KeycloakConnectorService:
         kk_connector = KubernetesService.get_keycloak_connector(ms_kk_conn.keycloak_instance_name)
         if not kk_connector:
             raise KeycloakConnectorCrdDoesNotExist(
-                f"Rabbit Custom Resource `{ms_kk_conn.keycloak_instance_name}`"
+                f"Keycloak Custom Resource `{ms_kk_conn.keycloak_instance_name}`"
                 " does not exist"
             )
 
