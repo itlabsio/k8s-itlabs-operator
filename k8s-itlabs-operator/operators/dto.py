@@ -21,6 +21,12 @@ class UsedLabelValues(str, Enum):
         return str(self.value)
 
 
+class SuccessLabelValues(str, Enum):
+    undefined = 'undefined'
+    success = 'success'
+    failure = 'failure'
+
+
 @dataclass
 class ConnectorStatus:
     is_enabled: Optional[bool] = None
@@ -57,3 +63,29 @@ class ConnectorStatus:
             else:
                 exception_str = module + '.' + self.exception.__class__.__name__
         return exception_str
+
+
+@dataclass
+class MutationHookStatus:
+    is_used: Optional[bool] = None
+    is_success: Optional[bool] = None
+
+    @property
+    def label_is_used(self) -> str:
+        if self.is_used is None:
+            label_value = UsedLabelValues.undefined
+        elif self.is_used:
+            label_value = UsedLabelValues.used
+        else:
+            label_value = UsedLabelValues.unused
+        return str(label_value)
+
+    @property
+    def label_is_success(self) -> str:
+        if self.is_success is None:
+            label_value = SuccessLabelValues.undefined
+        elif self.is_success:
+            label_value = SuccessLabelValues.success
+        else:
+            label_value = SuccessLabelValues.failure
+        return str(label_value)

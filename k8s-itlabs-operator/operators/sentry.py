@@ -3,8 +3,8 @@ import logging
 import kopf
 
 from exceptions import InfrastructureServiceProblem
-from observability.metrics.decorator import monitoring
-from operators.dto import ConnectorStatus
+from observability.metrics.decorator import monitoring, mutation_hook_monitoring
+from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.sentry_connector.services.sentry_connector import SentryConnectorService
 from connectors.sentry_connector.factories.dto_factory import SentryConnectorMicroserviceDtoFactory
 from connectors.sentry_connector.factories.service_factories.sentry_connector import SentryConnectorServiceFactory
@@ -56,10 +56,15 @@ def create_pods(body, patch, spec, labels, annotations, **_):
 
 
 @kopf.on.create("pods.v1", id="sentry-connector-on-check-creation")
+@mutation_hook_monitoring(connector_type="sentry_connector")
 def check_creation(annotations, labels, body, spec, **_):
+    status = MutationHookStatus()
     if not SentryConnectorService.is_sentry_conn_used_by_object(annotations, labels):
-        return None
+        status.is_used = False
+        return status
 
+    status.is_used = True
+    status.is_success = True
     if not SentryConnectorService.containers_contain_required_envs(spec):
         kopf.event(
             body,
@@ -67,3 +72,6 @@ def check_creation(annotations, labels, body, spec, **_):
             reason="SentryConnector",
             message="Sentry Connector not applied",
         )
+        status.is_success = False
+
+    return status

@@ -3,8 +3,8 @@ import logging
 import kopf
 
 from exceptions import InfrastructureServiceProblem
-from observability.metrics.decorator import monitoring
-from operators.dto import ConnectorStatus
+from observability.metrics.decorator import monitoring, mutation_hook_monitoring
+from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExist, UnknownVaultPathInRabbitConnector
 from connectors.rabbit_connector.factories.dto_factory import RabbitConnectorMicroserviceDtoFactory
 from connectors.rabbit_connector.factories.service_factories.rabbit_connector import RabbitConnectorServiceFactory
@@ -50,10 +50,16 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 
 @kopf.on.create("pods.v1", id="rabbit-connector-on-check-creation")
+@mutation_hook_monitoring(connector_type="rabbit_connector")
 def check_creation(annotations, body, spec, **_):
-    if not RabbitConnectorService.is_rabbit_conn_used_by_object(annotations):
-        return None
+    status = MutationHookStatus()
 
+    if not RabbitConnectorService.is_rabbit_conn_used_by_object(annotations):
+        status.is_used = False
+        return status
+
+    status.is_used = True
+    status.is_success = True
     if not RabbitConnectorService.containers_contain_required_envs(spec):
         kopf.event(
             body,
@@ -61,3 +67,6 @@ def check_creation(annotations, body, spec, **_):
             reason="RabbitConnector",
             message="Rabbit Connector not applied",
         )
+        status.is_success = False
+
+    return status

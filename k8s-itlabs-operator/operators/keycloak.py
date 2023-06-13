@@ -3,8 +3,8 @@ import logging
 import kopf
 
 from exceptions import InfrastructureServiceProblem
-from observability.metrics.decorator import monitoring
-from operators.dto import ConnectorStatus
+from observability.metrics.decorator import monitoring, mutation_hook_monitoring
+from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.keycloak_connector.services.keycloak_connector import \
     KeycloakConnectorService
 from connectors.keycloak_connector.exceptions import KeycloakConnectorError
@@ -59,10 +59,16 @@ def create_pods(body, patch, spec, annotations, **_):
 
 
 @kopf.on.create("pods.v1", id="keycloak-connector-on-check-creation")
+@mutation_hook_monitoring(connector_type="keycloak_connector")
 def check_creation(annotations, body, spec, **_):
-    if not KeycloakConnectorService.is_kk_conn_used_by_obj(annotations):
-        return None
+    status = MutationHookStatus()
 
+    if not KeycloakConnectorService.is_kk_conn_used_by_obj(annotations):
+        status.is_used = False
+        return status
+
+    status.is_used = True
+    status.is_success = True
     if not KeycloakConnectorService.containers_contain_required_envs(spec):
         kopf.event(
             body,
@@ -70,3 +76,6 @@ def check_creation(annotations, body, spec, **_):
             reason="KeycloakConnector",
             message="Keycloak Connector not applied",
         )
+        status.is_success = False
+
+    return status

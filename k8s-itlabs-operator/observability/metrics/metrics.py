@@ -31,3 +31,15 @@ app_http_request_operator_client_latency_seconds = Histogram(
                   'для histogram типа метрики.',
     labelnames=('uri', 'status_code', 'method', 'exception_name')
 )
+
+app_mutation_admission_hook_latency_seconds = Histogram(
+    name='app_mutation_admission_hook_latency_seconds',
+    documentation='Данная метрика содержит количество вызовов mutation hooks, разделенных на интервалы '
+                  '[0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, +Inf]. '
+                  'Метка connector_type ДОЛЖНА содержать тип коннектора (postgres, rabbit, sentry, keycloak), '
+                  'метка used ДОЛЖНА содержать информацию о том, что должен был быть вызван коннектор или нет '
+                  '(по признакам специфичным для каждого коннектора), '
+                  'метка success ДОЛЖНА содержать значение о том, что был ли успешно выполнен коннектор.',
+    labelnames=('connector_type', 'used', 'success'),
+    buckets=(.005, .01, .025, .05, .075, .1, .25, .5, .75, 1.0, 2.5, 5.0, 7.5, 10.0, INF)
+)

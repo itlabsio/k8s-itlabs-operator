@@ -3,8 +3,8 @@ import logging
 import kopf
 
 from exceptions import InfrastructureServiceProblem
-from observability.metrics.decorator import monitoring
-from operators.dto import ConnectorStatus
+from observability.metrics.decorator import monitoring, mutation_hook_monitoring
+from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector
 from connectors.postgres_connector.factories.dto_factory import PgConnectorMicroserviceDtoFactory
 from connectors.postgres_connector.factories.service_factories.postgres_connector import PostgresConnectorServiceFactory
@@ -56,10 +56,16 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 
 @kopf.on.create("pods.v1", id="postgres-connector-on-check-creation")
+@mutation_hook_monitoring(connector_type="postgres_connector")
 def check_creation(annotations, body, spec, **_):
-    if not PostgresConnectorService.is_pg_conn_used_by_object(annotations):
-        return None
+    status = MutationHookStatus()
 
+    if not PostgresConnectorService.is_pg_conn_used_by_object(annotations):
+        status.is_used = False
+        return status
+
+    status.is_used = True
+    status.is_success = True
     if not PostgresConnectorService.containers_contain_required_envs(spec):
         kopf.event(
             body,
@@ -67,3 +73,6 @@ def check_creation(annotations, body, spec, **_):
             reason="PostgresConnector",
             message="Postgres Connector not applied",
         )
+        status.is_success = False
+
+    return status
