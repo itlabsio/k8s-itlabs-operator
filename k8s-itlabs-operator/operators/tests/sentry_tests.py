@@ -255,8 +255,7 @@ def test_sentry_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
     assert any(
         event.type == "Error"
         and event.reason == "SentryConnector"
-        and event.note == ("Sentry Custom Resource `non-exist-instance` "
-                           "does not exist")
+        and event.note == "Sentry Connector not applied"
         and app_name in event.regarding.name
         for event in events.items
     )

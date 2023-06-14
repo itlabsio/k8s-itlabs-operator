@@ -1,4 +1,6 @@
 import urllib.parse
+from dataclasses import dataclass
+from typing import Optional
 
 import ujson
 from kubernetes import client as kube_client
@@ -13,6 +15,32 @@ def deserialize_dict_to_kubeobj(d: dict, kubeobjclass):
     kube_api = kube_client.ApiClient()
     wrapped_obj = WrappedObj(data=ujson.dumps(d))
     return kube_api.deserialize(wrapped_obj, kubeobjclass)
+
+
+@dataclass
+class OwnerReferenceDto:
+    kind: str
+    name: str
+
+
+class OwnerReferenceDtoFactory:
+    @staticmethod
+    def dto_from_dict(owner: dict) -> Optional[OwnerReferenceDto]:
+        try:
+            return OwnerReferenceDto(
+                kind=owner["kind"],
+                name=owner["name"],
+            )
+        except IndexError:
+            return None
+
+
+def get_owner_reference(body: dict) -> Optional[OwnerReferenceDto]:
+    try:
+        owner = body.get("metadata", {}).get("ownerReferences", [])[0]
+        return OwnerReferenceDtoFactory.dto_from_dict(owner)
+    except IndexError:
+        return None
 
 
 def join(base: str, url: str):

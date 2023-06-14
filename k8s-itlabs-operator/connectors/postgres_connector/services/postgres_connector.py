@@ -21,11 +21,16 @@ class PostgresConnectorService:
     def on_create_deployment(self, ms_pg_con: PgConnectorMicroserviceDto):
         pg_connector = KubernetesService.get_pg_connector(ms_pg_con.pg_instance_name)
         if not pg_connector:
-            raise PgConnectorCrdDoesNotExist()
+            raise PgConnectorCrdDoesNotExist(
+                f"Postgres Custom Resource `{ms_pg_con.pg_instance_name}`"
+                " does not exist"
+            )
 
         pg_instance_cred = self.vault_service.unvault_pg_connector(pg_connector)
         if not pg_instance_cred:
-            raise UnknownVaultPathInPgConnector()
+            raise UnknownVaultPathInPgConnector(
+                "Couldn't getting root credentials for connecting to Postgres"
+            )
 
         pg_service = PostgresServiceFactory.create_pg_service(pg_instance_cred)
         source_hash = self.generate_source_hash(

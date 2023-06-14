@@ -43,14 +43,14 @@ class KeycloakConnectorService:
         kk_connector = KubernetesService.get_keycloak_connector(ms_kk_conn.keycloak_instance_name)
         if not kk_connector:
             raise KeycloakConnectorCrdDoesNotExist(
-                f"Couldn't find keycloakconnector by "
-                f"instance name: {ms_kk_conn.keycloak_instance_name}"
+                f"Keycloak Custom Resource `{ms_kk_conn.keycloak_instance_name}`"
+                " does not exist"
             )
 
         kk_api_cred = self.vault_service.unvault_keycloak_connector(kk_connector)
         if not kk_api_cred:
             raise NonExistSecretForKeycloakConnector(
-                "Couldn't find keycloak credentials"
+                "Couldn't getting root credentials for connecting to Keycloak"
             )
 
         kk_service = KeycloakServiceFactory.create(
