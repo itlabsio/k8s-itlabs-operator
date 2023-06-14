@@ -7,7 +7,7 @@ authors = ["itlabs.io"]
 [tool.poetry.dependencies]
 python = "^3.10"
 kopf = "1.36.0"
-kubernetes = "22.6.0"
+kubernetes = "25.3.0"
 hvac = "1.0.2"
 psycopg2-binary = "2.9.5"
 sentry-sdk = "1.16.0"
