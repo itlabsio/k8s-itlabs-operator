@@ -8,6 +8,8 @@ from connectors.rabbit_connector.factories.dto_factory import RabbitMsSecretDtoF
 from connectors.rabbit_connector.factories.service_factories.rabbit import RabbitServiceFactory
 from connectors.rabbit_connector.services.kubernetes import KubernetesService
 from connectors.rabbit_connector.services.vault import AbstractVaultService
+from utils.concurrency import ConnectorSourceLock
+from utils.hashing import generate_hash
 
 
 class RabbitConnectorService:
@@ -17,15 +19,34 @@ class RabbitConnectorService:
     def on_create_deployment(self, ms_rabbit_con: RabbitConnectorMicroserviceDto):
         rabbit_connector = KubernetesService.get_rabbit_connector(ms_rabbit_con.rabbit_instance_name)
         if not rabbit_connector:
-            raise RabbitConnectorCrdDoesNotExist()
+            raise RabbitConnectorCrdDoesNotExist(
+                f"Rabbit Custom Resource `{ms_rabbit_con.rabbit_instance_name}`"
+                " does not exist"
+            )
 
         rabbit_instance_cred = self.vault_service.unvault_rabbit_connector(rabbit_connector)
         if not rabbit_instance_cred:
-            raise UnknownVaultPathInRabbitConnector()
+            raise UnknownVaultPathInRabbitConnector(
+                "Couldn't getting root credentials for connecting to Rabbit"
+            )
 
         rabbit_service = RabbitServiceFactory.create_rabbit_service(rabbit_instance_cred)
-        rabbit_ms_creds = self.get_or_create_rabbit_credentials(rabbit_instance_cred, ms_rabbit_con)
-        rabbit_service.configure_rabbit(rabbit_ms_creds)
+        source_hash = self.generate_source_hash(
+            broker_host=rabbit_instance_cred.broker_host,
+            broker_port=rabbit_instance_cred.broker_port,
+            api_url=rabbit_instance_cred.api_url,
+            username=ms_rabbit_con.username,
+            vhost=ms_rabbit_con.vhost,
+        )
+        with ConnectorSourceLock(source_hash):
+            rabbit_ms_creds = self.get_or_create_rabbit_credentials(rabbit_instance_cred, ms_rabbit_con)
+            rabbit_service.configure_rabbit(rabbit_ms_creds)
+
+    @staticmethod
+    def generate_source_hash(
+            broker_host: str, broker_port: int, api_url: str, username: str, vhost: str
+    ) -> str:
+        return generate_hash(broker_host, broker_port, api_url, username, vhost)
 
     @staticmethod
     def is_rabbit_conn_used_by_object(annotations: dict) -> bool:

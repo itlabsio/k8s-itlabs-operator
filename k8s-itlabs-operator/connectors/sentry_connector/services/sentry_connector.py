@@ -7,6 +7,8 @@ from connectors.sentry_connector.exceptions import SentryConnectorCrdDoesNotExis
 from connectors.sentry_connector.factories.service_factories.sentry import SentryServiceFactory
 from connectors.sentry_connector.services.kubernetes import KubernetesService
 from connectors.sentry_connector.services.vault import AbstractVaultService
+from utils.concurrency import ConnectorSourceLock
+from utils.hashing import generate_hash
 
 
 class SentryConnectorService:
@@ -43,24 +45,42 @@ class SentryConnectorService:
         sentry_connector = KubernetesService.get_sentry_connector(ms_sentry_conn.sentry_instance_name)
         if not sentry_connector:
             raise SentryConnectorCrdDoesNotExist(
-                f"Couldn't find sentryconnector by instance name: {ms_sentry_conn.sentry_instance_name}"
+                f"Sentry Custom Resource `{ms_sentry_conn.sentry_instance_name}`"
+                " does not exist"
             )
+
         sentry_api_cred = self.vault_service.unvault_sentry_connector(sentry_connector)
         if not sentry_api_cred:
             raise NonExistSecretForSentryConnector(
-                "Couldn't find sentry credentials"
+                "Couldn't getting root credentials for connecting to Sentry"
             )
 
         sentry_service = SentryServiceFactory.create_sentry_service(sentry_api_cred)
         sentry_ms_cred = self.vault_service.get_sentry_ms_credentials(ms_sentry_conn.vault_path)
 
-        if sentry_ms_cred and \
-                sentry_service.is_sentry_dsn_exist(project_slug=sentry_ms_cred.project_slug, dsn=sentry_ms_cred.dsn):
-            logging.info("Sentry dsn-key already exist")
-            return
+        source_hash = self.generate_source_hash(
+            url=sentry_api_cred.api_url,
+            organization=sentry_api_cred.api_organization,
+            team=ms_sentry_conn.team,
+            project=ms_sentry_conn.project,
+            env=ms_sentry_conn.environment,
+        )
+        with ConnectorSourceLock(source_hash):
+            if sentry_ms_cred and \
+                    sentry_service.is_sentry_dsn_exist(
+                        project_slug=sentry_ms_cred.project_slug,
+                        dsn=sentry_ms_cred.dsn):
+                logging.info("Sentry dsn-key already exist")
+                return
 
-        sentry_ms_cred = sentry_service.configure_sentry(ms_sentry_conn)
-        self.vault_service.create_ms_sentry_credentials(ms_sentry_conn.vault_path, sentry_ms_cred)
+            sentry_ms_cred = sentry_service.configure_sentry(ms_sentry_conn)
+            self.vault_service.create_ms_sentry_credentials(ms_sentry_conn.vault_path, sentry_ms_cred)
+
+    @staticmethod
+    def generate_source_hash(
+            url: str, organization: str, team: str, project: str, env: str
+    ) -> str:
+        return generate_hash(url, organization, team, project, env)
 
     def mutate_containers(self, spec, ms_sentry_conn: SentryConnectorMicroserviceDto) -> bool:
         mutated = False

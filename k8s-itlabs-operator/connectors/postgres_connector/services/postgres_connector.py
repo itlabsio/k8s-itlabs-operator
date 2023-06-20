@@ -10,6 +10,8 @@ from connectors.postgres_connector.factories.service_factories.postgres import P
 from connectors.postgres_connector.services.kubernetes import KubernetesService
 from connectors.postgres_connector.services.vault import AbstractVaultService
 from connectors.postgres_connector.specifications import PG_CON_REQUIRED_ANNOTATION_NAMES
+from utils.concurrency import ConnectorSourceLock
+from utils.hashing import generate_hash
 
 
 class PostgresConnectorService:
@@ -19,15 +21,33 @@ class PostgresConnectorService:
     def on_create_deployment(self, ms_pg_con: PgConnectorMicroserviceDto):
         pg_connector = KubernetesService.get_pg_connector(ms_pg_con.pg_instance_name)
         if not pg_connector:
-            raise PgConnectorCrdDoesNotExist()
+            raise PgConnectorCrdDoesNotExist(
+                f"Postgres Custom Resource `{ms_pg_con.pg_instance_name}`"
+                " does not exist"
+            )
 
         pg_instance_cred = self.vault_service.unvault_pg_connector(pg_connector)
         if not pg_instance_cred:
-            raise UnknownVaultPathInPgConnector()
+            raise UnknownVaultPathInPgConnector(
+                "Couldn't getting root credentials for connecting to Postgres"
+            )
 
         pg_service = PostgresServiceFactory.create_pg_service(pg_instance_cred)
-        db_creds = self.get_or_create_db_credentials(pg_instance_cred, ms_pg_con)
-        pg_service.create_database(db_creds)
+        source_hash = self.generate_source_hash(
+            host=pg_instance_cred.host,
+            port=pg_instance_cred.port,
+            database=ms_pg_con.db_name,
+            username=ms_pg_con.db_username,
+        )
+        with ConnectorSourceLock(source_hash):
+            db_creds = self.get_or_create_db_credentials(pg_instance_cred, ms_pg_con)
+            pg_service.create_database(db_creds)
+
+    @staticmethod
+    def generate_source_hash(
+            host: str, port: int, database: str, username: str
+    ) -> str:
+        return generate_hash(host, port, database, username)
 
     @staticmethod
     def is_pg_conn_used_by_object(annotations: dict) -> bool:

@@ -11,6 +11,8 @@ from kubernetes.dynamic import DynamicClient
 
 from connectors.rabbit_connector import specifications
 
+
+APP_REPLICAS = 2
 APP_DEPLOYMENT_NAMESPACE = "default"
 RABBIT_VAULT_SECRET_PATH = "vault:secret/data/rabbit-credentials"
 REQUIRED_VAULT_SECRET_KEYS = {
@@ -59,7 +61,7 @@ def app_manifests(app_name) -> List[dict]:
             "namespace": APP_DEPLOYMENT_NAMESPACE,
         },
         "spec": {
-            "replicas": 1,
+            "replicas": APP_REPLICAS,
             "selector": {
                 "matchLabels": {
                     "app": app_name,
@@ -102,7 +104,7 @@ def wait_app_deployment(k8s, app_manifests):
                 namespace=manifest["metadata"]["namespace"],
                 name=manifest["metadata"]["name"]
             )
-            if deployment_status.status.available_replicas == 1:
+            if deployment_status.status.available_replicas == APP_REPLICAS:
                 break
             time.sleep(5)
         except ApiException:
@@ -268,8 +270,7 @@ def test_rabbit_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
     assert any(
         event.type == "Error"
         and event.reason == "RabbitConnector"
-        and event.note == ("Rabbit Custom Resource `non-exist-instance` "
-                           "does not exist")
+        and event.note == "Rabbit Connector not applied"
         and app_name in event.regarding.name
         for event in events.items
     )

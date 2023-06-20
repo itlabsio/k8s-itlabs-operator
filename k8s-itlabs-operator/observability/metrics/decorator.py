@@ -4,8 +4,10 @@ from typing import Callable
 from prometheus_client.context_managers import Timer
 from prometheus_client.decorator import decorate
 
-from observability.metrics.metrics import app_http_request_operator_latency_seconds
-from operators.dto import ConnectorStatus
+from observability.metrics.metrics import \
+    app_http_request_operator_latency_seconds, \
+    app_mutation_admission_hook_latency_seconds
+from operators.dto import ConnectorStatus, MutationHookStatus
 
 
 class LabeledTimer(Timer):
@@ -71,6 +73,27 @@ def monitoring(connector_type: str):
                 app_http_request_operator_latency_seconds.labels(**label_values).observe(process_time)
                 connector_type_key = label_values.pop('connector_type')
                 return {connector_type_key: label_values}
+
+        return wrapped
+
+    return wrap
+
+
+def mutation_hook_monitoring(connector_type: str):
+    def wrap(func: Callable):
+        def wrapped(*args, **kwargs):
+            start_time = default_timer()
+
+            status: MutationHookStatus = func(*args, **kwargs)
+            process_time = default_timer() - start_time
+            label_values = {
+                'connector_type': connector_type,
+                'used': status.label_is_used,
+                'success': status.label_is_success,
+            }
+            app_mutation_admission_hook_latency_seconds.labels(**label_values).observe(process_time)
+            connector_type_key = label_values.pop('connector_type')
+            return {connector_type_key: label_values}
 
         return wrapped
 

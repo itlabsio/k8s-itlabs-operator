@@ -28,6 +28,7 @@ KEYCLOAK_REALM_PASSWORD = "test-password"
 
 VAULT_KEYCLOAK_USER_SECRET_PATH = "vault:secret/data/keycloak-credentials"
 
+APP_REPLICAS = 2
 APP_DEPLOYMENT_NAMESPACE = "default"
 REQUIRED_POD_ENVIRONMENTS = {
     env_name for env_name, _ in specifications.KEYCLOAK_VAR_NAMES
@@ -219,7 +220,7 @@ def app_manifests(app_name) -> List[dict]:
             "namespace": APP_DEPLOYMENT_NAMESPACE,
         },
         "spec": {
-            "replicas": 1,
+            "replicas": APP_REPLICAS,
             "selector": {
                 "matchLabels": {
                     "app": app_name,
@@ -262,7 +263,7 @@ def wait_app_deployment(k8s, app_manifests):
                 namespace=manifest["metadata"]["namespace"],
                 name=manifest["metadata"]["name"],
             )
-            if deployment_status.status.available_replicas == 1:
+            if deployment_status.status.available_replicas == APP_REPLICAS:
                 break
             time.sleep(5)
         except ApiException:
@@ -365,8 +366,7 @@ def test_keycloak_operator_on_deployment_using_non_exist_custom_resource(k8s, va
     assert any(
         event.type == "Error"
         and event.reason == "KeycloakConnector"
-        and event.note == ("Keycloak Custom Resource `non-exist-instance` "
-                           "does not exist")
+        and event.note == "Keycloak Connector not applied"
         and app_name in event.regarding.name
         for event in events.items
     )
