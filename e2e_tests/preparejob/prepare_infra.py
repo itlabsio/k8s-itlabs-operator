@@ -5,7 +5,7 @@ import hvac
 import psycopg2
 from hvac import exceptions
 from kubernetes import client as k8s_client, config
-from kubernetes.client import V1ConfigMap, V1ServiceAccount
+from kubernetes.client import V1ConfigMap, V1Secret
 from psycopg2 import sql
 
 
@@ -19,15 +19,13 @@ def configure_k8s_cluster(kube_api_url: str):
             raise Exception("Could not configure kubernetes client")
 
 
-def get_token_and_cacrt_for_service_account(service_account_name: str, namespace: str):
+def get_token_and_cacrt_for_service_account(
+        service_account_token_name: str, namespace: str
+):
     k8s_api_instance = k8s_client.CoreV1Api()
-    service_account: V1ServiceAccount = k8s_api_instance.read_namespaced_service_account(
-        name=service_account_name,
-        namespace=namespace
+    secret: V1Secret = k8s_api_instance.read_namespaced_secret(
+        name=service_account_token_name, namespace=namespace
     )
-    token_resource_name = [s for s in service_account.secrets if 'token' in s.name][0].name
-    secret = k8s_api_instance.read_namespaced_secret(
-        name=token_resource_name, namespace=namespace)
     btoken = secret.data['token']
     token = base64.b64decode(btoken).decode()
     bcacrt = secret.data['ca.crt']
@@ -43,14 +41,14 @@ def prepare_vault():
     vault_k8s_auth_method = 'kube-ee'
     vault_k8s_role = 'k8s-itlabs-operator'
     kube_api_url = "https://kind-control-plane:6443"
-    operator_name = 'e2e-k8s-itlabs-operator'
+    operator_token_name = 'e2e-k8s-itlabs-operator-token'
     policy_name = 'tester'
     namespace = 'k8s-itlabs-operator'
     service_account_names = ['k8s-itlabs-operator', 'e2e-k8s-itlabs-operator']
 
     configure_k8s_cluster(kube_api_url=kube_api_url)
     token, cacrt = get_token_and_cacrt_for_service_account(
-        service_account_name=operator_name,
+        service_account_token_name=operator_token_name,
         namespace=namespace
     )
     client = hvac.Client(url=vault_url, token=getenv('OPERATOR_VAULT_TOKEN'))

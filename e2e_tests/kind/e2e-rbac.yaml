@@ -6,6 +6,15 @@ metadata:
   labels:
     app: k8s-itlabs-operator
 ---
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: e2e-k8s-itlabs-operator-token
+  namespace: k8s-itlabs-operator
+  annotations:
+    kubernetes.io/service-account.name: e2e-k8s-itlabs-operator
+---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:

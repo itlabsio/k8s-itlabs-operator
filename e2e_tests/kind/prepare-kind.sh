@@ -47,7 +47,7 @@ prepare_rbac() {
 }
 
 prepare_certmanager() {
-  kubectl apply --wait=true -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+  kubectl apply --wait=true -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
   kubectl wait deployment -n cert-manager --all --for condition=Available=True --timeout=90s
 }
 

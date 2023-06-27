@@ -57,8 +57,8 @@ jobs:
         uses: actions/checkout@v3
       - name: Run tests
         env:
-          KUBECTL: v1.23.5
-          KIND: v0.14.0
+          KUBECTL: v1.24.15
+          KIND: v0.20.0
           DOCKER_IMAGE: operator:test
           MANIFEST_FOLDER: ./manifests
         run: |
