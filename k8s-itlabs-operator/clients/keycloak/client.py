@@ -117,6 +117,6 @@ class KeycloakClient(AbstractKeycloakClient):
             if response.status_code != http.client.OK:
                 error = ErrorDtoFactory.dto_from_dict(response.json())
                 raise InfrastructureServiceProblem("Keycloak", KeycloakError(error))
-            return response.json().get("secret")
+            return response.json().get("value")
         except Exception as e:
             raise InfrastructureServiceProblem("Keycloak", e)
