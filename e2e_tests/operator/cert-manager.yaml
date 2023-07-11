@@ -40,8 +40,8 @@ spec:
     name: ca-admission-root
     kind: ClusterIssuer
   secretName: k8s-itlabs-operator
-  duration: 2160h
-  renewBefore: 360h
+  duration: 60m
+  renewBefore: 30m
   dnsNames:
     - k8s-itlabs-operator
     - k8s-itlabs-operator.k8s-itlabs-operator.svc

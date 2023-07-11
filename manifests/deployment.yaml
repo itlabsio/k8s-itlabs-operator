@@ -2,6 +2,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    secret.reloader.stakater.com/reload: "k8s-itlabs-operator"
   labels:
     app: k8s-itlabs-operator
   name: k8s-itlabs-operator
