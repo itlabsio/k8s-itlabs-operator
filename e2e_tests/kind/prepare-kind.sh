@@ -51,6 +51,10 @@ prepare_certmanager() {
   kubectl wait deployment -n cert-manager --all --for condition=Available=True --timeout=90s
 }
 
+prepare_reloader() {
+  kubectl apply -f https://raw.githubusercontent.com/stakater/Reloader/v1.0.29/deployments/kubernetes/reloader.yaml
+}
+
 
 prepare_kind
 prepare_cluster
@@ -58,4 +62,5 @@ prepare_namespace
 prepare_serviceaccount
 prepare_registry_creds
 prepare_rbac
+prepare_reloader
 prepare_certmanager
