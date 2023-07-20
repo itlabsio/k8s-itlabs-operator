@@ -238,3 +238,51 @@ def test_monitoring_on_deleting_simple_service(k8s, simple_case):
             f"ServiceMonitor was not found by name {app_name} "
             f"in namespace {app_namespace}"
         )
+
+
+@pytest.mark.e2e
+@pytest.mark.usefixtures("deploy_app")
+def test_monitoring_was_changed_on_redeploy_application_with_changed_annotations(k8s, app_manifest):
+    app_name = app_manifest["metadata"].get("name")
+    app_namespace = app_manifest["metadata"].get("namespace")
+
+    # 1. Checking that ServiceMonitor has been created.
+    service_monitor = get_service_monitor(k8s, app_name, app_namespace)
+    if service_monitor is None:
+        pytest.fail(
+            f"Could not find ServiceMonitor by name {app_name} "
+            f"in namespace {app_namespace}"
+        )
+
+    # 2. ServiceMonitor will be recreated after changing annotations.
+    # app_manifest["metadata"]["annotations"]["monitoring.connector.itlabs.io/metrics-path"] = "/new-metrics"
+    # app_manifest["metadata"]["annotations"]["monitoring.connector.itlabs.io/interval"] = "30s"
+    CoreV1Api(k8s).patch_namespaced_service(
+        namespace=app_namespace,
+        name=app_name,
+        body={
+            "metadata": {
+                "annotations": {
+                    "monitoring.connector.itlabs.io/metrics-path": "/new-metrics",
+                    "monitoring.connector.itlabs.io/interval": "30s",
+                },
+            },
+        },
+    )
+    time.sleep(10)
+    service_monitor = get_service_monitor(k8s, app_name, app_namespace)
+    if service_monitor is None:
+        pytest.fail(
+            f"Could not find ServiceMonitor by name {app_name} "
+            f"in namespace {app_namespace}"
+        )
+
+    endpoint = service_monitor.get("spec", {}).get("endpoints", [None, ])[0]
+    if endpoint is None:
+        pytest.fail(
+            f"ServiceMonitor {app_name} in namespace {app_namespace} "
+            f"does not contain endpoints"
+        )
+
+    assert endpoint.get("path") == "/new-metrics"
+    assert endpoint.get("interval") == "30s"
