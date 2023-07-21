@@ -74,11 +74,6 @@ class KubernetesService:
             },
         }
 
-    def create_service_monitor(self, namespace: str, body: dict) -> bool:
-        if self.service_monitor_api_resource:
-            self.service_monitor_api_resource.create(body=body, namespace=namespace)
-        return bool(self.service_monitor_api_resource)
-
     def get_service_monitor(self, namespace: str, name: str) -> Optional:
         if not self.service_monitor_api_resource:
             return
@@ -90,6 +85,11 @@ class KubernetesService:
             )
         except ApiException:
             return None
+
+    def create_service_monitor(self, namespace: str, body: dict) -> bool:
+        if self.service_monitor_api_resource:
+            self.service_monitor_api_resource.create(body=body, namespace=namespace)
+        return bool(self.service_monitor_api_resource)
 
     def delete_service_monitor(self, namespace: str, name: str):
         if not self.service_monitor_api_resource:
@@ -107,10 +107,23 @@ class MonitoringConnectorService:
 
     def create_service_monitor(self, ms_monitoring_con: MonitoringConnectorMicroserviceDto, service_name: str,
                                namespace: str) -> bool:
-        service_monitor_dict = self.kubernetes_service.get_servicemonitor_dict(ms_monitoring_con=ms_monitoring_con,
-                                                                               service_name=service_name,
-                                                                               namespace=namespace)
-        return self.kubernetes_service.create_service_monitor(namespace=namespace, body=service_monitor_dict)
+        service_monitor_dict = self.kubernetes_service.get_servicemonitor_dict(
+            ms_monitoring_con=ms_monitoring_con,
+            service_name=service_name,
+            namespace=namespace
+        )
+
+        sm = self.kubernetes_service.get_service_monitor(
+            namespace=namespace, name=service_name
+        )
+        if sm is not None:
+            self.kubernetes_service.delete_service_monitor(
+                namespace=namespace, name=service_name
+            )
+
+        return self.kubernetes_service.create_service_monitor(
+            namespace=namespace, body=service_monitor_dict
+        )
 
     def delete_service_monitor(self, namespace: str, service_name: str):
         """connector can delete only own servicemonitors"""
