@@ -8,7 +8,3 @@ class SentryConnectorCrdDoesNotExist(SentryConnectorError):
 
 class NonExistSecretForSentryConnector(SentryConnectorError):
     ...
-
-
-class EnvironmentValueError(ValueError):
-    ...

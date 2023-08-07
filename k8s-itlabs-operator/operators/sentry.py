@@ -8,7 +8,7 @@ from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.sentry_connector.services.sentry_connector import SentryConnectorService
 from connectors.sentry_connector.factories.dto_factory import SentryConnectorMicroserviceDtoFactory
 from connectors.sentry_connector.factories.service_factories.sentry_connector import SentryConnectorServiceFactory
-from connectors.sentry_connector.exceptions import SentryConnectorError, EnvironmentValueError
+from connectors.sentry_connector.exceptions import SentryConnectorError
 from utils.common import OwnerReferenceDto, get_owner_reference
 
 
@@ -26,12 +26,7 @@ def create_pods(body, patch, spec, labels, annotations, **_):
     if not status.is_used:
         logging.info(f"[{owner_fmt}] Sentry connector is not used, because no expected annotations")
         return status
-    try:
-        ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
-    except EnvironmentValueError as e:
-        logging.error(f"[{owner_fmt}] Problem with Sentry connector", exc_info=e)
-        status.exception = e
-        return status
+    ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
 
     sentry_conn_service = SentryConnectorServiceFactory.create_sentry_connector_service()
     logging.info(f"[{owner_fmt}] Sentry connector service is created")
