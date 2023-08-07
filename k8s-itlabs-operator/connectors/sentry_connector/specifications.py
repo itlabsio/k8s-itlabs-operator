@@ -28,8 +28,7 @@ SENTRY_VAR_NAMES = (
 )
 
 
-SENTRY_AVAILABLE_ENVIRONMENTS = {
+SENTRY_TRANSFORM_ENVIRONMENTS = {
     "development": "dev",
-    "stage": "stage",
     "production": "prod",
 }

@@ -2,7 +2,6 @@ from connectors.sentry_connector import specifications
 from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, \
     SentryConnectorMicroserviceDto, SentryApiSecretDto
 from connectors.sentry_connector.crd import SentryConnectorCrd
-from connectors.sentry_connector.exceptions import EnvironmentValueError
 
 
 class SentryMsSecretDtoFactory:
@@ -47,10 +46,7 @@ class SentryConnectorMicroserviceDtoFactory:
     @staticmethod
     def _parse_environment(env: str) -> str:
         """Возвращает сокращенное название среды окружения"""
-        try:
-            return specifications.SENTRY_AVAILABLE_ENVIRONMENTS[env].lower()
-        except KeyError:
-            raise EnvironmentValueError("Environment label contains invalid value")
+        return specifications.SENTRY_TRANSFORM_ENVIRONMENTS.get(env, env)
 
 
 class SentryApiSecretDtoFactory:
