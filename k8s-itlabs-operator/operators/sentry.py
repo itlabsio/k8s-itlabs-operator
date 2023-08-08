@@ -52,7 +52,7 @@ def create_pods(body, patch, spec, labels, annotations, **_):
 
 @kopf.on.create("pods.v1", id="sentry-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="sentry_connector")
-def check_creation(annotations, labels, body, spec, **_):
+def check_creation(annotations, labels, body, **_):
     status = MutationHookStatus()
     if not SentryConnectorService.is_sentry_conn_used_by_object(annotations, labels):
         status.is_used = False
@@ -60,6 +60,7 @@ def check_creation(annotations, labels, body, spec, **_):
 
     status.is_used = True
     status.is_success = True
+    spec = body.get("spec", {})
     if not SentryConnectorService.containers_contain_required_envs(spec):
         kopf.event(
             body,
