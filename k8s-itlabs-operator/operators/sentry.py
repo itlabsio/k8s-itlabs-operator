@@ -68,12 +68,6 @@ def check_creation(annotations, labels, body, new, **_):
             reason="SentryConnector",
             message="Sentry Connector not applied",
         )
-        # debug
-        logging.info(
-            f"CHECK CREATION FOR SENTRY:"
-            f"\n\t(body): {body}"
-            f"\n\t(new): {new}"
-        )
         status.is_success = False
 
     return status
