@@ -62,6 +62,15 @@ def check_creation(annotations, labels, body, new, **_):
     status.is_success = True
     spec = body.get("spec", {})
     if not SentryConnectorService.containers_contain_required_envs(spec):
+        # debug
+        logging.info(
+            f"Failure on check creation for Sentry:"
+            f"\n\t(annotations): {annotations}"
+            f"\n\t(labels): {labels}"
+            f"\n\t(body): {body}"
+            f"\n\t(new): {new}"
+        )
+
         kopf.event(
             body,
             type="Error",

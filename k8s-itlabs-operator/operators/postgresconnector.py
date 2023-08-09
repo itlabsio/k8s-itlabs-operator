@@ -57,7 +57,7 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 @kopf.on.create("pods.v1", id="postgres-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="postgres_connector")
-def check_creation(annotations, body, **_):
+def check_creation(annotations, body, new, **_):
     status = MutationHookStatus()
 
     if not PostgresConnectorService.is_pg_conn_used_by_object(annotations):
@@ -68,6 +68,14 @@ def check_creation(annotations, body, **_):
     status.is_success = True
     spec = body.get("spec", {})
     if not PostgresConnectorService.containers_contain_required_envs(spec):
+        # debug
+        logging.info(
+            f"Failure on check creation for Postgres:"
+            f"\n\t(annotations): {annotations}"
+            f"\n\t(body): {body}"
+            f"\n\t(new): {new}"
+        )
+
         kopf.event(
             body,
             type="Error",
