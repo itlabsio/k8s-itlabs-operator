@@ -60,7 +60,7 @@ def create_pods(body, patch, spec, annotations, **_):
 
 @kopf.on.create("pods.v1", id="keycloak-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="keycloak_connector")
-def check_creation(annotations, body, spec, **_):
+def check_creation(annotations, body, **_):
     status = MutationHookStatus()
 
     if not KeycloakConnectorService.is_kk_conn_used_by_obj(annotations):
@@ -69,6 +69,7 @@ def check_creation(annotations, body, spec, **_):
 
     status.is_used = True
     status.is_success = True
+    spec = body.get("spec", {})
     if not KeycloakConnectorService.containers_contain_required_envs(spec):
         kopf.event(
             body,
