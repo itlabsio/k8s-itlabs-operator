@@ -54,18 +54,19 @@ class PostgresConnectorService:
         return all(annotation_name in annotations for annotation_name in PG_CON_REQUIRED_ANNOTATION_NAMES)
 
     @staticmethod
-    def containers_contain_required_envs(spec: dict) -> bool:
+    def any_containers_contain_required_envs(spec: dict) -> bool:
         all_containers = chain(
             spec.get("containers", []),
             spec.get("initContainers", [])
         )
 
+        required_envs = set(env for env, _ in specifications.DATABASE_VAR_NAMES)
+
         for container in all_containers:
-            for env_name, _ in specifications.DATABASE_VAR_NAMES:
-                envs = [e.get("name") for e in container.get("env", {})]
-                if env_name not in envs:
-                    return False
-        return True
+            envs = set(e.get("name") for e in container.get("env", []))
+            if (envs & required_envs) == required_envs:
+                return True
+        return False
 
     def get_or_create_db_credentials(self, pg_instance_cred: PgConnectorInstanceSecretDto,
                                      ms_pg_con: PgConnectorMicroserviceDto) -> PgConnectorDbSecretDto:

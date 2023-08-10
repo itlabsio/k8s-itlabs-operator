@@ -70,7 +70,7 @@ def check_creation(annotations, body, **_):
     status.is_used = True
     status.is_success = True
     spec = body.get("spec", {})
-    if not KeycloakConnectorService.containers_contain_required_envs(spec):
+    if not KeycloakConnectorService.any_containers_contain_required_envs(spec):
         kopf.event(
             body,
             type="Error",

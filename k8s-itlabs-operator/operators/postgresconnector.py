@@ -67,15 +67,7 @@ def check_creation(annotations, body, new, **_):
     status.is_used = True
     status.is_success = True
     spec = body.get("spec", {})
-    if not PostgresConnectorService.containers_contain_required_envs(spec):
-        # debug
-        logging.info(
-            f"Failure on check creation for Postgres:"
-            f"\n\t(annotations): {annotations}"
-            f"\n\t(body): {body}"
-            f"\n\t(new): {new}"
-        )
-
+    if not PostgresConnectorService.any_containers_contain_required_envs(spec):
         kopf.event(
             body,
             type="Error",

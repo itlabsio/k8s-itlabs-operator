@@ -55,18 +55,19 @@ class RabbitConnectorService:
         )
 
     @staticmethod
-    def containers_contain_required_envs(spec: dict) -> bool:
+    def any_containers_contain_required_envs(spec: dict) -> bool:
         all_containers = chain(
             spec.get("containers", []),
             spec.get("initContainers", [])
         )
 
+        required_envs = set(env for env, _ in specifications.RABBIT_VAR_NAMES)
+
         for container in all_containers:
-            for env_name, _ in specifications.RABBIT_VAR_NAMES:
-                envs = [e.get("name") for e in container.get("env", {})]
-                if env_name not in envs:
-                    return False
-        return True
+            envs = set(e.get("name") for e in container.get("env", []))
+            if (envs & required_envs) == required_envs:
+                return True
+        return False
 
     def get_or_create_rabbit_credentials(self, rabbit_api_cred: RabbitApiSecretDto,
                                          ms_rabbit_con: RabbitConnectorMicroserviceDto) -> RabbitMsSecretDto:
