@@ -2,6 +2,8 @@ import logging
 
 import kopf
 
+from connectors.postgres_connector.factories.service_factories.validation import \
+    PostgresConnectorValidationServiceFactory
 from exceptions import InfrastructureServiceProblem
 from observability.metrics.decorator import monitoring, mutation_hook_monitoring
 from operators.dto import ConnectorStatus, MutationHookStatus
@@ -57,7 +59,7 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 @kopf.on.create("pods.v1", id="postgres-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="postgres_connector")
-def check_creation(annotations, body, new, **_):
+def check_creation(annotations, labels, body, **_):
     status = MutationHookStatus()
 
     if not PostgresConnectorService.is_pg_conn_used_by_object(annotations):
@@ -66,13 +68,16 @@ def check_creation(annotations, body, new, **_):
 
     status.is_used = True
     status.is_success = True
-    spec = body.get("spec", {})
-    if not PostgresConnectorService.any_containers_contain_required_envs(spec):
+
+    service = PostgresConnectorValidationServiceFactory.create()
+    errors = service.validate(annotations, labels)
+    if errors:
+        reasons = "; ".join(str(e) for e in errors)
         kopf.event(
             body,
             type="Error",
             reason="PostgresConnector",
-            message="Postgres Connector not applied",
+            message=f"Postgres Connector not applied for next reasons: {reasons}",
         )
         status.is_success = False
 
