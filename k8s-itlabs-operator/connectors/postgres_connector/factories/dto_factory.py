@@ -23,10 +23,10 @@ class PgConnectorFactory:
 class PgConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> PgConnectorMicroserviceDto:
-        default_name = labels.get(APP_NAME_LABEL)
+        default_name = labels.get(APP_NAME_LABEL, "")
         return PgConnectorMicroserviceDto(
-            pg_instance_name=annotations.get(PG_INSTANCE_NAME_ANNOTATION),
-            vault_path=annotations.get(VAULTPATH_NAME_ANNOTATION),
+            pg_instance_name=annotations.get(PG_INSTANCE_NAME_ANNOTATION, ""),
+            vault_path=annotations.get(VAULTPATH_NAME_ANNOTATION, ""),
             db_name=annotations.get(DB_NAME_ANNOTATION, default_name),
             db_username=annotations.get(USER_NAME_ANNOTATION, default_name)
         )

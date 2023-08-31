@@ -28,6 +28,7 @@ SENTRY_VAR_NAMES = (
 )
 
 
+
 SENTRY_TRANSFORM_ENVIRONMENTS = {
     "development": "dev",
     "production": "prod",

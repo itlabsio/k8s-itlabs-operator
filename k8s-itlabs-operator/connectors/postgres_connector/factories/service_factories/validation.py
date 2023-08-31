@@ -8,6 +8,6 @@ class PostgresConnectorValidationServiceFactory:
     @staticmethod
     def create() -> PostgresConnectorValidationService:
         return PostgresConnectorValidationService(
-            kube=KubernetesService,
-            vault=VaultClientFactory.create_vault_client(),
+            kube_service=KubernetesService,
+            vault_client=VaultClientFactory.create_vault_client(),
         )

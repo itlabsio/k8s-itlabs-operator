@@ -2,9 +2,6 @@ from copy import deepcopy
 from typing import List, Optional
 
 from clients.vault.vaultclient import AbstractVaultClient, AnyObject
-from connectors.postgres_connector.dto import PgConnector
-from connectors.postgres_connector.services.kubernetes import \
-    AbstractKubernetesService
 
 
 class MockedVaultClient(AbstractVaultClient):
@@ -42,15 +39,3 @@ class VaultClientMocker:
     @staticmethod
     def mock_hvac_vault_client(mocker, value):
         return mocker.patch("clients.vault.vaultclient.VaultClient._read_secret_version", return_value=value)
-
-
-class MockKubernetesService(AbstractKubernetesService):
-    @classmethod
-    def get_pg_connector(cls, name: str) -> PgConnector:
-        return PgConnector(
-            host="postgres.default",
-            port=5432,
-            database="postgres",
-            username="vault:secret/data/infrastructure/postgres#USERNAME",
-            password="vault:secret/data/infrastructure/postgres#PASSWORD",
-        )
