@@ -33,14 +33,18 @@ class SentryConnectorFactory:
 class SentryConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> SentryConnectorMicroserviceDto:
-        default_team = labels.get(specifications.SENTRY_APP_NAME_LABEL)
-        default_project = labels.get(specifications.SENTRY_APP_NAME_LABEL)
+        default_team = labels.get(specifications.SENTRY_APP_NAME_LABEL, "")
+        default_project = labels.get(specifications.SENTRY_APP_NAME_LABEL, "")
+        default_environment = "default"
         return SentryConnectorMicroserviceDto(
-            sentry_instance_name=annotations.get(specifications.SENTRY_INSTANCE_NAME_ANNOTATION),
-            vault_path=annotations.get(specifications.SENTRY_VAULT_PATH_ANNOTATION),
+            sentry_instance_name=annotations.get(specifications.SENTRY_INSTANCE_NAME_ANNOTATION, ""),
+            vault_path=annotations.get(specifications.SENTRY_VAULT_PATH_ANNOTATION, ""),
             project=annotations.get(specifications.SENTRY_PROJECT_ANNOTATION, default_project),
             team=annotations.get(specifications.SENTRY_TEAM_ANNOTATION, default_team),
-            environment=cls._parse_environment(annotations.get(specifications.SENTRY_ENVIRONMENT_ANNOTATION)),
+            environment=cls._parse_environment(annotations.get(
+                specifications.SENTRY_ENVIRONMENT_ANNOTATION,
+                default_environment
+            )),
         )
 
     @staticmethod
