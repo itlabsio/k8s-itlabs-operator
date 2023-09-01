@@ -1,3 +1,5 @@
+import abc
+from abc import ABCMeta
 from typing import Optional
 
 from clients.k8s.k8s_client import KubernetesClient
@@ -6,8 +8,8 @@ from connectors.keycloak_connector.factories.crd_factory import KeycloakConnecto
 from connectors.keycloak_connector.factories.dto_factory import KeycloakConnectorFactory
 
 
-class KubernetesService:
-    _k8s_client = KubernetesClient
+class AbstractKubernetesService:
+    __metaclass__ = ABCMeta
 
     @staticmethod
     def get_pod_annotations(meta: dict) -> dict:
@@ -16,6 +18,15 @@ class KubernetesService:
     @staticmethod
     def get_pod_labels(meta: dict) -> dict:
         return meta.get("labels", {})
+
+    @classmethod
+    @abc.abstractmethod
+    def get_keycloak_connector(cls, name: str) -> Optional[KeycloakConnector]:
+        raise NotImplementedError
+
+
+class KubernetesService(AbstractKubernetesService):
+    _k8s_client = KubernetesClient
 
     @classmethod
     def get_keycloak_connector(cls, name: str) -> Optional[KeycloakConnector]:
