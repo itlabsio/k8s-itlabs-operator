@@ -1,3 +1,5 @@
+import abc
+from abc import ABCMeta
 from typing import Optional
 
 from clients.k8s.k8s_client import KubernetesClient
@@ -6,7 +8,16 @@ from connectors.rabbit_connector.factories.crd_factory import RabbitConnectorCrd
 from connectors.rabbit_connector.factories.dto_factory import RabbitConnectorFactory
 
 
-class KubernetesService:
+class AbstractKubernetesService:
+    __metaclass__ = ABCMeta
+
+    @classmethod
+    @abc.abstractmethod
+    def get_rabbit_connector(cls, name: str) -> Optional[RabbitConnector]:
+        raise NotImplementedError
+
+
+class KubernetesService(AbstractKubernetesService):
     _k8s_client = KubernetesClient
 
     @classmethod

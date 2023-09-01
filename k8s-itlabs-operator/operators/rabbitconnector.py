@@ -9,6 +9,8 @@ from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExis
 from connectors.rabbit_connector.factories.dto_factory import RabbitConnectorMicroserviceDtoFactory
 from connectors.rabbit_connector.factories.service_factories.rabbit_connector import RabbitConnectorServiceFactory
 from connectors.rabbit_connector.services.rabbit_connector import RabbitConnectorService
+from connectors.rabbit_connector.factories.service_factories.validation import \
+    RabbitConnectorValidationServiceFactory
 from utils.common import OwnerReferenceDto, get_owner_reference
 
 
@@ -51,7 +53,7 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 @kopf.on.create("pods.v1", id="rabbit-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="rabbit_connector")
-def check_creation(annotations, body, **_):
+def check_creation(annotations, labels, body, **_):
     status = MutationHookStatus()
 
     if not RabbitConnectorService.is_rabbit_conn_used_by_object(annotations):
@@ -62,12 +64,28 @@ def check_creation(annotations, body, **_):
     status.is_success = True
     spec = body.get("spec", {})
     if not RabbitConnectorService.any_containers_contain_required_envs(spec):
-        kopf.event(
-            body,
-            type="Error",
-            reason="RabbitConnector",
-            message="Rabbit Connector not applied",
-        )
         status.is_success = False
+
+        connector_dto = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = RabbitConnectorValidationServiceFactory.create()
+        errors = service.validate(connector_dto)
+        if errors:
+            reasons = "; ".join(str(e) for e in errors)
+            kopf.event(
+                body,
+                type="Error",
+                reason="RabbitConnector",
+                message=f"Rabbit Connector not applied for next reasons: {reasons}",
+            )
+        else:
+            kopf.event(
+                body,
+                type="Error",
+                reason="RabbitConnector",
+                message=(
+                    "Rabbit Connector not applied by unknown reasons. "
+                    "It's maybe problems with infrastructure or certificates."
+                )
+            )
 
     return status

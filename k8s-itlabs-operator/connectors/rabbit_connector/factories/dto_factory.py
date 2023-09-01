@@ -20,10 +20,10 @@ class RabbitApiSecretDtoFactory:
 class RabbitConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> RabbitConnectorMicroserviceDto:
-        default_name = labels.get(specifications.APP_NAME_LABEL)
+        default_name = labels.get(specifications.APP_NAME_LABEL, "")
         return RabbitConnectorMicroserviceDto(
-            rabbit_instance_name=annotations.get(specifications.RABBIT_INSTANCE_NAME_ANNOTATION),
-            vault_path=annotations.get(specifications.VAULTPATH_NAME_ANNOTATION),
+            rabbit_instance_name=annotations.get(specifications.RABBIT_INSTANCE_NAME_ANNOTATION, ""),
+            vault_path=annotations.get(specifications.VAULTPATH_NAME_ANNOTATION, ""),
             username=annotations.get(specifications.USER_NAME_ANNOTATION, default_name),
             vhost=annotations.get(specifications.VHOST_NAME_ANNOTATION, default_name)
         )
