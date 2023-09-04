@@ -47,8 +47,12 @@ prepare_rbac() {
 }
 
 prepare_certmanager() {
-  kubectl apply --wait=true -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
+  kubectl apply --wait=true -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
   kubectl wait deployment -n cert-manager --all --for condition=Available=True --timeout=90s
+}
+
+prepare_reloader() {
+  kubectl apply -f https://raw.githubusercontent.com/stakater/Reloader/v1.0.29/deployments/kubernetes/reloader.yaml
 }
 
 
@@ -58,4 +62,5 @@ prepare_namespace
 prepare_serviceaccount
 prepare_registry_creds
 prepare_rbac
+prepare_reloader
 prepare_certmanager

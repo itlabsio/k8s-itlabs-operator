@@ -2,12 +2,15 @@ import logging
 
 import kopf
 
+
 from exceptions import InfrastructureServiceProblem
 from observability.metrics.decorator import monitoring, mutation_hook_monitoring
 from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector
 from connectors.postgres_connector.factories.dto_factory import PgConnectorMicroserviceDtoFactory
 from connectors.postgres_connector.factories.service_factories.postgres_connector import PostgresConnectorServiceFactory
+from connectors.postgres_connector.factories.service_factories.validation import \
+    PostgresConnectorValidationServiceFactory
 from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
 from utils.common import OwnerReferenceDto, get_owner_reference
 
@@ -57,7 +60,7 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 @kopf.on.create("pods.v1", id="postgres-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="postgres_connector")
-def check_creation(annotations, body, spec, **_):
+def check_creation(annotations, labels, body, **_):
     status = MutationHookStatus()
 
     if not PostgresConnectorService.is_pg_conn_used_by_object(annotations):
@@ -66,13 +69,31 @@ def check_creation(annotations, body, spec, **_):
 
     status.is_used = True
     status.is_success = True
-    if not PostgresConnectorService.containers_contain_required_envs(spec):
-        kopf.event(
-            body,
-            type="Error",
-            reason="PostgresConnector",
-            message="Postgres Connector not applied",
-        )
+
+    spec = body.get("spec", {})
+    if not PostgresConnectorService.any_containers_contain_required_envs(spec):
         status.is_success = False
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationServiceFactory.create()
+        errors = service.validate(connector_dto)
+        if errors:
+            reasons = "; ".join(str(e) for e in errors)
+            kopf.event(
+                body,
+                type="Error",
+                reason="PostgresConnector",
+                message=f"Postgres Connector not applied for next reasons: {reasons}",
+            )
+        else:
+            kopf.event(
+                body,
+                type="Error",
+                reason="PostgresConnector",
+                message=(
+                    "Postgres Connector not applied by unknown reasons. "
+                    "It's maybe problems with infrastructure or certificates."
+                )
+            )
 
     return status

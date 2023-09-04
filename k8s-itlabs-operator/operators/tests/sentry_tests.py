@@ -191,7 +191,7 @@ def test_sentry_operator_on_initial_deployment_application(k8s, vault, sentry, a
     keys = sentry.get_sentry_project_keys(app_name)
     assert len(keys) > 0
     assert any(
-        k.name == specifications.SENTRY_AVAILABLE_ENVIRONMENTS[APP_DEPLOYMENT_ENVIRONMENT]
+        k.name == specifications.SENTRY_TRANSFORM_ENVIRONMENTS[APP_DEPLOYMENT_ENVIRONMENT]
         and k.dsn == secret[specifications.SENTRY_DSN_KEY]
         for k in keys
     )
@@ -255,7 +255,7 @@ def test_sentry_operator_on_deployment_using_non_exist_custom_resource(k8s, vaul
     assert any(
         event.type == "Error"
         and event.reason == "SentryConnector"
-        and event.note == "Sentry Connector not applied"
+        and event.note == "Sentry Connector not applied for next reasons: Sentry Custom Resource `non-exist-instance` does not exist"
         and app_name in event.regarding.name
         for event in events.items
     )

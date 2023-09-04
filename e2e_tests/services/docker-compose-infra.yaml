@@ -3,7 +3,7 @@ version: '3.6'
 services:
 
   vault:
-    image: vault:1.10.0
+    image: hashicorp/vault:1.14.0
     container_name: vault-e2e
     networks:
       - kind
@@ -32,7 +32,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # задаем пароль для superuser postgres
 
   rabbit:
-    image: rabbitmq:3.10-management
+    image: rabbitmq:3.12-management
     container_name: rabbitmq
     networks:
       - kind
@@ -43,7 +43,7 @@ services:
       - "15672:15672"
 
   keycloak:
-    image: quay.io/keycloak/keycloak:19.0.1
+    image: quay.io/keycloak/keycloak:21.1.0
     container_name: keycloak
     networks:
       - kind

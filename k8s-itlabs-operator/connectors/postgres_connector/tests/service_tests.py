@@ -7,14 +7,18 @@ from clients.vault.tests.mocks import MockedVaultClient
 from connectors.postgres_connector import specifications
 from connectors.postgres_connector.dto import PgConnectorInstanceSecretDto, PgConnectorMicroserviceDto, PgConnector
 from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector
-from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSecretDtoFactory
+from connectors.postgres_connector.factories.dto_factory import \
+    PgConnectorDbSecretDtoFactory, PgConnectorMicroserviceDtoFactory
 from connectors.postgres_connector.services.postgres import PostgresService
 from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
+from connectors.postgres_connector.services.validation import \
+    PostgresConnectorValidationService, PostgresConnectorApplicationError
 from connectors.postgres_connector.services.vault import VaultService
 from connectors.postgres_connector.tests.factories import PgConnectorInstanceSecretDtoTestFactory, \
     PgConnectorMicroserviceDtoTestFactory
-from connectors.postgres_connector.tests.mocks import MockedVaultService, KubernetesServiceMocker, \
-    PostgresServiceFactoryMocker, MockedPostgresService
+from connectors.postgres_connector.tests.mocks import MockedVaultService, \
+    KubernetesServiceMocker, \
+    PostgresServiceFactoryMocker, MockedPostgresService, MockKubernetesService
 
 
 @pytest.mark.unit
@@ -220,3 +224,127 @@ class TestVaultService:
         vault_service = VaultService(vault_client=vault_client)
         pg_creds = vault_service.get_pg_ms_credentials(vault_path='any')
         assert pg_creds
+
+
+@pytest.mark.unit
+class TestPostgresConnectorValidationService:
+    @pytest.fixture
+    def vault(self):
+        return MockedVaultClient(secret={
+            "DATABASE_HOST": "postgres",
+            "DATABASE_PORT": "5432",
+            "DATABASE_NAME": "postgres",
+            "DATABASE_USER": "postgres",
+            "DATABASE_PASSWORD": "postgres",
+        })
+
+    @pytest.fixture
+    def kube(self):
+        return MockKubernetesService()
+
+    def test_all_annotations_exists(self, kube, vault):
+        annotations = {
+            "postgres.connector.itlabs.io/instance-name": "postgres",
+            "postgres.connector.itlabs.io/vault-path": "vault:secret/data/postgres",
+            "postgres.connector.itlabs.io/db-username": "username",
+            "postgres.connector.itlabs.io/db-name": "database",
+        }
+        labels = {}
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+        assert not errors
+
+    def test_required_annotations_and_label_for_default_value_exist(self, kube, vault):
+        annotations = {
+            "postgres.connector.itlabs.io/instance-name": "postgres",
+            "postgres.connector.itlabs.io/vault-path": "vault:secret/data/postgres",
+        }
+        labels = {
+            "app": "application",
+        }
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+        assert not errors
+
+    def test_required_annotations_not_exist(self, kube, vault):
+        annotations = {}
+        labels = {
+            "app": "application",
+        }
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert PostgresConnectorApplicationError(
+            "Postgres instance name for application is not set in annotations"
+        ) in errors
+        assert PostgresConnectorApplicationError(
+            "Vault secret path for application is not set in annotations "
+            "for Postgres"
+        ) in errors
+
+    def test_label_for_default_value_not_exist(self, kube, vault):
+        annotations = {
+            "postgres.connector.itlabs.io/instance-name": "postgres",
+            "postgres.connector.itlabs.io/vault-path": "vault:secret/data/postgres",
+        }
+        labels = {}
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert PostgresConnectorApplicationError(
+            "Postgres username for application is not set in annotations"
+        ) in errors
+        assert PostgresConnectorApplicationError(
+            "Postgres database name for application is not set in annotations"
+        ) in errors
+
+    def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
+        annotations = {
+            "postgres.connector.itlabs.io/instance-name": "postgres",
+            "postgres.connector.itlabs.io/vault-path": "secret/data/postgres",
+            "postgres.connector.itlabs.io/db-username": "username",
+            "postgres.connector.itlabs.io/db-name": "database",
+        }
+        labels = {}
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert PostgresConnectorApplicationError(
+            "Couldn't parse Vault secret path: secret/data/postgres "
+            "for Postgres"
+        ) in errors
+
+    def test_vault_secret_not_contains_some_expected_keys(self, kube):
+        annotations = {
+            "postgres.connector.itlabs.io/instance-name": "postgres",
+            "postgres.connector.itlabs.io/vault-path": "vault:secret/data/postgres",
+            "postgres.connector.itlabs.io/db-username": "username",
+            "postgres.connector.itlabs.io/db-name": "database",
+        }
+        labels = {}
+
+        vault = MockedVaultClient(secret={
+            "DATABASE_PORT": "5432",
+            "DATABASE_NAME": "postgres",
+            "DATABASE_USER": "postgres",
+            "DATABASE_PASSWORD": "postgres",
+        })
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = PostgresConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert PostgresConnectorApplicationError(
+            "Vault secret path for application doesn't contains next keys: "
+            "DATABASE_HOST for Postgres"
+        ) in errors

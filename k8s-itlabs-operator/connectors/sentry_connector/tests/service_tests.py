@@ -6,12 +6,17 @@ from clients.vault.tests.mocks import MockedVaultClient
 from connectors.sentry_connector import specifications
 from connectors.sentry_connector.dto import SentryConnector
 from connectors.sentry_connector.exceptions import SentryConnectorCrdDoesNotExist, NonExistSecretForSentryConnector
+from connectors.sentry_connector.factories.dto_factory import \
+    SentryConnectorMicroserviceDtoFactory
 from connectors.sentry_connector.services.kubernetes import KubernetesService
 from connectors.sentry_connector.services.sentry import SentryService
 from connectors.sentry_connector.services.sentry_connector import SentryConnectorService
+from connectors.sentry_connector.services.validation import \
+    SentryConnectorValidationService, SentryConnectorApplicationError
 from connectors.sentry_connector.services.vault import VaultService
 from connectors.sentry_connector.tests.factories import SentryConnectorMicroserviceDtoTestFactory
-from connectors.sentry_connector.tests.mocks import KubernetesServiceMocker, MockedVaultService
+from connectors.sentry_connector.tests.mocks import KubernetesServiceMocker, \
+    MockedVaultService, MockKubernetesService
 
 
 @pytest.mark.unit
@@ -112,3 +117,123 @@ class TestSentryConnectorService:
             "containers": [{"name": "container"}]
         }
         assert sentry_conn_service.mutate_containers(spec=spec, ms_sentry_conn=ms_sentry_conn)
+
+
+@pytest.mark.unit
+class TestSentryConnectorValidationService:
+    @pytest.fixture
+    def vault(self):
+        return MockedVaultClient(secret={
+            "SENTRY_DSN": "https://00000000000000000000000000000000@sentry/1",
+            "SENTRY_PROJECT_SLUG": "sentry",
+        })
+
+    @pytest.fixture
+    def kube(self):
+        return MockKubernetesService()
+
+    def test_all_annotations_exists(self, kube, vault):
+        annotations = {
+            "sentry.connector.itlabs.io/instance-name": "sentry",
+            "sentry.connector.itlabs.io/vault-path": "vault:secret/data/sentry",
+            "sentry.connector.itlabs.io/environment": "test",
+            "sentry.connector.itlabs.io/project": "project",
+            "sentry.connector.itlabs.io/team": "team",
+        }
+        labels = {}
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+        assert not errors
+
+    def test_required_annotations_and_label_for_default_value_exists(self, kube, vault):
+        annotations = {
+            "sentry.connector.itlabs.io/instance-name": "sentry",
+            "sentry.connector.itlabs.io/vault-path": "vault:secret/data/sentry",
+        }
+        labels = {
+            "app": "application",
+        }
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+        assert not errors
+
+    def test_required_annotations_not_exist(self, kube, vault):
+        annotations = {}
+        labels = {
+            "app": "application",
+        }
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert SentryConnectorApplicationError(
+            "Sentry instance name for application is not set in annotations"
+        ) in errors
+        assert SentryConnectorApplicationError(
+            "Vault secret path for application is not set in annotations "
+            "for Sentry"
+        ) in errors
+
+    def test_label_for_default_value_not_exists(self, kube, vault):
+        annotations = {
+            "sentry.connector.itlabs.io/instance-name": "sentry",
+            "sentry.connector.itlabs.io/vault-path": "vault:secret/data/sentry",
+        }
+        labels = {}
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert SentryConnectorApplicationError(
+            "Sentry team for application is not set in annotations"
+        ) in errors
+        assert SentryConnectorApplicationError(
+            "Sentry project for application is not set in annotations"
+        ) in errors
+
+    def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
+        annotations = {
+            "sentry.connector.itlabs.io/instance-name": "sentry",
+            "sentry.connector.itlabs.io/vault-path": "secret/data/sentry",
+            "sentry.connector.itlabs.io/environment": "test",
+            "sentry.connector.itlabs.io/project": "project",
+            "sentry.connector.itlabs.io/team": "team",
+        }
+        labels = {}
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert SentryConnectorApplicationError(
+            "Couldn't parse Vault secret path: secret/data/sentry for Sentry"
+        ) in errors
+
+    def test_vault_secret_not_contains_some_expected_keys(self, kube):
+        annotations = {
+            "sentry.connector.itlabs.io/instance-name": "sentry",
+            "sentry.connector.itlabs.io/vault-path": "vault:secret/data/sentry",
+            "sentry.connector.itlabs.io/environment": "test",
+            "sentry.connector.itlabs.io/project": "project",
+            "sentry.connector.itlabs.io/team": "team",
+        }
+        labels = {}
+
+        vault = MockedVaultClient(secret={
+            "SENTRY_PROJECT_SLUG": "sentry",
+        })
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationService(kube, vault)
+        errors = service.validate(connector_dto)
+
+        assert SentryConnectorApplicationError(
+            "Vault secret path for application doesn't contains next keys: "
+            "SENTRY_DSN for Sentry"
+        ) in errors

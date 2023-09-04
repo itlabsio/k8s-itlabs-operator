@@ -26,18 +26,19 @@ class KeycloakConnectorService:
         return has_required_annotations
 
     @staticmethod
-    def containers_contain_required_envs(spec: dict) -> bool:
+    def any_containers_contain_required_envs(spec: dict) -> bool:
         all_containers = chain(
             spec.get("containers", []),
             spec.get("initContainers", [])
         )
 
+        required_envs = set(env for env, _ in specifications.KEYCLOAK_VAR_NAMES)
+
         for container in all_containers:
-            for env_name, _ in specifications.KEYCLOAK_VAR_NAMES:
-                envs = [e.get("name") for e in container.get("env", {})]
-                if env_name not in envs:
-                    return False
-        return True
+            envs = set(e.get("name") for e in container.get("env", []))
+            if (envs & required_envs) == required_envs:
+                return True
+        return False
 
     def on_create_deployment(self, ms_kk_conn: KeycloakConnectorMicroserviceDto):
         kk_connector = KubernetesService.get_keycloak_connector(ms_kk_conn.keycloak_instance_name)

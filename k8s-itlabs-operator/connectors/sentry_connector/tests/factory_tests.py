@@ -1,16 +1,30 @@
 import pytest
 
 from connectors.sentry_connector import specifications
-from connectors.sentry_connector.exceptions import EnvironmentValueError
 from connectors.sentry_connector.factories.dto_factory import SentryConnectorMicroserviceDtoFactory
 
 
 @pytest.mark.unit
 class TestSentryConnectorMicroserviceDtoFactory:
 
-    def test_label_contain_incorrect_environment_value(self):
-        annotations = {specifications.SENTRY_ENVIRONMENT_ANNOTATION: "dev"}
+    def test_annotation_contain_transform_environment_value(self):
         labels = {}
+        annotations = {
+            specifications.SENTRY_ENVIRONMENT_ANNOTATION: "development"
+        }
 
-        with pytest.raises(EnvironmentValueError):
-            SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(
+            annotations, labels
+        )
+
+        assert dto.environment == "dev"
+
+    def test_annotation_contain_unchangeable_environment_value(self):
+        labels = {}
+        annotations = {specifications.SENTRY_ENVIRONMENT_ANNOTATION: "any"}
+
+        dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(
+            annotations, labels
+        )
+
+        assert dto.environment == "any"

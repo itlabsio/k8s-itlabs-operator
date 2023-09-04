@@ -2,6 +2,8 @@ from typing import Optional
 
 from clients.postgres.dto import PgConnectorDbSecretDto
 from connectors.postgres_connector.dto import PgConnectorInstanceSecretDto, PgConnector
+from connectors.postgres_connector.services.kubernetes import \
+    AbstractKubernetesService
 from connectors.postgres_connector.services.postgres import AbstractPostgresService
 from connectors.postgres_connector.services.vault import AbstractVaultService
 
@@ -55,3 +57,16 @@ class PostgresServiceFactoryMocker:
             'postgres.PostgresServiceFactory.create_pg_service',
             return_value=pg_service if pg_service else MockedPostgresService()
         )
+
+
+class MockKubernetesService(AbstractKubernetesService):
+    @classmethod
+    def get_pg_connector(cls, name: str) -> PgConnector:
+        return PgConnector(
+            host="postgres.default",
+            port=5432,
+            database="postgres",
+            username="vault:secret/data/infrastructure/postgres#USERNAME",
+            password="vault:secret/data/infrastructure/postgres#PASSWORD",
+        )
+

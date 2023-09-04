@@ -19,9 +19,9 @@ class KeycloakConnectorMicroserviceDtoFactory:
             annotations: dict
     ) -> KeycloakConnectorMicroserviceDto:
         return KeycloakConnectorMicroserviceDto(
-            keycloak_instance_name=annotations.get(KEYCLOAK_INSTANCE_NAME_ANNOTATION),
-            vault_path=annotations.get(KEYCLOAK_VAULT_PATH_ANNOTATION),
-            client_id=annotations.get(KEYCLOAK_CLIENT_ID_ANNOTATION),
+            keycloak_instance_name=annotations.get(KEYCLOAK_INSTANCE_NAME_ANNOTATION, ""),
+            vault_path=annotations.get(KEYCLOAK_VAULT_PATH_ANNOTATION, ""),
+            client_id=annotations.get(KEYCLOAK_CLIENT_ID_ANNOTATION, ""),
         )
 
 

@@ -8,7 +8,9 @@ from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.sentry_connector.services.sentry_connector import SentryConnectorService
 from connectors.sentry_connector.factories.dto_factory import SentryConnectorMicroserviceDtoFactory
 from connectors.sentry_connector.factories.service_factories.sentry_connector import SentryConnectorServiceFactory
-from connectors.sentry_connector.exceptions import SentryConnectorError, EnvironmentValueError
+from connectors.sentry_connector.exceptions import SentryConnectorError
+from connectors.sentry_connector.factories.service_factories.validation import \
+    SentryConnectorValidationServiceFactory
 from utils.common import OwnerReferenceDto, get_owner_reference
 
 
@@ -26,12 +28,7 @@ def create_pods(body, patch, spec, labels, annotations, **_):
     if not status.is_used:
         logging.info(f"[{owner_fmt}] Sentry connector is not used, because no expected annotations")
         return status
-    try:
-        ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
-    except EnvironmentValueError as e:
-        logging.error(f"[{owner_fmt}] Problem with Sentry connector", exc_info=e)
-        status.exception = e
-        return status
+    ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
 
     sentry_conn_service = SentryConnectorServiceFactory.create_sentry_connector_service()
     logging.info(f"[{owner_fmt}] Sentry connector service is created")
@@ -57,7 +54,7 @@ def create_pods(body, patch, spec, labels, annotations, **_):
 
 @kopf.on.create("pods.v1", id="sentry-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="sentry_connector")
-def check_creation(annotations, labels, body, spec, **_):
+def check_creation(annotations, labels, body, **_):
     status = MutationHookStatus()
     if not SentryConnectorService.is_sentry_conn_used_by_object(annotations, labels):
         status.is_used = False
@@ -65,13 +62,30 @@ def check_creation(annotations, labels, body, spec, **_):
 
     status.is_used = True
     status.is_success = True
-    if not SentryConnectorService.containers_contain_required_envs(spec):
-        kopf.event(
-            body,
-            type="Error",
-            reason="SentryConnector",
-            message="Sentry Connector not applied",
-        )
+    spec = body.get("spec", {})
+    if not SentryConnectorService.any_containers_contain_required_envs(spec):
         status.is_success = False
+
+        connector_dto = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        service = SentryConnectorValidationServiceFactory.create()
+        errors = service.validate(connector_dto)
+        if errors:
+            reasons = "; ".join(str(e) for e in errors)
+            kopf.event(
+                body,
+                type="Error",
+                reason="SentryConnector",
+                message=f"Sentry Connector not applied for next reasons: {reasons}",
+            )
+        else:
+            kopf.event(
+                body,
+                type="Error",
+                reason="SentryConnector",
+                message=(
+                    "Sentry Connector not applied by unknown reasons. "
+                    "It's maybe problems with infrastructure or certificates."
+                )
+            )
 
     return status

@@ -27,9 +27,12 @@ SENTRY_VAR_NAMES = (
     ("SENTRY_DSN", SENTRY_DSN_KEY),
 )
 
+REQUIRED_SENTRY_SECRET_KEYS = (
+    SENTRY_DSN_KEY,
+    SENTRY_PROJECT_SLUG_KEY,
+)
 
-SENTRY_AVAILABLE_ENVIRONMENTS = {
+SENTRY_TRANSFORM_ENVIRONMENTS = {
     "development": "dev",
-    "stage": "stage",
     "production": "prod",
 }
