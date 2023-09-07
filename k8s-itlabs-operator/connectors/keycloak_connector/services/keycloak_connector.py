@@ -19,13 +19,6 @@ class KeycloakConnectorService:
         self.vault_service = vault_service
 
     @staticmethod
-    def is_kk_conn_used_by_obj(annotations: dict) -> bool:
-        has_required_annotations = all(
-            map(lambda x: x in annotations, REQUIRED_ANNOTATIONS)
-        )
-        return has_required_annotations
-
-    @staticmethod
     def any_containers_contain_required_envs(spec: dict) -> bool:
         all_containers = chain(
             spec.get("containers", []),

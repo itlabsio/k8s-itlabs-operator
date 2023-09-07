@@ -37,39 +37,18 @@ class KeycloakConnectorValidationService(ConnectorValidationService):
         self.errors = []
 
         self._check_instance(keycloak_connector_dto.keycloak_instance_name)
-        self._check_client(keycloak_connector_dto.client_id)
         self._check_vault_secret(keycloak_connector_dto.vault_path)
 
         return self.errors
 
     def _check_instance(self, instance_name: str):
-        if not instance_name:
-            self.errors.append(KeycloakConnectorApplicationError(
-                "Keycloak instance name for application "
-                "is not set in annotations"
-            ))
-            return
-
         instance_connector = self._kube_service.get_keycloak_connector(instance_name)
         if not instance_connector:
             self.errors.append(KeycloakConnectorInfrastructureError(
                 f"Keycloak Custom Resource `{instance_name}` does not exist"
             ))
 
-    def _check_client(self, client_id: str):
-        if not client_id:
-            self.errors.append(KeycloakConnectorApplicationError(
-                "Keycloak client id for application is not set in annotations"
-            ))
-
     def _check_vault_secret(self, secret_path: str):
-        if not secret_path:
-            self.errors.append(KeycloakConnectorApplicationError(
-                "Vault secret path for application "
-                "is not set in annotations for Keycloak"
-            ))
-            return
-
         try:
             VaultPathFactory.path_from_str(secret_path)
             secret = self._vault_client.read_secret(secret_path)
