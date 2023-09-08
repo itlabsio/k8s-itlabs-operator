@@ -9,8 +9,7 @@ from operators.dto import ConnectorStatus, MutationHookStatus
 from connectors.keycloak_connector.services.keycloak_connector import \
     KeycloakConnectorService
 from connectors.keycloak_connector.exceptions import KeycloakConnectorError, \
-    KeycloakConnectorMissingRequiredAnnotationError, KeycloakConnectorAnnotationEmptyValueError, \
-    KeycloakConnectorAnnotationEmptyValueErrorList
+    KeycloakConnectorMissingRequiredAnnotationError, KeycloakConnectorAnnotationEmptyValueError
 from connectors.keycloak_connector.factories.dto_factory import \
     KeycloakConnectorMicroserviceDtoFactory as DtoFactory
 from connectors.keycloak_connector.factories.service_factories.keycloak_connector import \
@@ -37,7 +36,7 @@ def create_pods(body, patch, spec, annotations, **_):
         logging.info(f"[{owner_fmt}] Keycloak connector is not used, "
                      "because not expected annotations")
         return status
-    except KeycloakConnectorAnnotationEmptyValueErrorList as e:
+    except KeycloakConnectorAnnotationEmptyValueError as e:
         logging.error(f"[{owner_fmt}] Problem with Keycloak connector: {e.message}", exc_info=e)
         status.is_enabled = False
         status.exception = e
@@ -77,7 +76,7 @@ def check_creation(annotations, name, body, **_):
     except KeycloakConnectorMissingRequiredAnnotationError:
         status.is_used = False
         return status
-    except KeycloakConnectorAnnotationEmptyValueErrorList as e:
+    except KeycloakConnectorAnnotationEmptyValueError as e:
         logging.error(f"[{name}] Problem with Keycloak connector: {e.message}", exc_info=e)
         status.is_enabled = False
         status.exception = e

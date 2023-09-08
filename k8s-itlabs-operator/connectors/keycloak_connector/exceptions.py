@@ -1,7 +1,5 @@
 from typing import List
 
-from connectors.keycloak_connector import specifications
-
 
 class KeycloakConnectorError(Exception):
     pass
@@ -16,27 +14,16 @@ class NonExistSecretForKeycloakConnector(KeycloakConnectorError):
 
 
 class KeycloakConnectorMissingRequiredAnnotationError(KeycloakConnectorError):
-    pass
+    def __init__(self, missed_annotation_names: List[str]):
+        super().__init__()
+        self.missed_annotation_names = missed_annotation_names
+        annotations = ', '.join(missed_annotation_names)
+        self.message = f"Missed required annotations: {annotations}"
 
 
 class KeycloakConnectorAnnotationEmptyValueError(KeycloakConnectorError):
-    def __init__(self, annotation_name: str):
+    def __init__(self, empty_annotation_names: List[str]):
         super().__init__()
-        if annotation_name == specifications.KEYCLOAK_INSTANCE_NAME_ANNOTATION:
-            required_data = "Keycloak instance name"
-        elif annotation_name == specifications.KEYCLOAK_CLIENT_ID_ANNOTATION:
-            required_data = "Keycloak client id"
-        elif annotation_name == specifications.KEYCLOAK_VAULT_PATH_ANNOTATION:
-            required_data = "Keycloak's vault secret path"
-        else:
-            required_data = annotation_name
-        self.message = f"{required_data} for application is empty in annotations"
-
-
-class KeycloakConnectorAnnotationEmptyValueErrorList(KeycloakConnectorError):
-    def __init__(self, errors: List[KeycloakConnectorAnnotationEmptyValueError]):
-        self.errors = errors
-
-    @property
-    def message(self) -> str:
-        return ", ".join([e.message for e in self.errors])
+        self.empty_annotation_names = empty_annotation_names
+        annotations = ', '.join(empty_annotation_names)
+        self.message = f"Unaccessable empty value for annotations: {annotations}"

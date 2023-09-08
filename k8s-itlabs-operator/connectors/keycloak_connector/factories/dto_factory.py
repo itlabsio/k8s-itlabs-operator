@@ -2,7 +2,7 @@ from connectors.keycloak_connector import specifications
 from connectors.keycloak_connector.crd import KeycloakConnectorCrd
 from connectors.keycloak_connector.exceptions import (
     KeycloakConnectorMissingRequiredAnnotationError,
-    KeycloakConnectorAnnotationEmptyValueError, KeycloakConnectorAnnotationEmptyValueErrorList
+    KeycloakConnectorAnnotationEmptyValueError
 )
 
 from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
@@ -12,17 +12,15 @@ from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, 
 class KeycloakConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_metadata(cls, annotations: dict) -> KeycloakConnectorMicroserviceDto:
-        errors = []
-        if not all(map(lambda x: x in annotations, specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS)):
-            raise KeycloakConnectorMissingRequiredAnnotationError()
-        if not annotations.get(specifications.KEYCLOAK_INSTANCE_NAME_ANNOTATION):
-            errors.append(KeycloakConnectorAnnotationEmptyValueError(specifications.KEYCLOAK_INSTANCE_NAME_ANNOTATION))
-        if not annotations.get(specifications.KEYCLOAK_VAULT_PATH_ANNOTATION):
-            errors.append(KeycloakConnectorAnnotationEmptyValueError(specifications.KEYCLOAK_VAULT_PATH_ANNOTATION))
-        if not annotations.get(specifications.KEYCLOAK_CLIENT_ID_ANNOTATION):
-            errors.append(KeycloakConnectorAnnotationEmptyValueError(specifications.KEYCLOAK_CLIENT_ID_ANNOTATION))
-        if errors:
-            raise KeycloakConnectorAnnotationEmptyValueErrorList(errors=errors)
+        required_annotations = {x: annotations[x] for x in annotations if
+                                x in specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS}
+        missed_annotation_names = [x for x in specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS if
+                                   x not in required_annotations]
+        if missed_annotation_names:
+            raise KeycloakConnectorMissingRequiredAnnotationError(missed_annotation_names=missed_annotation_names)
+        empty_annotation_names = [key for key in required_annotations if not annotations[key]]
+        if empty_annotation_names:
+            raise KeycloakConnectorAnnotationEmptyValueError(empty_annotation_names=empty_annotation_names)
         return KeycloakConnectorMicroserviceDto(
             keycloak_instance_name=annotations.get(specifications.KEYCLOAK_INSTANCE_NAME_ANNOTATION),
             vault_path=annotations.get(specifications.KEYCLOAK_VAULT_PATH_ANNOTATION),
