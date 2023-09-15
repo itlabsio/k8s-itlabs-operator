@@ -1,14 +1,38 @@
-class RabbitConnectorCrdDoesNotExist(Exception):
+from validation.exceptions import AnnotationValidatorEmptyValueException, AnnotationValidatorMissedRequiredException, \
+    ConnectorError
+
+
+class RabbitConnectorError(ConnectorError):
     pass
 
 
-class UnknownVaultPathInRabbitConnector(Exception):
+class RabbitConnectorApplicationError(RabbitConnectorError):
     pass
 
 
-class NotMatchingUsernames(Exception):
+class RabbitConnectorInfrastructureError(RabbitConnectorError):
     pass
 
 
-class NotMatchingVhostNames(Exception):
+class RabbitConnectorCrdDoesNotExist(RabbitConnectorError):
+    pass
+
+
+class UnknownVaultPathInRabbitConnector(RabbitConnectorError):
+    pass
+
+
+class NotMatchingUsernames(RabbitConnectorError):
+    pass
+
+
+class NotMatchingVhostNames(RabbitConnectorError):
+    pass
+
+
+class RabbitConnectorMissingRequiredAnnotationError(RabbitConnectorError, AnnotationValidatorMissedRequiredException):
+    pass
+
+
+class RabbitConnectorAnnotationEmptyValueError(RabbitConnectorError, AnnotationValidatorEmptyValueException):
     pass

@@ -1,26 +1,27 @@
 from connectors.keycloak_connector import specifications
 from connectors.keycloak_connector.crd import KeycloakConnectorCrd
+from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
+    KeycloakConnector, KeycloakMsSecretDto, KeycloakApiSecretDto
 from connectors.keycloak_connector.exceptions import (
     KeycloakConnectorMissingRequiredAnnotationError,
     KeycloakConnectorAnnotationEmptyValueError
 )
+from validation.annotations_validator import AnnotationValidator
 
-from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
-    KeycloakConnector, KeycloakMsSecretDto, KeycloakApiSecretDto
+
+class KeycloakAnnotationValidator(AnnotationValidator):
+    required_annotation_names = specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS
+    on_missing_required_annotation_error = KeycloakConnectorMissingRequiredAnnotationError
+    not_empty_annotation_names = specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS
+    on_empty_value_annotation_error = KeycloakConnectorAnnotationEmptyValueError
 
 
 class KeycloakConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_metadata(cls, annotations: dict) -> KeycloakConnectorMicroserviceDto:
-        required_annotations = {x: annotations[x] for x in annotations if
+        keycloak_annotations = {x: annotations[x] for x in annotations if
                                 x in specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS}
-        missed_annotation_names = [x for x in specifications.KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS if
-                                   x not in required_annotations]
-        if missed_annotation_names:
-            raise KeycloakConnectorMissingRequiredAnnotationError(missed_annotation_names=missed_annotation_names)
-        empty_annotation_names = [key for key in required_annotations if not annotations[key]]
-        if empty_annotation_names:
-            raise KeycloakConnectorAnnotationEmptyValueError(empty_annotation_names=empty_annotation_names)
+        KeycloakAnnotationValidator.validate(annotations=keycloak_annotations)
         return KeycloakConnectorMicroserviceDto(
             keycloak_instance_name=annotations.get(specifications.KEYCLOAK_INSTANCE_NAME_ANNOTATION),
             vault_path=annotations.get(specifications.KEYCLOAK_VAULT_PATH_ANNOTATION),

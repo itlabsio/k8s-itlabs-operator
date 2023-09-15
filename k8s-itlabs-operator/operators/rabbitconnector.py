@@ -12,6 +12,7 @@ from connectors.rabbit_connector.services.rabbit_connector import RabbitConnecto
 from connectors.rabbit_connector.factories.service_factories.validation import \
     RabbitConnectorValidationServiceFactory
 from utils.common import OwnerReferenceDto, get_owner_reference
+from validation.exceptions import AnnotationValidatorEmptyValueException, AnnotationValidatorMissedRequiredException
 
 
 @kopf.on.mutate('pods.v1', id='rabbit-connector-on-createpods')
@@ -24,11 +25,19 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
     logging.info(f"[{owner_fmt}] A rabbit mutate handler is called on pod creating")
     status = ConnectorStatus()
-    status.is_used = RabbitConnectorService.is_rabbit_conn_used_by_object(annotations)
-    if not status.is_used:
-        logging.info(f"[{owner_fmt}] Rabbit connector is not used, because no expected annotations")
+
+    try:
+        ms_rabbit_con = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+    except AnnotationValidatorMissedRequiredException as e:
+        status.is_used = False
+        logging.info(f"[{owner_fmt}] Rabbit connector is not used, reason: {e.message}")
         return status
-    ms_rabbit_con = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+    except AnnotationValidatorEmptyValueException as e:
+        logging.error(f"[{owner_fmt}] Problem with Rabbit connector: {e.message}", exc_info=e)
+        status.is_used = True
+        status.exception = e
+        return status
+
     rabbit_con_service = RabbitConnectorServiceFactory.create_rabbit_connector_service()
     logging.info(f"[{owner_fmt}] Rabbit connector service is created")
     try:
@@ -53,11 +62,18 @@ def create_pods(body, patch, spec, annotations, labels, **_):
 
 @kopf.on.create("pods.v1", id="rabbit-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="rabbit_connector")
-def check_creation(annotations, labels, body, **_):
+def check_creation(annotations, name, labels, body, **_):
     status = MutationHookStatus()
-
-    if not RabbitConnectorService.is_rabbit_conn_used_by_object(annotations):
+    try:
+        ms_rabbit_con = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+    except AnnotationValidatorMissedRequiredException as e:
         status.is_used = False
+        logging.info(f"[{name}] Rabbit connector is not used, reason: {e.message}")
+        return status
+    except AnnotationValidatorEmptyValueException as e:
+        logging.error(f"[{name}] Problem with Rabbit connector: {e.message}", exc_info=e)
+        status.is_used = True
+        status.exception = e
         return status
 
     status.is_used = True
@@ -66,9 +82,8 @@ def check_creation(annotations, labels, body, **_):
     if not RabbitConnectorService.any_containers_contain_required_envs(spec):
         status.is_success = False
 
-        connector_dto = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
         service = RabbitConnectorValidationServiceFactory.create()
-        errors = service.validate(connector_dto)
+        errors = service.validate(ms_rabbit_con)
         if errors:
             reasons = "; ".join(str(e) for e in errors)
             kopf.event(

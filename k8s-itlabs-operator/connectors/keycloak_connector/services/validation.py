@@ -1,31 +1,22 @@
-from typing import List
+from typing import List, Type
 
 from clients.vault.exceptions import IncorrectPath
 from clients.vault.factories.vault_path import VaultPathFactory
 from clients.vault.vaultclient import AbstractVaultClient
 from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto
+from connectors.keycloak_connector.exceptions import KeycloakConnectorInfrastructureError, \
+    KeycloakConnectorApplicationError
 from connectors.keycloak_connector.services.kubernetes import \
     AbstractKubernetesService
 from connectors.keycloak_connector.specifications import \
     REQUIRED_KEYCLOAK_SECRET_KEYS
 from exceptions import InfrastructureServiceProblem
-from utils.validation import ConnectorValidationService, ConnectorError
-
-
-class KeycloakConnectorError(ConnectorError):
-    pass
-
-
-class KeycloakConnectorApplicationError(KeycloakConnectorError):
-    pass
-
-
-class KeycloakConnectorInfrastructureError(KeycloakConnectorError):
-    pass
+from validation.abstract_service import ConnectorValidationService
+from validation.exceptions import ConnectorError
 
 
 class KeycloakConnectorValidationService(ConnectorValidationService):
-    def __init__(self, kube_service: AbstractKubernetesService, vault_client: AbstractVaultClient):
+    def __init__(self, kube_service: Type[AbstractKubernetesService], vault_client: AbstractVaultClient):
         super().__init__()
 
         self._kube_service = kube_service

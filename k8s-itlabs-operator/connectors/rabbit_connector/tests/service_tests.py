@@ -4,12 +4,13 @@ from clients.vault.tests.mocks import MockedVaultClient
 from connectors.rabbit_connector import specifications
 from connectors.rabbit_connector.dto import RabbitConnector, \
     RabbitConnectorMicroserviceDto, RabbitApiSecretDto
-from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExist, UnknownVaultPathInRabbitConnector
+from connectors.rabbit_connector.exceptions import RabbitConnectorCrdDoesNotExist, UnknownVaultPathInRabbitConnector, \
+    RabbitConnectorApplicationError
 from connectors.rabbit_connector.factories.dto_factory import \
     RabbitConnectorMicroserviceDtoFactory
 from connectors.rabbit_connector.services.rabbit_connector import RabbitConnectorService
 from connectors.rabbit_connector.services.validation import \
-    RabbitConnectorValidationService, RabbitConnectorApplicationError
+    RabbitConnectorValidationService
 from connectors.rabbit_connector.tests.factories import RabbitConnectorMicroserviceDtoTestFactory, \
     RabbitApiSecretDtoTestFactory
 from connectors.rabbit_connector.tests.mocks import MockedVaultService, \
@@ -19,20 +20,6 @@ from connectors.rabbit_connector.tests.mocks import MockedVaultService, \
 
 @pytest.mark.unit
 class TestRabbitConnectorService:
-    def test_is_rabbit_conn_used_by_object_used(self):
-        annotations = {
-            'a': 'some',
-            specifications.RABBIT_INSTANCE_NAME_ANNOTATION: 'rabbit',
-            specifications.VAULTPATH_NAME_ANNOTATION: 'path',
-        }
-        is_used = RabbitConnectorService.is_rabbit_conn_used_by_object(annotations=annotations)
-        assert is_used
-
-    def test_is_rabbit_conn_used_by_object_unused(self):
-        annotations = {}
-        is_used = RabbitConnectorService.is_rabbit_conn_used_by_object(annotations=annotations)
-        assert not is_used
-
     def test_on_create_deployment_no_crds(self, mocker):
         KubernetesServiceMocker.mock_get_rabbit_connector(mocker=mocker)
         ms_rabbit_con = RabbitConnectorMicroserviceDtoTestFactory()
@@ -142,74 +129,7 @@ class TestRabbitConnectorValidationService:
 
     @pytest.fixture
     def kube(self):
-        return MockKubernetesService()
-
-    def test_all_annotations_exists(self, kube, vault):
-        annotations = {
-            "rabbit.connector.itlabs.io/instance-name": "rabbit",
-            "rabbit.connector.itlabs.io/vault-path": f"vault:secret/data/rabbit",
-            "rabbit.connector.itlabs.io/username": "rabbit",
-            "rabbit.connector.itlabs.io/vhost": "rabbit",
-        }
-        labels = {}
-
-        connector_dto = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
-        service = RabbitConnectorValidationService(kube, vault)
-        errors = service.validate(connector_dto)
-        assert not errors
-
-    def test_required_annotations_and_label_for_default_value_exist(self, kube, vault):
-        annotations = {
-            "rabbit.connector.itlabs.io/instance-name": "rabbit",
-            "rabbit.connector.itlabs.io/vault-path": f"vault:secret/data/rabbit",
-        }
-        labels = {
-            "app": "application",
-        }
-
-        connector_dto = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(
-            annotations, labels)
-        service = RabbitConnectorValidationService(kube, vault)
-        errors = service.validate(connector_dto)
-        assert not errors
-
-    def test_required_annotations_not_exist(self, kube, vault):
-        annotations = {}
-        labels = {
-            "app": "application",
-        }
-
-        connector_dto = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(
-            annotations, labels)
-        service = RabbitConnectorValidationService(kube, vault)
-        errors = service.validate(connector_dto)
-
-        assert RabbitConnectorApplicationError(
-            "RabbitMQ instance name for application is not set in annotations"
-        ) in errors
-        assert RabbitConnectorApplicationError(
-            "Vault secret path for application is not set in annotations "
-            "for RabbitMQ"
-        ) in errors
-
-    def test_label_for_default_value_not_exist(self, kube, vault):
-        annotations = {
-            "rabbit.connector.itlabs.io/instance-name": "rabbit",
-            "rabbit.connector.itlabs.io/vault-path": f"vault:secret/data/rabbit",
-        }
-        labels = {}
-
-        connector_dto = RabbitConnectorMicroserviceDtoFactory.dto_from_annotations(
-            annotations, labels)
-        service = RabbitConnectorValidationService(kube, vault)
-        errors = service.validate(connector_dto)
-
-        assert RabbitConnectorApplicationError(
-            "RabbitMQ username for application is not set in annotations"
-        ) in errors
-        assert RabbitConnectorApplicationError(
-            "RabbitMQ vhost for application is not set in annotations"
-        ) in errors
+        return MockKubernetesService
 
     def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
         annotations = {

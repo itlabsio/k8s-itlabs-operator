@@ -1,7 +1,16 @@
-from typing import List
+from validation.exceptions import AnnotationValidatorMissedRequiredException, AnnotationValidatorEmptyValueException, \
+    ConnectorError
 
 
-class KeycloakConnectorError(Exception):
+class KeycloakConnectorError(ConnectorError):
+    pass
+
+
+class KeycloakConnectorApplicationError(KeycloakConnectorError):
+    pass
+
+
+class KeycloakConnectorInfrastructureError(KeycloakConnectorError):
     pass
 
 
@@ -13,17 +22,10 @@ class NonExistSecretForKeycloakConnector(KeycloakConnectorError):
     pass
 
 
-class KeycloakConnectorMissingRequiredAnnotationError(KeycloakConnectorError):
-    def __init__(self, missed_annotation_names: List[str]):
-        super().__init__()
-        self.missed_annotation_names = missed_annotation_names
-        annotations = ', '.join(missed_annotation_names)
-        self.message = f"Missed required annotations: {annotations}"
+class KeycloakConnectorMissingRequiredAnnotationError(KeycloakConnectorError,
+                                                      AnnotationValidatorMissedRequiredException):
+    pass
 
 
-class KeycloakConnectorAnnotationEmptyValueError(KeycloakConnectorError):
-    def __init__(self, empty_annotation_names: List[str]):
-        super().__init__()
-        self.empty_annotation_names = empty_annotation_names
-        annotations = ', '.join(empty_annotation_names)
-        self.message = f"Unaccessable empty value for annotations: {annotations}"
+class KeycloakConnectorAnnotationEmptyValueError(KeycloakConnectorError, AnnotationValidatorEmptyValueException):
+    pass

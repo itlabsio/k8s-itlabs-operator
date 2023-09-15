@@ -2,7 +2,6 @@ import logging
 
 import kopf
 
-
 from exceptions import InfrastructureServiceProblem
 from observability.metrics.decorator import monitoring, mutation_hook_monitoring
 from operators.dto import ConnectorStatus, MutationHookStatus
@@ -31,17 +30,16 @@ def create_pods(body, patch, spec, annotations, **_):
     status = ConnectorStatus()
     try:
         ms_keycloak_conn = DtoFactory.dto_from_metadata(annotations)
-    except KeycloakConnectorMissingRequiredAnnotationError:
+    except KeycloakConnectorMissingRequiredAnnotationError as e:
         status.is_used = False
-        logging.info(f"[{owner_fmt}] Keycloak connector is not used, "
-                     "because not expected annotations")
+        logging.info(f"[{owner_fmt}] Keycloak connector is not used, reason: {e.message}")
         return status
     except KeycloakConnectorAnnotationEmptyValueError as e:
         logging.error(f"[{owner_fmt}] Problem with Keycloak connector: {e.message}", exc_info=e)
-        status.is_enabled = False
+        status.is_used = True
         status.exception = e
         return status
-
+    status.is_used = True
     kk_conn_service = KeycloakConnectorServiceFactory.create()
     logging.info(f"[{owner_fmt}] Keycloak connector service is created")
     try:
@@ -78,7 +76,7 @@ def check_creation(annotations, name, body, **_):
         return status
     except KeycloakConnectorAnnotationEmptyValueError as e:
         logging.error(f"[{name}] Problem with Keycloak connector: {e.message}", exc_info=e)
-        status.is_enabled = False
+        status.is_used = True
         status.exception = e
         return status
 

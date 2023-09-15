@@ -19,7 +19,7 @@ class TestKeycloakConnectorValidationService:
 
     @pytest.fixture
     def kube(self):
-        return MockKubernetesService()
+        return MockKubernetesService
 
     def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
         annotations = {

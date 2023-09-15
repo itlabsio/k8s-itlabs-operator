@@ -8,8 +8,6 @@ from connectors.keycloak_connector.exceptions import KeycloakConnectorCrdDoesNot
 from connectors.keycloak_connector.factories.service_factories.keycloak import KeycloakServiceFactory
 from connectors.keycloak_connector.services.kubernetes import KubernetesService
 from connectors.keycloak_connector.services.vault import VaultService
-from connectors.keycloak_connector.specifications import \
-    KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS as REQUIRED_ANNOTATIONS
 from utils.concurrency import ConnectorSourceLock
 from utils.hashing import generate_hash
 
