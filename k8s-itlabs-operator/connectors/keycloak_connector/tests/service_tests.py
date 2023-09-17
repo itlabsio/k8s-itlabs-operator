@@ -19,37 +19,7 @@ class TestKeycloakConnectorValidationService:
 
     @pytest.fixture
     def kube(self):
-        return MockKubernetesService()
-
-    def test_all_annotations_exists(self, kube, vault):
-        annotations = {
-            "keycloak.connector.itlabs.io/instance-name": "keycloak",
-            "keycloak.connector.itlabs.io/vault-path": "vault:secret/data/keycloak",
-            "keycloak.connector.itlabs.io/client-id": "keycloak",
-        }
-
-        connector_dto = KeycloakConnectorMicroserviceDtoFactory.dto_from_metadata(annotations)
-        service = KeycloakConnectorValidationService(kube, vault)
-        errors = service.validate(connector_dto)
-        assert not errors
-
-    def test_required_annotations_not_exists(self, kube, vault):
-        annotations = {}
-
-        connector_dto = KeycloakConnectorMicroserviceDtoFactory.dto_from_metadata(annotations)
-        service = KeycloakConnectorValidationService(kube, vault)
-        errors = service.validate(connector_dto)
-
-        assert KeycloakConnectorApplicationError(
-            "Keycloak instance name for application is not set in annotations"
-        ) in errors
-        assert KeycloakConnectorApplicationError(
-            "Keycloak client id for application is not set in annotations"
-        ) in errors
-        assert KeycloakConnectorApplicationError(
-            "Vault secret path for application is not set in annotations "
-            "for Keycloak"
-        ) in errors
+        return MockKubernetesService
 
     def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
         annotations = {

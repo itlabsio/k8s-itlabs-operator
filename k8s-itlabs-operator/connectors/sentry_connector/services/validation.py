@@ -4,24 +4,14 @@ from clients.vault.exceptions import IncorrectPath
 from clients.vault.factories.vault_path import VaultPathFactory
 from clients.vault.vaultclient import AbstractVaultClient
 from connectors.sentry_connector.dto import SentryConnectorMicroserviceDto
+from connectors.sentry_connector.exceptions import SentryConnectorApplicationError, SentryConnectorInfrastructureError
 from connectors.sentry_connector.services.kubernetes import \
     AbstractKubernetesService
 from connectors.sentry_connector.specifications import \
     REQUIRED_SENTRY_SECRET_KEYS
 from exceptions import InfrastructureServiceProblem
-from utils.validation import ConnectorError, ConnectorValidationService
-
-
-class SentryConnectorError(ConnectorError):
-    pass
-
-
-class SentryConnectorApplicationError(SentryConnectorError):
-    pass
-
-
-class SentryConnectorInfrastructureError(SentryConnectorError):
-    pass
+from validation.abstract_service import ConnectorValidationService
+from validation.exceptions import ConnectorError
 
 
 class SentryConnectorValidationService(ConnectorValidationService):

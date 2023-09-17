@@ -2,6 +2,9 @@ from connectors.sentry_connector import specifications
 from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, \
     SentryConnectorMicroserviceDto, SentryApiSecretDto
 from connectors.sentry_connector.crd import SentryConnectorCrd
+from connectors.sentry_connector.exceptions import SentryConnectorMissingRequiredAnnotationError, \
+    SentryConnectorAnnotationEmptyValueError
+from validation.annotations_validator import AnnotationValidator
 
 
 class SentryMsSecretDtoFactory:
@@ -30,21 +33,37 @@ class SentryConnectorFactory:
         )
 
 
+class SentryAnnotationValidator(AnnotationValidator):
+    required_annotation_names = specifications.SENTRY_CONNECTOR_REQUIRED_ANNOTATIONS
+    on_missing_required_annotation_error = SentryConnectorMissingRequiredAnnotationError
+    not_empty_annotation_names = specifications.SENTRY_CONNECTOR_ANNOTATIONS
+    on_empty_value_annotation_error = SentryConnectorAnnotationEmptyValueError
+
+
 class SentryConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> SentryConnectorMicroserviceDto:
-        default_team = labels.get(specifications.SENTRY_APP_NAME_LABEL, "")
-        default_project = labels.get(specifications.SENTRY_APP_NAME_LABEL, "")
+        sentry_annotations = {}
+        default_name = labels.get(specifications.SENTRY_APP_NAME_LABEL)
         default_environment = "default"
+        for key in specifications.SENTRY_CONNECTOR_ANNOTATIONS:
+            if key == specifications.SENTRY_PROJECT_ANNOTATION:
+                sentry_annotations[key] = annotations.get(specifications.SENTRY_PROJECT_ANNOTATION, default_name)
+            if key == specifications.SENTRY_TEAM_ANNOTATION:
+                sentry_annotations[key] = annotations.get(specifications.SENTRY_TEAM_ANNOTATION, default_name)
+            if key == specifications.SENTRY_ENVIRONMENT_ANNOTATION:
+                sentry_annotations[key] = cls._parse_environment(
+                    annotations.get(specifications.SENTRY_ENVIRONMENT_ANNOTATION, default_environment)
+                )
+            elif key in annotations:
+                sentry_annotations[key] = annotations[key]
+        SentryAnnotationValidator.validate(sentry_annotations)
         return SentryConnectorMicroserviceDto(
-            sentry_instance_name=annotations.get(specifications.SENTRY_INSTANCE_NAME_ANNOTATION, ""),
-            vault_path=annotations.get(specifications.SENTRY_VAULT_PATH_ANNOTATION, ""),
-            project=annotations.get(specifications.SENTRY_PROJECT_ANNOTATION, default_project),
-            team=annotations.get(specifications.SENTRY_TEAM_ANNOTATION, default_team),
-            environment=cls._parse_environment(annotations.get(
-                specifications.SENTRY_ENVIRONMENT_ANNOTATION,
-                default_environment
-            )),
+            sentry_instance_name=sentry_annotations.get(specifications.SENTRY_INSTANCE_NAME_ANNOTATION),
+            vault_path=sentry_annotations.get(specifications.SENTRY_VAULT_PATH_ANNOTATION),
+            project=sentry_annotations.get(specifications.SENTRY_PROJECT_ANNOTATION),
+            team=sentry_annotations.get(specifications.SENTRY_TEAM_ANNOTATION),
+            environment=sentry_annotations.get(specifications.SENTRY_ENVIRONMENT_ANNOTATION),
         )
 
     @staticmethod

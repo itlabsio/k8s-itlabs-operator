@@ -1,12 +1,7 @@
 import abc
-from typing import List, Any
+from typing import List
 
-
-class ConnectorError(Exception):
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, ConnectorError):
-            return str(self) == str(other)
-        return False
+from validation.exceptions import ConnectorError
 
 
 class ConnectorValidationService(abc.ABC):

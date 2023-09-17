@@ -9,7 +9,6 @@ from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSec
 from connectors.postgres_connector.factories.service_factories.postgres import PostgresServiceFactory
 from connectors.postgres_connector.services.kubernetes import KubernetesService
 from connectors.postgres_connector.services.vault import AbstractVaultService
-from connectors.postgres_connector.specifications import PG_CON_REQUIRED_ANNOTATION_NAMES
 from utils.concurrency import ConnectorSourceLock
 from utils.hashing import generate_hash
 
@@ -48,10 +47,6 @@ class PostgresConnectorService:
             host: str, port: int, database: str, username: str
     ) -> str:
         return generate_hash(host, port, database, username)
-
-    @staticmethod
-    def is_pg_conn_used_by_object(annotations: dict) -> bool:
-        return all(annotation_name in annotations for annotation_name in PG_CON_REQUIRED_ANNOTATION_NAMES)
 
     @staticmethod
     def any_containers_contain_required_envs(spec: dict) -> bool:

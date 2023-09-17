@@ -2,7 +2,10 @@ from connectors.rabbit_connector import specifications
 from connectors.rabbit_connector.crd import RabbitConnectorCrd
 from connectors.rabbit_connector.dto import RabbitConnectorMicroserviceDto, RabbitApiSecretDto, RabbitMsSecretDto, \
     RabbitConnector
+from connectors.rabbit_connector.exceptions import RabbitConnectorMissingRequiredAnnotationError, \
+    RabbitConnectorAnnotationEmptyValueError
 from utils.passgen import generate_password
+from validation.annotations_validator import AnnotationValidator
 
 
 class RabbitApiSecretDtoFactory:
@@ -17,15 +20,31 @@ class RabbitApiSecretDtoFactory:
         )
 
 
+class RabbitAnnotationValidator(AnnotationValidator):
+    required_annotation_names = specifications.RABBIT_CONNECTOR_REQUIRED_ANNOTATIONS
+    on_missing_required_annotation_error = RabbitConnectorMissingRequiredAnnotationError
+    not_empty_annotation_names = specifications.RABBIT_CONNECTOR_ANNOTATIONS
+    on_empty_value_annotation_error = RabbitConnectorAnnotationEmptyValueError
+
+
 class RabbitConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> RabbitConnectorMicroserviceDto:
+        rabbit_annotations = {}
         default_name = labels.get(specifications.APP_NAME_LABEL, "")
+        for key in specifications.RABBIT_CONNECTOR_ANNOTATIONS:
+            if key == specifications.USER_NAME_ANNOTATION:
+                rabbit_annotations[key] = annotations.get(specifications.USER_NAME_ANNOTATION, default_name)
+            elif key == specifications.VHOST_NAME_ANNOTATION:
+                rabbit_annotations[key] = annotations.get(specifications.VHOST_NAME_ANNOTATION, default_name)
+            elif key in annotations:
+                rabbit_annotations[key] = annotations[key]
+        RabbitAnnotationValidator.validate(annotations=rabbit_annotations)
         return RabbitConnectorMicroserviceDto(
-            rabbit_instance_name=annotations.get(specifications.RABBIT_INSTANCE_NAME_ANNOTATION, ""),
-            vault_path=annotations.get(specifications.VAULTPATH_NAME_ANNOTATION, ""),
-            username=annotations.get(specifications.USER_NAME_ANNOTATION, default_name),
-            vhost=annotations.get(specifications.VHOST_NAME_ANNOTATION, default_name)
+            rabbit_instance_name=rabbit_annotations.get(specifications.RABBIT_INSTANCE_NAME_ANNOTATION),
+            vault_path=rabbit_annotations.get(specifications.VAULTPATH_NAME_ANNOTATION),
+            username=rabbit_annotations.get(specifications.USER_NAME_ANNOTATION),
+            vhost=rabbit_annotations.get(specifications.VHOST_NAME_ANNOTATION),
         )
 
 

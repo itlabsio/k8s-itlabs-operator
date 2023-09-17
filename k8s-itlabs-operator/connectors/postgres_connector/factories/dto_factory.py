@@ -3,9 +3,12 @@ from connectors.postgres_connector import specifications
 from connectors.postgres_connector.crd import PostgresConnectorCrd
 from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, PgConnector, \
     PgConnectorInstanceSecretDto
+from connectors.postgres_connector.exceptions import PgConnectorAnnotationEmptyValueError, \
+    PgConnectorMissingRequiredAnnotationError
 from connectors.postgres_connector.specifications import PG_INSTANCE_NAME_ANNOTATION, VAULTPATH_NAME_ANNOTATION, \
     DB_NAME_ANNOTATION, USER_NAME_ANNOTATION, APP_NAME_LABEL
 from utils.passgen import generate_password
+from validation.annotations_validator import AnnotationValidator
 
 
 class PgConnectorFactory:
@@ -20,15 +23,31 @@ class PgConnectorFactory:
         )
 
 
+class PgAnnotationValidator(AnnotationValidator):
+    required_annotation_names = specifications.PG_CON_REQUIRED_ANNOTATION_NAMES
+    on_missing_required_annotation_error = PgConnectorMissingRequiredAnnotationError
+    not_empty_annotation_names = specifications.PG_CON_ANNOTATION_NAMES
+    on_empty_value_annotation_error = PgConnectorAnnotationEmptyValueError
+
+
 class PgConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> PgConnectorMicroserviceDto:
+        pg_annotations = {}
         default_name = labels.get(APP_NAME_LABEL, "")
+        for key in specifications.PG_CON_ANNOTATION_NAMES:
+            if key == DB_NAME_ANNOTATION:
+                pg_annotations[key] = annotations.get(DB_NAME_ANNOTATION, default_name)
+            elif key == USER_NAME_ANNOTATION:
+                pg_annotations[key] = annotations.get(USER_NAME_ANNOTATION, default_name)
+            elif key in annotations:
+                pg_annotations[key] = annotations[key]
+        PgAnnotationValidator.validate(annotations=pg_annotations)
         return PgConnectorMicroserviceDto(
-            pg_instance_name=annotations.get(PG_INSTANCE_NAME_ANNOTATION, ""),
-            vault_path=annotations.get(VAULTPATH_NAME_ANNOTATION, ""),
-            db_name=annotations.get(DB_NAME_ANNOTATION, default_name),
-            db_username=annotations.get(USER_NAME_ANNOTATION, default_name)
+            pg_instance_name=pg_annotations.get(PG_INSTANCE_NAME_ANNOTATION),
+            vault_path=pg_annotations.get(VAULTPATH_NAME_ANNOTATION),
+            db_name=pg_annotations.get(DB_NAME_ANNOTATION),
+            db_username=pg_annotations.get(USER_NAME_ANNOTATION)
         )
 
 
