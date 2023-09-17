@@ -20,7 +20,7 @@ services:
       - IPC_LOCK
 
   postgres:
-    build: ./sentry
+    build: ./postgres
     container_name: postgres
     networks:
       - kind
