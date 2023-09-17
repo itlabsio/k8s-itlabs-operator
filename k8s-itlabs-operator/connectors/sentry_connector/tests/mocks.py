@@ -1,6 +1,8 @@
 from typing import Optional
 
 from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, SentryApiSecretDto
+from connectors.sentry_connector.services.kubernetes import \
+    AbstractKubernetesService
 from connectors.sentry_connector.services.vault import AbstractVaultService
 
 
@@ -36,3 +38,13 @@ class MockedVaultService(AbstractVaultService):
 
     def unvault_sentry_connector(self, sentry_connector: SentryConnector) -> Optional[SentryApiSecretDto]:
         pass
+
+
+class MockKubernetesService(AbstractKubernetesService):
+    @classmethod
+    def get_sentry_connector(cls, name: str) -> Optional[SentryConnector]:
+        return SentryConnector(
+            url="http://sentry.local",
+            token="vault:secret/data/infrastructure/sentry#API_TOKEN",
+            organization="sentry",
+        )

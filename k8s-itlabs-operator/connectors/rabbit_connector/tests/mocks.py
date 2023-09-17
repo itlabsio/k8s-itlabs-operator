@@ -1,6 +1,8 @@
 from typing import Optional
 
 from connectors.rabbit_connector.dto import RabbitMsSecretDto, RabbitApiSecretDto, RabbitConnector
+from connectors.rabbit_connector.services.kubernetes import \
+    AbstractKubernetesService
 from connectors.rabbit_connector.services.rabbit import AbstractRabbitService
 from connectors.rabbit_connector.services.vault import AbstractVaultService
 
@@ -52,3 +54,16 @@ class KubernetesServiceMocker:
             'connectors.rabbit_connector.services.kubernetes.KubernetesService.get_rabbit_connector',
             return_value=rabbit_connector
         )
+
+
+class MockKubernetesService(AbstractKubernetesService):
+    @classmethod
+    def get_rabbit_connector(cls, name: str) -> Optional[RabbitConnector]:
+        return RabbitConnector(
+            broker_host="rabbit.default",
+            broker_port=5672,
+            url="https://rabbit.local",
+            username="vault:secret/data/infrastructure/rabbit#USERNAME",
+            password="vault:secret/data/infrastructure/rabbit#PASSWORD",
+        )
+

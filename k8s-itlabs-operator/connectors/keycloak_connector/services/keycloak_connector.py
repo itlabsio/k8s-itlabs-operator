@@ -8,8 +8,6 @@ from connectors.keycloak_connector.exceptions import KeycloakConnectorCrdDoesNot
 from connectors.keycloak_connector.factories.service_factories.keycloak import KeycloakServiceFactory
 from connectors.keycloak_connector.services.kubernetes import KubernetesService
 from connectors.keycloak_connector.services.vault import VaultService
-from connectors.keycloak_connector.specifications import \
-    KEYCLOAK_CONNECTOR_REQUIRED_ANNOTATIONS as REQUIRED_ANNOTATIONS
 from utils.concurrency import ConnectorSourceLock
 from utils.hashing import generate_hash
 
@@ -17,13 +15,6 @@ from utils.hashing import generate_hash
 class KeycloakConnectorService:
     def __init__(self, vault_service: VaultService):
         self.vault_service = vault_service
-
-    @staticmethod
-    def is_kk_conn_used_by_obj(annotations: dict) -> bool:
-        has_required_annotations = all(
-            map(lambda x: x in annotations, REQUIRED_ANNOTATIONS)
-        )
-        return has_required_annotations
 
     @staticmethod
     def any_containers_contain_required_envs(spec: dict) -> bool:

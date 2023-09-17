@@ -49,12 +49,6 @@ class RabbitConnectorService:
         return generate_hash(broker_host, broker_port, api_url, username, vhost)
 
     @staticmethod
-    def is_rabbit_conn_used_by_object(annotations: dict) -> bool:
-        return all(
-            annotation_name in annotations for annotation_name in specifications.RABBIT_CONNECTOR_REQUIRED_ANNOTATIONS
-        )
-
-    @staticmethod
     def any_containers_contain_required_envs(spec: dict) -> bool:
         all_containers = chain(
             spec.get("containers", []),

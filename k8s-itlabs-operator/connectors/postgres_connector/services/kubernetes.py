@@ -1,4 +1,6 @@
+import abc
 import logging
+from abc import ABCMeta
 from typing import Optional
 
 from clients.k8s.k8s_client import KubernetesClient
@@ -9,7 +11,16 @@ from connectors.postgres_connector.factories.dto_factory import PgConnectorFacto
 logger = logging.getLogger('PgConnectorK8sService')
 
 
-class KubernetesService:
+class AbstractKubernetesService:
+    __metaclass__ = ABCMeta
+
+    @classmethod
+    @abc.abstractmethod
+    def get_pg_connector(cls, name: str) -> Optional[PgConnector]:
+        raise NotImplementedError
+
+
+class KubernetesService(AbstractKubernetesService):
     _k8s_client = KubernetesClient
 
     @classmethod

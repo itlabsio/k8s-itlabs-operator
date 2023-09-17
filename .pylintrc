@@ -46,6 +46,7 @@ disable=simplifiable-if-expression, # R1719
         unused-argument, # W0613
         lost-exception, # W0150
         unspecified-encoding, # W1514
+        arguments-differ, # W0221
 
 [DESIGN]
 

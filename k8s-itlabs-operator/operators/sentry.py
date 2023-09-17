@@ -9,7 +9,10 @@ from connectors.sentry_connector.services.sentry_connector import SentryConnecto
 from connectors.sentry_connector.factories.dto_factory import SentryConnectorMicroserviceDtoFactory
 from connectors.sentry_connector.factories.service_factories.sentry_connector import SentryConnectorServiceFactory
 from connectors.sentry_connector.exceptions import SentryConnectorError
+from connectors.sentry_connector.factories.service_factories.validation import \
+    SentryConnectorValidationServiceFactory
 from utils.common import OwnerReferenceDto, get_owner_reference
+from validation.exceptions import AnnotationValidatorMissedRequiredException, AnnotationValidatorEmptyValueException
 
 
 @kopf.on.mutate("pods.v1", id="sentry-connector-on-createpods")
@@ -22,11 +25,17 @@ def create_pods(body, patch, spec, labels, annotations, **_):
 
     logging.info(f"[{owner_fmt}] Sentry mutate handler is called on pod creating")
     status = ConnectorStatus()
-    status.is_used = SentryConnectorService.is_sentry_conn_used_by_object(annotations, labels)
-    if not status.is_used:
-        logging.info(f"[{owner_fmt}] Sentry connector is not used, because no expected annotations")
+    try:
+        ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+    except AnnotationValidatorMissedRequiredException as e:
+        status.is_used = False
+        logging.info(f"[{owner_fmt}] Sentry connector is not used, reason: {e.message}")
         return status
-    ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+    except AnnotationValidatorEmptyValueException as e:
+        logging.error(f"[{owner_fmt}] Problem with Sentry connector: {e.message}", exc_info=e)
+        status.is_used = True
+        status.exception = e
+        return status
 
     sentry_conn_service = SentryConnectorServiceFactory.create_sentry_connector_service()
     logging.info(f"[{owner_fmt}] Sentry connector service is created")
@@ -52,22 +61,45 @@ def create_pods(body, patch, spec, labels, annotations, **_):
 
 @kopf.on.create("pods.v1", id="sentry-connector-on-check-creation")
 @mutation_hook_monitoring(connector_type="sentry_connector")
-def check_creation(annotations, labels, body, new, **_):
+def check_creation(annotations, name, labels, body, **_):
     status = MutationHookStatus()
-    if not SentryConnectorService.is_sentry_conn_used_by_object(annotations, labels):
+    try:
+        ms_sentry_conn = SentryConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+    except AnnotationValidatorMissedRequiredException as e:
         status.is_used = False
+        logging.info(f"[{name}] Sentry connector is not used, reason: {e.message}")
+        return status
+    except AnnotationValidatorEmptyValueException as e:
+        logging.error(f"[{name}] Problem with Sentry connector: {e.message}", exc_info=e)
+        status.is_used = True
+        status.exception = e
         return status
 
     status.is_used = True
     status.is_success = True
     spec = body.get("spec", {})
     if not SentryConnectorService.any_containers_contain_required_envs(spec):
-        kopf.event(
-            body,
-            type="Error",
-            reason="SentryConnector",
-            message="Sentry Connector not applied",
-        )
         status.is_success = False
+
+        service = SentryConnectorValidationServiceFactory.create()
+        errors = service.validate(ms_sentry_conn)
+        if errors:
+            reasons = "; ".join(str(e) for e in errors)
+            kopf.event(
+                body,
+                type="Error",
+                reason="SentryConnector",
+                message=f"Sentry Connector not applied for next reasons: {reasons}",
+            )
+        else:
+            kopf.event(
+                body,
+                type="Error",
+                reason="SentryConnector",
+                message=(
+                    "Sentry Connector not applied by unknown reasons. "
+                    "It's maybe problems with infrastructure or certificates."
+                )
+            )
 
     return status

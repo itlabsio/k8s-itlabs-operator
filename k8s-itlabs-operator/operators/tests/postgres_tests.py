@@ -267,7 +267,7 @@ def test_postgres_operator_on_deployment_using_non_exist_custom_resource(k8s, va
     assert any(
         event.type == "Error"
         and event.reason == "PostgresConnector"
-        and event.note == "Postgres Connector not applied"
+        and event.note == "Postgres Connector not applied for next reasons: Postgres Custom Resource `non-exist-instance` does not exist"
         and app_name in event.regarding.name
         for event in events.items
     )
