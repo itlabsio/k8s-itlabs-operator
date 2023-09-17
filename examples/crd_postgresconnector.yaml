@@ -8,3 +8,4 @@ spec:
   database: postgres
   username: vault:secret/data/infrastructure/postgres#USERNAME
   password: vault:secret/data/infrastructure/postgres#PASSWORD
+  readonly-username: vault:secret/data/infrastructure/postgres#READONLY_USERNAME

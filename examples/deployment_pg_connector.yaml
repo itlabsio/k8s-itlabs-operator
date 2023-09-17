@@ -18,6 +18,7 @@ spec:
         postgres.connector.itlabs.io/vault-path: vault:secret/data/application/postgres-credentials
         postgres.connector.itlabs.io/db-name: mydb
         postgres.connector.itlabs.io/db-username: myuser
+        postgres.connector.itlabs.io/grant-access-for-readonly-user: true
     spec:
       containers:
       - image: alpine:3.15
