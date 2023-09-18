@@ -242,16 +242,27 @@ class TestPostgresConnectorValidationService:
     def kube(self):
         return MockKubernetesService
 
-    def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
-        annotations = {
+    @staticmethod
+    def get_annotations(override_annotations: dict[str, str] | None = None):
+        default_annotations = {
             "postgres.connector.itlabs.io/instance-name": "postgres",
-            "postgres.connector.itlabs.io/vault-path": "secret/data/postgres",
+            "postgres.connector.itlabs.io/vault-path": "vault:secret/data/postgres",
             "postgres.connector.itlabs.io/db-username": "username",
             "postgres.connector.itlabs.io/db-name": "database",
         }
+        if override_annotations:
+            default_annotations.update(override_annotations)
+        return default_annotations
+
+    def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
+        annotations = self.get_annotations({
+            "postgres.connector.itlabs.io/vault-path": "secret/data/postgres",
+        })
         labels = {}
 
-        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
+            annotations, labels
+        )
         service = PostgresConnectorValidationService(kube, vault)
         errors = service.validate(connector_dto)
 
@@ -261,12 +272,7 @@ class TestPostgresConnectorValidationService:
         ) in errors
 
     def test_vault_secret_not_contains_some_expected_keys(self, kube):
-        annotations = {
-            "postgres.connector.itlabs.io/instance-name": "postgres",
-            "postgres.connector.itlabs.io/vault-path": "vault:secret/data/postgres",
-            "postgres.connector.itlabs.io/db-username": "username",
-            "postgres.connector.itlabs.io/db-name": "database",
-        }
+        annotations = self.get_annotations()
         labels = {}
 
         vault = MockedVaultClient(secret={
@@ -276,7 +282,9 @@ class TestPostgresConnectorValidationService:
             "DATABASE_PASSWORD": "postgres",
         })
 
-        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(annotations, labels)
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
+            annotations, labels
+        )
         service = PostgresConnectorValidationService(kube, vault)
         errors = service.validate(connector_dto)
 
