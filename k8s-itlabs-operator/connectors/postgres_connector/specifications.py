@@ -4,6 +4,7 @@ PG_INSTANCE_NAME_ANNOTATION = 'postgres.connector.itlabs.io/instance-name'
 VAULTPATH_NAME_ANNOTATION = 'postgres.connector.itlabs.io/vault-path'
 DB_NAME_ANNOTATION = 'postgres.connector.itlabs.io/db-name'
 USER_NAME_ANNOTATION = 'postgres.connector.itlabs.io/db-username'
+GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION = 'postgres.connector.itlabs.io/grant-access-for-readonly-user'
 
 PG_CON_ANNOTATION_NAMES = (
     PG_INSTANCE_NAME_ANNOTATION,

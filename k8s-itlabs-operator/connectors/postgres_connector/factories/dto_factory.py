@@ -5,8 +5,11 @@ from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, PgConn
     PgConnectorInstanceSecretDto
 from connectors.postgres_connector.exceptions import PgConnectorAnnotationEmptyValueError, \
     PgConnectorMissingRequiredAnnotationError
-from connectors.postgres_connector.specifications import PG_INSTANCE_NAME_ANNOTATION, VAULTPATH_NAME_ANNOTATION, \
-    DB_NAME_ANNOTATION, USER_NAME_ANNOTATION, APP_NAME_LABEL
+from connectors.postgres_connector.specifications import \
+    PG_INSTANCE_NAME_ANNOTATION, VAULTPATH_NAME_ANNOTATION, \
+    DB_NAME_ANNOTATION, USER_NAME_ANNOTATION, APP_NAME_LABEL, \
+    GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION
+from utils.common import strtobool
 from utils.passgen import generate_password
 from validation.annotations_validator import AnnotationValidator
 
@@ -20,6 +23,7 @@ class PgConnectorFactory:
             database=pg_con_crd.spec.database,
             username=pg_con_crd.spec.username,
             password=pg_con_crd.spec.password,
+            readonly_username=pg_con_crd.spec.readonly_username,
         )
 
 
@@ -47,7 +51,10 @@ class PgConnectorMicroserviceDtoFactory:
             pg_instance_name=pg_annotations.get(PG_INSTANCE_NAME_ANNOTATION),
             vault_path=pg_annotations.get(VAULTPATH_NAME_ANNOTATION),
             db_name=pg_annotations.get(DB_NAME_ANNOTATION),
-            db_username=pg_annotations.get(USER_NAME_ANNOTATION)
+            db_username=pg_annotations.get(USER_NAME_ANNOTATION),
+            grant_access_for_readonly_user=strtobool(
+                pg_annotations.get(GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION, "false")
+            ),
         )
 
 
