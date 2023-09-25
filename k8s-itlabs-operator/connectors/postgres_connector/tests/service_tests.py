@@ -6,7 +6,8 @@ from clients.postgres.tests.mocks import MockedPostgresClient
 from clients.vault.tests.mocks import MockedVaultClient
 from connectors.postgres_connector import specifications
 from connectors.postgres_connector.dto import PgConnectorInstanceSecretDto, PgConnectorMicroserviceDto, PgConnector
-from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector
+from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, \
+    UnknownVaultPathInPgConnector, PostgresConnectorInfrastructureError
 from connectors.postgres_connector.factories.dto_factory import \
     PgConnectorDbSecretDtoFactory, PgConnectorMicroserviceDtoFactory
 from connectors.postgres_connector.services.postgres import PostgresService
@@ -240,7 +241,11 @@ class TestPostgresConnectorValidationService:
 
     @pytest.fixture
     def kube(self):
-        return MockKubernetesService
+        return MockKubernetesService()
+
+    @pytest.fixture
+    def postgres(self):
+        return MockedPostgresService()
 
     @staticmethod
     def get_annotations(override_annotations: dict[str, str] | None = None):
@@ -254,7 +259,7 @@ class TestPostgresConnectorValidationService:
             default_annotations.update(override_annotations)
         return default_annotations
 
-    def test_annotation_contain_incorrect_vault_secret(self, kube, vault):
+    def test_annotation_contain_incorrect_vault_secret(self, vault, kube, postgres):
         annotations = self.get_annotations({
             "postgres.connector.itlabs.io/vault-path": "secret/data/postgres",
         })
@@ -263,7 +268,7 @@ class TestPostgresConnectorValidationService:
         connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
             annotations, labels
         )
-        service = PostgresConnectorValidationService(kube, vault)
+        service = PostgresConnectorValidationService(vault, kube, postgres)
         errors = service.validate(connector_dto)
 
         assert PostgresConnectorApplicationError(
@@ -271,7 +276,7 @@ class TestPostgresConnectorValidationService:
             "for Postgres"
         ) in errors
 
-    def test_vault_secret_not_contains_some_expected_keys(self, kube):
+    def test_vault_secret_not_contains_some_expected_keys(self, kube, postgres):
         annotations = self.get_annotations()
         labels = {}
 
@@ -285,10 +290,56 @@ class TestPostgresConnectorValidationService:
         connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
             annotations, labels
         )
-        service = PostgresConnectorValidationService(kube, vault)
+        service = PostgresConnectorValidationService(vault, kube, postgres)
         errors = service.validate(connector_dto)
 
         assert PostgresConnectorApplicationError(
             "Vault secret path for application doesn't contains next keys: "
             "DATABASE_HOST for Postgres"
+        ) in errors
+
+    def test_readonly_user_is_not_set_in_custom_resource(self, vault, postgres):
+        annotations = self.get_annotations({
+            "postgres.connector.itlabs.io/grant-access-for-readonly-user": "true",
+        })
+        labels = {}
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
+            annotations, labels
+        )
+        kube = MockKubernetesService(readonly_username=None)
+        service = PostgresConnectorValidationService(vault, kube, postgres)
+        errors = service.validate(connector_dto)
+
+        assert PostgresConnectorInfrastructureError(
+            f"Username for readonly access to the database is not set in "
+            f"Custom Resource `{connector_dto.pg_instance_name}` for Postgres"
+        ) in errors
+
+    def test_readonly_user_does_not_exist_in_postgres(self, postgres):
+        annotations = self.get_annotations({
+            "postgres.connector.itlabs.io/grant-access-for-readonly-user": "true",
+        })
+        labels = {}
+
+        vault = MockedVaultClient(secret={
+            "DATABASE_HOST": "postgres.default",
+            "DATABASE_PORT": "5432",
+            "DATABASE_NAME": "postgres",
+            "DATABASE_USER": "postgres",
+            "DATABASE_PASSWORD": "postgres",
+        })
+        kube = MockKubernetesService(
+            readonly_username="non-exist-user"
+        )
+
+        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
+            annotations, labels
+        )
+        service = PostgresConnectorValidationService(vault, kube, postgres)
+        errors = service.validate(connector_dto)
+
+        assert PostgresConnectorInfrastructureError(
+            f"Username for readonly access to the database does not exist "
+            f"in `{connector_dto.pg_instance_name}`"
         ) in errors

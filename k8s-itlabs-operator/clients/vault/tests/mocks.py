@@ -32,7 +32,7 @@ class MockedVaultClient(AbstractVaultClient):
         pass
 
     def unvault_object(self, obj: AnyObject) -> AnyObject:
-        pass
+        return obj
 
 
 class VaultClientMocker:

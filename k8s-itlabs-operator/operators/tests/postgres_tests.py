@@ -28,10 +28,27 @@ REQUIRED_POD_ENVIRONMENTS = {
 }
 
 POSTGRES_HOST = getenv('POSTGRES_HOST')
+POSTGRES_INSTANCE_NAME = "postgres"
+POSTGRES_READONLY_USERNAME = "readonly"
 
 
 def get_postgres_instance_name():
-    return os.getenv("POSTGRES_INSTANCE_NAME", "postgres")
+    return os.getenv("POSTGRES_INSTANCE_NAME", POSTGRES_INSTANCE_NAME)
+
+
+def get_postgres_instance_name_without_readonly():
+    return f"{get_postgres_instance_name()}-without-ro"
+
+
+def get_postgres_instance_name_with_non_exist_readonly():
+    return f"{get_postgres_instance_name()}-with-non-exist-ro"
+
+
+def get_postgres_readonly_username():
+    return os.getenv(
+        "POSTGRES_READONLY_USERNAME",
+        POSTGRES_READONLY_USERNAME
+    )
 
 
 @pytest.fixture
@@ -77,6 +94,7 @@ def app_manifests(app_name) -> List[dict]:
                         "postgres.connector.itlabs.io/vault-path": f"vault:secret/data/{app_name}/postgres-credentials",
                         "postgres.connector.itlabs.io/db-name": app_name,
                         "postgres.connector.itlabs.io/db-username": app_name,
+                        "postgres.connector.itlabs.io/grant-access-for-readonly-user": "true",
                     },
                 },
                 "spec": {
@@ -118,6 +136,8 @@ def pg_secret() -> dict:
     return {
         "DATABASE_USER": "operator",
         "DATABASE_PASSWORD": "operator_pwd",
+        "DATABASE_READONLY_USER": get_postgres_readonly_username(),
+        "DATABASE_NON_EXIST_READONLY_USER": f"{get_postgres_readonly_username()}-non-exist",
     }
 
 
@@ -134,12 +154,51 @@ def pg_cr() -> dict:
             "host": POSTGRES_HOST,
             "username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_USER",
             "password": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_PASSWORD",
+            "readonly-username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_READONLY_USER",
+        },
+    }
+
+
+@pytest.fixture(scope="session")
+def pg_cr_without_readonly() -> dict:
+    """Postgres Custom Resource that does not contain readonly role"""
+    return {
+        "apiVersion": "itlabs.io/v1",
+        "kind": "PostgresConnector",
+        "metadata": {
+            "name": get_postgres_instance_name_without_readonly(),
+        },
+        "spec": {
+            "host": POSTGRES_HOST,
+            "username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_USER",
+            "password": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_PASSWORD",
+        },
+    }
+
+
+@pytest.fixture(scope="session")
+def pg_cr_with_non_exist_readonly() -> dict:
+    """Postgres Custom Resource that contains non exist readonly role"""
+    return {
+        "apiVersion": "itlabs.io/v1",
+        "kind": "PostgresConnector",
+        "metadata": {
+            "name": get_postgres_instance_name_with_non_exist_readonly(),
+        },
+        "spec": {
+            "host": POSTGRES_HOST,
+            "username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_USER",
+            "password": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_PASSWORD",
+            "readonly-username": f"{POSTGRES_VAULT_SECRET_PATH}#DATABASE_NON_EXIST_READONLY_USER",
         },
     }
 
 
 @pytest.fixture(scope="session", autouse=True)
-def create_postgres_cr(k8s, vault, pg_secret, pg_cr):
+def create_postgres_cr(
+        k8s, vault, pg_secret,
+        pg_cr, pg_cr_without_readonly, pg_cr_with_non_exist_readonly
+):
     secret = vault.read_secret(POSTGRES_VAULT_SECRET_PATH)
     if not secret:
         vault.create_secret(
@@ -152,6 +211,8 @@ def create_postgres_cr(k8s, vault, pg_secret, pg_cr):
         kind="PostgresConnector",
     )
     resource.create(body=pg_cr)
+    resource.create(body=pg_cr_without_readonly)
+    resource.create(body=pg_cr_with_non_exist_readonly)
 
 
 @pytest.mark.e2e
@@ -159,7 +220,7 @@ def create_postgres_cr(k8s, vault, pg_secret, pg_cr):
 def test_postgres_operator_on_initial_deployment_application(k8s, vault, app_name):
     # Application manifest contains environments:
     #   - POSTGRES_DB_HOST
-    #   - POSTGRES_DB_PORTApiException
+    #   - POSTGRES_DB_PORT
     #   - POSTGRES_DB_NAME
     #   - POSTGRES_DB_USER
     #   - POSTGRES_DB_PASSWORD
@@ -198,6 +259,17 @@ def test_postgres_operator_on_initial_deployment_application(k8s, vault, app_nam
         dbname=secret["DATABASE_NAME"],
     )
 
+    # Events does not exist
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=PostgresConnector"
+    )
+    assert not any(
+        event.reason == "PostgresConnector"
+        and app_name in event.regarding.name
+        for event in events.items
+    )
+
 
 @pytest.mark.e2e
 @pytest.mark.usefixtures("create_secrets", "deploy_app", "wait_app_deployment")
@@ -222,6 +294,17 @@ def test_postgres_operator_on_redeployment_application(k8s, app_name):
         for c in containers:
             retrieved_pod_environments = {env.name for env in c.env}
             assert REQUIRED_POD_ENVIRONMENTS <= retrieved_pod_environments
+
+    # Events does not exist
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=PostgresConnector"
+    )
+    assert not any(
+        event.reason == "PostgresConnector"
+        and app_name in event.regarding.name
+        for event in events.items
+    )
 
 
 @pytest.fixture
@@ -267,7 +350,61 @@ def test_postgres_operator_on_deployment_using_non_exist_custom_resource(k8s, va
     assert any(
         event.type == "Error"
         and event.reason == "PostgresConnector"
-        and event.note == "Postgres Connector not applied for next reasons: Postgres Custom Resource `non-exist-instance` does not exist"
+        and event.note == "Postgres Custom Resource `non-exist-instance` does not exist"
+        and app_name in event.regarding.name
+        for event in events.items
+    )
+
+
+@pytest.fixture
+def use_instance_without_readonly_username():
+    envs = {
+        "POSTGRES_INSTANCE_NAME": get_postgres_instance_name_without_readonly(),
+    }
+    with mock.patch.dict(os.environ, envs):
+        yield
+
+
+@pytest.mark.e2e
+@pytest.mark.usefixtures("use_instance_without_readonly_username", "deploy_app", "wait_app_deployment")
+def test_test_postgres_operator_on_deployment_using_custom_resource_without_readonly(k8s, app_name):
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=PostgresConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "PostgresConnector"
+        and ("Username for readonly access to the database is not set in "
+             "Custom Resource `postgres-without-ro` for Postgres") in event.note
+        and app_name in event.regarding.name
+        for event in events.items
+    )
+
+
+@pytest.fixture
+def use_instance_contain_non_exist_readonly_username():
+    envs = {
+        "POSTGRES_INSTANCE_NAME": get_postgres_instance_name_with_non_exist_readonly(),
+    }
+    with mock.patch.dict(os.environ, envs):
+        yield
+
+
+@pytest.mark.e2e
+@pytest.mark.usefixtures("use_instance_contain_non_exist_readonly_username", "deploy_app", "wait_app_deployment")
+def test_test_postgres_operator_on_deployment_using_custom_resource_contain_non_exist_readonly(k8s, app_name):
+    # Event was created
+    events = EventsV1Api(k8s).list_namespaced_event(
+        namespace=APP_DEPLOYMENT_NAMESPACE,
+        field_selector="reason=PostgresConnector"
+    )
+    assert any(
+        event.type == "Error"
+        and event.reason == "PostgresConnector"
+        and ("Username for readonly access to the database does not exist "
+             "in `postgres-with-non-exist-ro`") in event.note
         and app_name in event.regarding.name
         for event in events.items
     )

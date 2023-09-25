@@ -27,3 +27,4 @@ class PgConnectorInstanceSecretDto:
     password: str
     host: str
     port: int
+    readonly_username: str | None = None

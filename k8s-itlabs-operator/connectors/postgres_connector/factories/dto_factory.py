@@ -52,12 +52,10 @@ class PgConnectorMicroserviceDtoFactory:
             vault_path=pg_annotations.get(specifications.VAULTPATH_NAME_ANNOTATION),
             db_name=pg_annotations.get(specifications.DB_NAME_ANNOTATION),
             db_username=pg_annotations.get(specifications.USER_NAME_ANNOTATION),
-            grant_access_for_readonly_user=strtobool(
-                pg_annotations.get(
-                    specifications.GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION,
-                    "false"
-                )
-            ),
+            grant_access_for_readonly_user=strtobool(annotations.get(
+                specifications.GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION,
+                "false"
+            )),
         )
 
 
@@ -115,4 +113,5 @@ class PgConnectorInstanceSecretDtoFactory:
             db_name=pg_connector.database,
             user=pg_connector.username,
             password=pg_connector.password,
+            readonly_username=pg_connector.readonly_username
         )

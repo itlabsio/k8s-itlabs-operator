@@ -13,7 +13,7 @@ class PostgresConnectorCrdFactory:
             database=spec.get("database", "postgres"),
             username=spec.get("username"),
             password=spec.get("password"),
-            readonly_username=spec.get("readonly_username"),
+            readonly_username=spec.get("readonly-username"),
         )
 
     @classmethod

@@ -39,6 +39,16 @@ class MockedPostgresService(AbstractPostgresService):
     def create_database(self, db_cred: PgConnectorDbSecretDto):
         self.create_database_call_count += 1
 
+    def is_user_exist(self, username: str) -> bool:
+        return username != "non-exist-user"
+
+    def is_user_grantee(self, database: str, username: str) -> bool:
+        return username != "non-grantee-user"
+
+    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
+                               grantor_database: str, grantee_name: str):
+        pass
+
 
 class KubernetesServiceMocker:
     @staticmethod
@@ -60,13 +70,29 @@ class PostgresServiceFactoryMocker:
 
 
 class MockKubernetesService(AbstractKubernetesService):
-    @classmethod
-    def get_pg_connector(cls, name: str) -> PgConnector:
+    def __init__(
+            self,
+            host: str = "postgres.default",
+            port: int = 5432,
+            database: str = "postgres",
+            username: str = "vault:secret/data/infrastructure/postgres#USERNAME",
+            password: str = "vault:secret/data/infrastructure/postgres#PASSWORD",
+            readonly_username: str | None = "vault:secret/data/infrastructure/postgres#READONLY_USERNAME",
+    ):
+        self.host = host
+        self.port = port
+        self.database = database
+        self.username = username
+        self.password = password
+        self.readonly_username = readonly_username
+
+    def get_pg_connector(self, name: str) -> PgConnector:
         return PgConnector(
-            host="postgres.default",
-            port=5432,
-            database="postgres",
-            username="vault:secret/data/infrastructure/postgres#USERNAME",
-            password="vault:secret/data/infrastructure/postgres#PASSWORD",
+            host=self.host,
+            port=self.port,
+            database=self.database,
+            username=self.username,
+            password=self.password,
+            readonly_username=self.readonly_username,
         )
 

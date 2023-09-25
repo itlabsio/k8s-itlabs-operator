@@ -1,4 +1,4 @@
-from typing import List, Type
+from typing import List
 
 from clients.vault.exceptions import IncorrectPath
 from clients.vault.factories.vault_path import VaultPathFactory
@@ -7,6 +7,8 @@ from connectors.postgres_connector.dto import PgConnectorMicroserviceDto
 from connectors.postgres_connector.exceptions import PostgresConnectorInfrastructureError, \
     PostgresConnectorApplicationError
 from connectors.postgres_connector.services.kubernetes import AbstractKubernetesService
+from connectors.postgres_connector.services.postgres import \
+    AbstractPostgresService
 from connectors.postgres_connector.specifications import REQUIRED_POSTGRES_SECRET_KEYS
 from exceptions import InfrastructureServiceProblem
 from validation.abstract_service import ConnectorValidationService
@@ -14,11 +16,15 @@ from validation.exceptions import ConnectorError
 
 
 class PostgresConnectorValidationService(ConnectorValidationService):
-    def __init__(self, kube_service: Type[AbstractKubernetesService], vault_client: AbstractVaultClient):
+    def __init__(self,
+                 vault_client: AbstractVaultClient,
+                 kube_service: AbstractKubernetesService,
+                 postgres_service: AbstractPostgresService):
         super().__init__()
 
-        self._kube_service = kube_service
         self._vault_client = vault_client
+        self._kube_service = kube_service
+        self._postgres_service = postgres_service
 
         self.errors: List[ConnectorError] = []
 
@@ -27,6 +33,10 @@ class PostgresConnectorValidationService(ConnectorValidationService):
 
         self._check_instance(postgres_connector_dto.pg_instance_name)
         self._check_vault_secret(postgres_connector_dto.vault_path)
+        self._check_readonly_user(
+            postgres_connector_dto.pg_instance_name,
+            postgres_connector_dto.grant_access_for_readonly_user,
+        )
 
         return self.errors
 
@@ -65,4 +75,31 @@ class PostgresConnectorValidationService(ConnectorValidationService):
             self.errors.append(PostgresConnectorApplicationError(
                 "Vault secret path for application doesn't contains next keys: "
                 f"{', '.join(unset_keys)} for Postgres"
+            ))
+
+    def _check_readonly_user(self, instance_name: str, is_grant_access: bool):
+        if not is_grant_access:
+            return
+
+        instance_connector = self._kube_service.get_pg_connector(instance_name)
+        if not instance_connector.readonly_username:
+            self.errors.append(PostgresConnectorInfrastructureError(
+                f"Username for readonly access to the database is not set in "
+                f"Custom Resource `{instance_name}` for Postgres"
+            ))
+            return
+
+        instance_credentials = self._vault_client.unvault_object(instance_connector)
+        readonly_username = instance_credentials.readonly_username
+
+        if not self._postgres_service.is_user_exist(readonly_username):
+            self.errors.append(PostgresConnectorInfrastructureError(
+                f"Username for readonly access to the database does not exist "
+                f"in `{instance_name}`"
+            ))
+            return
+
+        if not self._postgres_service.is_user_grantee(readonly_username):
+            self.errors.append(PostgresConnectorInfrastructureError(
+                "Access for readonly is not granted by unknown reasons"
             ))

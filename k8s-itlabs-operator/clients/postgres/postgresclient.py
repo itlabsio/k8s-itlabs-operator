@@ -20,6 +20,10 @@ class AbstractPostgresClient:
         raise NotImplementedError
 
     @abstractmethod
+    def is_user_grantee(self, database: str, user: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def is_database_exist(self, db_name: str) -> bool:
         raise NotImplementedError
 
@@ -43,6 +47,15 @@ class AbstractPostgresClient:
     def grant_user_to_admin(self, user: str):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_database_owner(self, database: str) -> str | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
+                               grantor_database: str, grantee_name: str):
+        raise NotImplementedError
+
 
 class PostgresClient(AbstractPostgresClient):
 
@@ -50,7 +63,10 @@ class PostgresClient(AbstractPostgresClient):
         self.connection_data = pg_connector_secret_dto
 
     def _execute_query_v2(self, query: str, *, identifiers: Iterable[str] = None,
-                          values: Iterable[str] = None) -> List[Tuple[object]]:
+                          values: Iterable[str] = None,
+                          database: str | None = None,
+                          username: str | None = None,
+                          password: str | None = None) -> List[Tuple[object]]:
         """
         Execute sql-query in database and returns execution result.
 
@@ -78,9 +94,9 @@ class PostgresClient(AbstractPostgresClient):
             query = sql.SQL(query).format(*query_identifiers)
         try:
             logger.info('Connecting to the PostgreSQL database...')
-            conn = psycopg2.connect(database=self.connection_data.db_name,
-                                    user=self.connection_data.user,
-                                    password=self.connection_data.password,
+            conn = psycopg2.connect(database=database or self.connection_data.db_name,
+                                    user=username or self.connection_data.user,
+                                    password=password or self.connection_data.password,
                                     host=self.connection_data.host,
                                     port=self.connection_data.port)
             conn.autocommit = True
@@ -104,6 +120,24 @@ class PostgresClient(AbstractPostgresClient):
     def is_user_exist(self, user: str) -> bool:
         query = """SELECT * FROM pg_catalog.pg_user u WHERE u.usename = %s;"""
         return bool(self._execute_query_v2(query, values=[user]))
+
+    def is_user_grantee(self, database: str, user: str) -> bool:
+        query = """
+            SELECT 1 FROM information_schema.table_privileges WHERE
+                grantee = %s
+                AND table_catalog = %s
+                AND privilege_type = 'SELECT'
+            UNION
+            SELECT 1
+            FROM pg_default_acl acl
+            join pg_namespace namespace on namespace.oid = acl.defaclnamespace
+            WHERE acl.defaclacl::text ILIKE %s;
+        """
+        return bool(self._execute_query_v2(
+            query,
+            values=[user, database, f"%{user}=r/{database}%"],
+            database=database
+        ))
 
     def is_database_exist(self, db_name: str) -> bool:
         query = """SELECT * FROM pg_catalog.pg_database db WHERE db.datname = %s;"""
@@ -145,3 +179,43 @@ class PostgresClient(AbstractPostgresClient):
     def _revoke_user_from_atlas(self, user: str):
         query = """REVOKE {} FROM {};"""
         self._execute_query_v2(query, identifiers=[user, self.connection_data.user])
+
+    def get_database_owner(self, database: str) -> str | None:
+        query = """
+            SELECT pg_catalog.pg_get_userbyid(datdba) AS "name"
+            FROM pg_catalog.pg_database
+            WHERE datname = %s;
+        """
+        name_idx = 0
+
+        owners = self._execute_query_v2(query, values=[database])
+        return owners[0][name_idx] if owners else None
+
+    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
+                               grantor_database: str, grantee_name: str):
+        query = """
+            GRANT USAGE ON SCHEMA public TO {1};
+
+            GRANT SELECT ON ALL TABLES IN SCHEMA public TO {1};
+            GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO {1};
+
+            ALTER DEFAULT PRIVILEGES GRANT SELECT ON TABLES TO {1};
+            ALTER DEFAULT PRIVILEGES GRANT SELECT ON SEQUENCES TO {1};
+
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public
+                GRANT SELECT ON TABLES TO {1};
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public
+                GRANT SELECT ON SEQUENCES TO {1};
+
+            ALTER DEFAULT PRIVILEGES FOR USER {0} IN SCHEMA public
+                GRANT SELECT ON TABLES TO {1};
+            ALTER DEFAULT PRIVILEGES FOR USER {0} IN SCHEMA public
+                GRANT SELECT ON SEQUENCES TO {1};
+        """
+        self._execute_query_v2(
+            query,
+            identifiers=[grantor_name, grantee_name],
+            database=grantor_database,
+            username=grantor_name,
+            password=grantor_password,
+        )
