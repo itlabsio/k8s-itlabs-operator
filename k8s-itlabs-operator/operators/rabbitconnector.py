@@ -78,6 +78,10 @@ def check_creation(annotations, name, labels, body, **_):
 
     status.is_used = True
     status.is_success = True
+
+    owner = get_owner_reference(body)
+    status.owner = f"{owner.kind}: {owner.name}" if owner else ""
+
     spec = body.get("spec", {})
     if not RabbitConnectorService.any_containers_contain_required_envs(spec):
         status.is_success = False

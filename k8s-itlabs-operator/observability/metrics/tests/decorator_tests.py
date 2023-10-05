@@ -97,17 +97,18 @@ class TestMutationHookMonitoringTypeDecorator:
         status = MutationHookStatus()
         simple_func_hook('World', status)
         assert app_mutation_admission_hook_latency_seconds._metrics
-        metric = app_mutation_admission_hook_latency_seconds._metrics.get(
-            (mutation_hook_monitoring_type, status.label_is_used, status.label_is_success)
-        )
+        metric = app_mutation_admission_hook_latency_seconds._metrics.get((
+            mutation_hook_monitoring_type, status.label_is_used,
+            status.label_is_success, status.label_owner
+        ))
         assert metric._sum._value
         old_value = metric._sum._value
         simple_func_hook('World', status)
         assert app_mutation_admission_hook_latency_seconds._metrics
-        metric = app_mutation_admission_hook_latency_seconds._metrics.get(
-            (mutation_hook_monitoring_type, status.label_is_used,
-             status.label_is_success)
-        )
+        metric = app_mutation_admission_hook_latency_seconds._metrics.get((
+            mutation_hook_monitoring_type, status.label_is_used,
+            status.label_is_success, status.label_owner
+        ))
         assert old_value != metric._sum._value
 
     def test_json_serializable(self):
@@ -119,5 +120,5 @@ class TestMutationHookMonitoringTypeDecorator:
             assert key == mutation_hook_monitoring_type
             subdict = status[key]
             assert isinstance(subdict, dict)
-            keys = ['used', 'success']
+            keys = ['used', 'success', 'owner']
             assert all(key in keys for key in subdict)
