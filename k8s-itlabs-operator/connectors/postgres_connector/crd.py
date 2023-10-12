@@ -13,8 +13,6 @@ class PostgresConnectorSpec:
     readonly_username: str | None = None
 
 
-
-
 @dataclass
 class PostgresConnectorCrd:
     api_version: str

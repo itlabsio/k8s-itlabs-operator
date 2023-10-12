@@ -1,3 +1,5 @@
+import dataclasses
+
 from itertools import chain
 
 from clients.postgres.dto import PgConnectorDbSecretDto
@@ -45,7 +47,6 @@ class PostgresConnectorService:
             pg_service.create_database(db_creds)
 
             if ms_pg_con.grant_access_for_readonly_user:
-
                 if not pg_instance_cred.readonly_username:
                     raise PgConnectorReadonlyUsernameIsNotSet(
                         f"`readonly` username is not set in Custom Resource "
@@ -58,12 +59,21 @@ class PostgresConnectorService:
                         f"in {ms_pg_con.pg_instance_name}"
                     )
 
-                if pg_service.is_user_grantee(db_creds.db_name, pg_instance_cred.readonly_username):
+                # Switch connection to application database for grant access
+                pg_access_cred = dataclasses.replace(
+                    pg_instance_cred, db_name=ms_pg_con.db_name
+                )
+                pg_access_service = PostgresServiceFactory.create_pg_service(
+                    pg_access_cred
+                )
+
+                if pg_access_service.is_user_grantee(
+                        db_creds.db_name, pg_instance_cred.readonly_username
+                ):
                     return
 
-                pg_service.grant_access_on_select(
-                    db_creds.user, db_creds.password, db_creds.db_name,
-                    pg_instance_cred.readonly_username
+                pg_access_service.grant_access_on_select(
+                    db_creds.user, pg_instance_cred.readonly_username
                 )
 
     @staticmethod

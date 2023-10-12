@@ -1,6 +1,6 @@
 import logging
 from abc import ABCMeta, abstractmethod
-from typing import Iterable, List, Tuple
+from typing import Iterable
 
 import psycopg2
 from psycopg2 import sql
@@ -48,12 +48,7 @@ class AbstractPostgresClient:
         raise NotImplementedError
 
     @abstractmethod
-    def get_database_owner(self, database: str) -> str | None:
-        raise NotImplementedError
-
-    @abstractmethod
-    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
-                               grantor_database: str, grantee_name: str):
+    def grant_access_on_select(self, grantor_name: str, grantee_name: str):
         raise NotImplementedError
 
 
@@ -63,10 +58,7 @@ class PostgresClient(AbstractPostgresClient):
         self.connection_data = pg_connector_secret_dto
 
     def _execute_query_v2(self, query: str, *, identifiers: Iterable[str] = None,
-                          values: Iterable[str] = None,
-                          database: str | None = None,
-                          username: str | None = None,
-                          password: str | None = None) -> List[Tuple[object]]:
+                          values: Iterable[str] = None):
         """
         Execute sql-query in database and returns execution result.
 
@@ -94,9 +86,9 @@ class PostgresClient(AbstractPostgresClient):
             query = sql.SQL(query).format(*query_identifiers)
         try:
             logger.info('Connecting to the PostgreSQL database...')
-            conn = psycopg2.connect(database=database or self.connection_data.db_name,
-                                    user=username or self.connection_data.user,
-                                    password=password or self.connection_data.password,
+            conn = psycopg2.connect(database=self.connection_data.db_name,
+                                    user=self.connection_data.user,
+                                    password=self.connection_data.password,
                                     host=self.connection_data.host,
                                     port=self.connection_data.port)
             conn.autocommit = True
@@ -136,7 +128,6 @@ class PostgresClient(AbstractPostgresClient):
         return bool(self._execute_query_v2(
             query,
             values=[user, database, f"%{user}=r/{database}%"],
-            database=database
         ))
 
     def is_database_exist(self, db_name: str) -> bool:
@@ -180,19 +171,12 @@ class PostgresClient(AbstractPostgresClient):
         query = """REVOKE {} FROM {};"""
         self._execute_query_v2(query, identifiers=[user, self.connection_data.user])
 
-    def get_database_owner(self, database: str) -> str | None:
-        query = """
-            SELECT pg_catalog.pg_get_userbyid(datdba) AS "name"
-            FROM pg_catalog.pg_database
-            WHERE datname = %s;
-        """
-        name_idx = 0
+    def grant_access_on_select(self, grantor_name: str, grantee_name: str):
+        self._grant_user_to_atlas_user(grantor_name)
+        self._grant_access_on_select(grantor_name, grantee_name)
+        self._revoke_user_from_atlas(grantor_name)
 
-        owners = self._execute_query_v2(query, values=[database])
-        return owners[0][name_idx] if owners else None
-
-    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
-                               grantor_database: str, grantee_name: str):
+    def _grant_access_on_select(self, grantor_name: str, grantee_name: str):
         query = """
             GRANT USAGE ON SCHEMA public TO {1};
 
@@ -212,10 +196,4 @@ class PostgresClient(AbstractPostgresClient):
             ALTER DEFAULT PRIVILEGES FOR USER {0} IN SCHEMA public
                 GRANT SELECT ON SEQUENCES TO {1};
         """
-        self._execute_query_v2(
-            query,
-            identifiers=[grantor_name, grantee_name],
-            database=grantor_database,
-            username=grantor_name,
-            password=grantor_password,
-        )
+        self._execute_query_v2(query, identifiers=[grantor_name, grantee_name])

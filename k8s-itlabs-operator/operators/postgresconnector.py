@@ -12,9 +12,6 @@ from connectors.postgres_connector.factories.service_factories.postgres_connecto
 from connectors.postgres_connector.factories.service_factories.validation import \
     PostgresConnectorValidationServiceFactory
 from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
-from connectors.postgres_connector.factories.service_factories.vault import \
-    VaultServiceFactory
-from connectors.postgres_connector.services.kubernetes import KubernetesService
 from utils.common import OwnerReferenceDto, get_owner_reference
 
 
@@ -85,50 +82,32 @@ def check_creation(annotations, name, labels, body, **_):
     status.is_used = True
     status.is_success = True
 
+    spec = body.get("spec", {})
     owner = get_owner_reference(body)
     status.owner = f"{owner.kind}: {owner.name}" if owner else ""
 
-    spec = body.get("spec", {})
+    is_contain_required_envs = PostgresConnectorService.any_containers_contain_required_envs(spec)
 
-    if not PostgresConnectorService.any_containers_contain_required_envs(spec) \
-            or connector_dto.grant_access_for_readonly_user:
+    if connector_dto and (
+        not is_contain_required_envs
+        or connector_dto.grant_access_for_readonly_user
+    ):
         status.is_success = False
 
-        instance_connector = KubernetesService.get_pg_connector(connector_dto.pg_instance_name)
-        if not instance_connector:
-            kopf.event(
-                body,
-                type="Error",
-                reason="PostgresConnector",
-                message=(
-                    f"Postgres Custom Resource "
-                    f"`{connector_dto.pg_instance_name}` does not exist"
-                ),
-            )
-            return status
-
-        vault = VaultServiceFactory.create_vault_service()
-        instance_credentials = vault.unvault_pg_connector(instance_connector)
-
-        service = PostgresConnectorValidationServiceFactory.create(instance_credentials)
-        errors = service.validate(connector_dto)
-        if errors:
+        service = PostgresConnectorValidationServiceFactory.create()
+        error_msg = (
+            "Postgres Connector not applied by unknown reasons. "
+            "It's maybe problems with infrastructure or certificates."
+        ) if not is_contain_required_envs else ""
+        if errors := service.validate(connector_dto):
             reasons = "; ".join(str(e) for e in errors)
+            error_msg = f"Postgres Connector not applied for next reasons: {reasons}"
+        if error_msg:
             kopf.event(
                 body,
                 type="Error",
                 reason="PostgresConnector",
-                message=f"Postgres Connector not applied for next reasons: {reasons}",
-            )
-        else:
-            kopf.event(
-                body,
-                type="Error",
-                reason="PostgresConnector",
-                message=(
-                    "Postgres Connector not applied by unknown reasons. "
-                    "It's maybe problems with infrastructure or certificates."
-                )
+                message=error_msg,
             )
 
     return status

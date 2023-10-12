@@ -23,8 +23,7 @@ class AbstractPostgresService:
         raise NotImplementedError
 
     @abstractmethod
-    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
-                               grantor_database: str, grantee_name: str):
+    def grant_access_on_select(self, grantor_name: str, grantee_name: str):
         raise NotImplementedError
 
 
@@ -51,7 +50,5 @@ class PostgresService(AbstractPostgresService):
     def is_user_grantee(self, database: str, username: str) -> bool:
         return self.pg_client.is_user_grantee(database, username)
 
-    def grant_access_on_select(self, grantor_name: str, grantor_password: str,
-                               grantor_database: str, grantee_name: str):
-        self.pg_client.grant_access_on_select(grantor_name, grantor_password,
-                                              grantor_database, grantee_name)
+    def grant_access_on_select(self, grantor_name: str, grantee_name: str):
+        self.pg_client.grant_access_on_select(grantor_name, grantee_name)

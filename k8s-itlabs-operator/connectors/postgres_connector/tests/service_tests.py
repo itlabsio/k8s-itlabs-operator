@@ -268,7 +268,7 @@ class TestPostgresConnectorValidationService:
         connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
             annotations, labels
         )
-        service = PostgresConnectorValidationService(vault, kube, postgres)
+        service = PostgresConnectorValidationService(vault, kube)
         errors = service.validate(connector_dto)
 
         assert PostgresConnectorApplicationError(
@@ -290,7 +290,7 @@ class TestPostgresConnectorValidationService:
         connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
             annotations, labels
         )
-        service = PostgresConnectorValidationService(vault, kube, postgres)
+        service = PostgresConnectorValidationService(vault, kube)
         errors = service.validate(connector_dto)
 
         assert PostgresConnectorApplicationError(
@@ -308,38 +308,10 @@ class TestPostgresConnectorValidationService:
             annotations, labels
         )
         kube = MockKubernetesService(readonly_username=None)
-        service = PostgresConnectorValidationService(vault, kube, postgres)
+        service = PostgresConnectorValidationService(vault, kube)
         errors = service.validate(connector_dto)
 
         assert PostgresConnectorInfrastructureError(
             f"Username for readonly access to the database is not set in "
             f"Custom Resource `{connector_dto.pg_instance_name}` for Postgres"
-        ) in errors
-
-    def test_readonly_user_does_not_exist_in_postgres(self, postgres):
-        annotations = self.get_annotations({
-            "postgres.connector.itlabs.io/grant-access-for-readonly-user": "true",
-        })
-        labels = {}
-
-        vault = MockedVaultClient(secret={
-            "DATABASE_HOST": "postgres.default",
-            "DATABASE_PORT": "5432",
-            "DATABASE_NAME": "postgres",
-            "DATABASE_USER": "postgres",
-            "DATABASE_PASSWORD": "postgres",
-        })
-        kube = MockKubernetesService(
-            readonly_username="non-exist-user"
-        )
-
-        connector_dto = PgConnectorMicroserviceDtoFactory.dto_from_annotations(
-            annotations, labels
-        )
-        service = PostgresConnectorValidationService(vault, kube, postgres)
-        errors = service.validate(connector_dto)
-
-        assert PostgresConnectorInfrastructureError(
-            f"Username for readonly access to the database does not exist "
-            f"in `{connector_dto.pg_instance_name}`"
         ) in errors

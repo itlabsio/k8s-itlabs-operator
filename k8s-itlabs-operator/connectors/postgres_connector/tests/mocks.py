@@ -79,20 +79,15 @@ class MockKubernetesService(AbstractKubernetesService):
             password: str = "vault:secret/data/infrastructure/postgres#PASSWORD",
             readonly_username: str | None = "vault:secret/data/infrastructure/postgres#READONLY_USERNAME",
     ):
-        self.host = host
-        self.port = port
-        self.database = database
-        self.username = username
-        self.password = password
-        self.readonly_username = readonly_username
+        self._connector = PgConnector(
+            host=host,
+            port=port,
+            database=database,
+            username=username,
+            password=password,
+            readonly_username=readonly_username,
+        )
 
     def get_pg_connector(self, name: str) -> PgConnector:
-        return PgConnector(
-            host=self.host,
-            port=self.port,
-            database=self.database,
-            username=self.username,
-            password=self.password,
-            readonly_username=self.readonly_username,
-        )
+        return self._connector
 
