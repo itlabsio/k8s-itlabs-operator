@@ -87,24 +87,19 @@ def check_creation(annotations, name, labels, body, **_):
         status.is_success = False
 
         service = RabbitConnectorValidationServiceFactory.create()
-        errors = service.validate(ms_rabbit_con)
-        if errors:
+        error_msg = (
+            "Rabbit Connector not applied by unknown reasons. "
+            "It's maybe problems with infrastructure or certificates."
+        )
+        if errors := service.validate(ms_rabbit_con):
             reasons = "; ".join(str(e) for e in errors)
-            kopf.event(
-                body,
-                type="Error",
-                reason="RabbitConnector",
-                message=f"Rabbit Connector not applied for next reasons: {reasons}",
-            )
-        else:
-            kopf.event(
-                body,
-                type="Error",
-                reason="RabbitConnector",
-                message=(
-                    "Rabbit Connector not applied by unknown reasons. "
-                    "It's maybe problems with infrastructure or certificates."
-                )
-            )
+            error_msg = f"Rabbit Connector not applied for next reasons: {reasons}"
+
+        kopf.event(
+            body,
+            type="Error",
+            reason="RabbitConnector",
+            message=error_msg,
+        )
 
     return status

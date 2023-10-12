@@ -86,24 +86,19 @@ def check_creation(annotations, name, labels, body, **_):
         status.is_success = False
 
         service = SentryConnectorValidationServiceFactory.create()
-        errors = service.validate(ms_sentry_conn)
-        if errors:
+        error_msg = (
+            "Sentry Connector not applied by unknown reasons. "
+            "It's maybe problems with infrastructure or certificates."
+        )
+        if errors := service.validate(ms_sentry_conn):
             reasons = "; ".join(str(e) for e in errors)
-            kopf.event(
-                body,
-                type="Error",
-                reason="SentryConnector",
-                message=f"Sentry Connector not applied for next reasons: {reasons}",
-            )
-        else:
-            kopf.event(
-                body,
-                type="Error",
-                reason="SentryConnector",
-                message=(
-                    "Sentry Connector not applied by unknown reasons. "
-                    "It's maybe problems with infrastructure or certificates."
-                )
-            )
+            error_msg = f"Sentry Connector not applied for next reasons: {reasons}"
+
+        kopf.event(
+            body,
+            type="Error",
+            reason="SentryConnector",
+            message=error_msg,
+        )
 
     return status

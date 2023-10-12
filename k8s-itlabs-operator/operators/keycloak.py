@@ -90,24 +90,19 @@ def check_creation(annotations, name, body, **_):
         status.is_success = False
 
         service = KeycloakConnectorValidationServiceFactory.create()
-        errors = service.validate(ms_keycloak_conn)
-        if errors:
+        error_msg = (
+            "Keycloak Connector not applied by unknown reasons. "
+            "It's maybe problems with infrastructure or certificates."
+        )
+        if errors := service.validate(ms_keycloak_conn):
             reasons = "; ".join(str(e) for e in errors)
-            kopf.event(
-                body,
-                type="Error",
-                reason="KeycloakConnector",
-                message=f"Keycloak Connector not applied for next reasons: {reasons}"
-            )
-        else:
-            kopf.event(
-                body,
-                type="Error",
-                reason="KeycloakConnector",
-                message=(
-                    "Keycloak Connector not applied by unknown reasons. "
-                    "It's maybe problems with infrastructure or certificates."
-                )
-            )
+            error_msg = f"Keycloak Connector not applied for next reasons: {reasons}"
+
+        kopf.event(
+            body,
+            type="Error",
+            reason="KeycloakConnector",
+            message=error_msg,
+        )
 
     return status
