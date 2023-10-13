@@ -5,8 +5,7 @@ from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, PgConn
     PgConnectorInstanceSecretDto
 from connectors.postgres_connector.exceptions import PgConnectorAnnotationEmptyValueError, \
     PgConnectorMissingRequiredAnnotationError
-from connectors.postgres_connector.specifications import PG_INSTANCE_NAME_ANNOTATION, VAULTPATH_NAME_ANNOTATION, \
-    DB_NAME_ANNOTATION, USER_NAME_ANNOTATION, APP_NAME_LABEL
+from utils.common import strtobool
 from utils.passgen import generate_password
 from validation.annotations_validator import AnnotationValidator
 
@@ -20,6 +19,7 @@ class PgConnectorFactory:
             database=pg_con_crd.spec.database,
             username=pg_con_crd.spec.username,
             password=pg_con_crd.spec.password,
+            readonly_username=pg_con_crd.spec.readonly_username,
         )
 
 
@@ -34,20 +34,28 @@ class PgConnectorMicroserviceDtoFactory:
     @classmethod
     def dto_from_annotations(cls, annotations: dict, labels: dict) -> PgConnectorMicroserviceDto:
         pg_annotations = {}
-        default_name = labels.get(APP_NAME_LABEL, "")
+        default_name = labels.get(specifications.APP_NAME_LABEL, "")
         for key in specifications.PG_CON_ANNOTATION_NAMES:
-            if key == DB_NAME_ANNOTATION:
-                pg_annotations[key] = annotations.get(DB_NAME_ANNOTATION, default_name)
-            elif key == USER_NAME_ANNOTATION:
-                pg_annotations[key] = annotations.get(USER_NAME_ANNOTATION, default_name)
+            if key == specifications.DB_NAME_ANNOTATION:
+                pg_annotations[key] = annotations.get(
+                    specifications.DB_NAME_ANNOTATION, default_name
+                )
+            elif key == specifications.USER_NAME_ANNOTATION:
+                pg_annotations[key] = annotations.get(
+                    specifications.USER_NAME_ANNOTATION, default_name
+                )
             elif key in annotations:
                 pg_annotations[key] = annotations[key]
         PgAnnotationValidator.validate(annotations=pg_annotations)
         return PgConnectorMicroserviceDto(
-            pg_instance_name=pg_annotations.get(PG_INSTANCE_NAME_ANNOTATION),
-            vault_path=pg_annotations.get(VAULTPATH_NAME_ANNOTATION),
-            db_name=pg_annotations.get(DB_NAME_ANNOTATION),
-            db_username=pg_annotations.get(USER_NAME_ANNOTATION)
+            pg_instance_name=pg_annotations.get(specifications.PG_INSTANCE_NAME_ANNOTATION),
+            vault_path=pg_annotations.get(specifications.VAULTPATH_NAME_ANNOTATION),
+            db_name=pg_annotations.get(specifications.DB_NAME_ANNOTATION),
+            db_username=pg_annotations.get(specifications.USER_NAME_ANNOTATION),
+            grant_access_for_readonly_user=strtobool(annotations.get(
+                specifications.GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION,
+                "false"
+            )),
         )
 
 
@@ -105,4 +113,5 @@ class PgConnectorInstanceSecretDtoFactory:
             db_name=pg_connector.database,
             user=pg_connector.username,
             password=pg_connector.password,
+            readonly_username=pg_connector.readonly_username
         )

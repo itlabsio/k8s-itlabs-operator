@@ -83,27 +83,31 @@ def check_creation(annotations, name, labels, body, **_):
     status.is_success = True
 
     spec = body.get("spec", {})
-    if not PostgresConnectorService.any_containers_contain_required_envs(spec):
+    owner = get_owner_reference(body)
+    status.owner = f"{owner.kind}: {owner.name}" if owner else ""
+
+    is_contain_required_envs = PostgresConnectorService.any_containers_contain_required_envs(spec)
+
+    if connector_dto and (
+        not is_contain_required_envs
+        or connector_dto.grant_access_for_readonly_user
+    ):
         status.is_success = False
+
         service = PostgresConnectorValidationServiceFactory.create()
-        errors = service.validate(connector_dto)
-        if errors:
+        error_msg = (
+            "Postgres Connector not applied by unknown reasons. "
+            "It's maybe problems with infrastructure or certificates."
+        ) if not is_contain_required_envs else ""
+        if errors := service.validate(connector_dto):
             reasons = "; ".join(str(e) for e in errors)
+            error_msg = f"Postgres Connector not applied for next reasons: {reasons}"
+        if error_msg:
             kopf.event(
                 body,
                 type="Error",
                 reason="PostgresConnector",
-                message=f"Postgres Connector not applied for next reasons: {reasons}",
-            )
-        else:
-            kopf.event(
-                body,
-                type="Error",
-                reason="PostgresConnector",
-                message=(
-                    "Postgres Connector not applied by unknown reasons. "
-                    "It's maybe problems with infrastructure or certificates."
-                )
+                message=error_msg,
             )
 
     return status

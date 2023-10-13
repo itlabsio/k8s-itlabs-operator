@@ -1,10 +1,14 @@
+import dataclasses
+
 from itertools import chain
 
 from clients.postgres.dto import PgConnectorDbSecretDto
 from connectors.postgres_connector import specifications
 from connectors.postgres_connector.dto import PgConnectorMicroserviceDto, PgConnectorInstanceSecretDto
-from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, UnknownVaultPathInPgConnector, \
-    NotMatchingUsernames, NotMatchingDbNames
+from connectors.postgres_connector.exceptions import PgConnectorCrdDoesNotExist, \
+    UnknownVaultPathInPgConnector, \
+    NotMatchingUsernames, NotMatchingDbNames, \
+    PgConnectorReadonlyUsernameIsNotSet, PgConnectorReadonlyUsernameDoesNotExist
 from connectors.postgres_connector.factories.dto_factory import PgConnectorDbSecretDtoFactory
 from connectors.postgres_connector.factories.service_factories.postgres import PostgresServiceFactory
 from connectors.postgres_connector.services.kubernetes import KubernetesService
@@ -41,6 +45,36 @@ class PostgresConnectorService:
         with ConnectorSourceLock(source_hash):
             db_creds = self.get_or_create_db_credentials(pg_instance_cred, ms_pg_con)
             pg_service.create_database(db_creds)
+
+            if ms_pg_con.grant_access_for_readonly_user:
+                if not pg_instance_cred.readonly_username:
+                    raise PgConnectorReadonlyUsernameIsNotSet(
+                        f"`readonly` username is not set in Custom Resource "
+                        f"{ms_pg_con.pg_instance_name}"
+                    )
+
+                if not pg_service.is_user_exist(pg_instance_cred.readonly_username):
+                    raise PgConnectorReadonlyUsernameDoesNotExist(
+                        f"{pg_instance_cred.readonly_username} does not exist "
+                        f"in {ms_pg_con.pg_instance_name}"
+                    )
+
+                # Switch connection to application database for grant access
+                pg_access_cred = dataclasses.replace(
+                    pg_instance_cred, db_name=db_creds.db_name
+                )
+                pg_access_service = PostgresServiceFactory.create_pg_service(
+                    pg_access_cred
+                )
+
+                if pg_access_service.is_user_grantee(
+                        db_creds.db_name, pg_instance_cred.readonly_username
+                ):
+                    return
+
+                pg_access_service.grant_access_on_select(
+                    db_creds.user, pg_instance_cred.readonly_username
+                )
 
     @staticmethod
     def generate_source_hash(

@@ -69,6 +69,7 @@ class ConnectorStatus:
 class MutationHookStatus:
     is_used: Optional[bool] = None
     is_success: Optional[bool] = None
+    owner: Optional[str] = None
 
     @property
     def label_is_used(self) -> str:
@@ -89,3 +90,9 @@ class MutationHookStatus:
         else:
             label_value = SuccessLabelValues.failure
         return str(label_value)
+
+    @property
+    def label_owner(self) -> str:
+        if self.owner is None:
+            return ""
+        return self.owner

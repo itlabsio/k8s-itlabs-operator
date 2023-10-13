@@ -10,6 +10,7 @@ class PostgresConnectorSpec:
     database: str
     username: str
     password: str
+    readonly_username: str | None = None
 
 
 @dataclass

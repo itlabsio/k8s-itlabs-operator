@@ -8,6 +8,7 @@ class PgConnector:
     database: str
     username: str
     password: str
+    readonly_username: str | None = None
 
 
 @dataclass
@@ -16,6 +17,7 @@ class PgConnectorMicroserviceDto:
     vault_path: str
     db_name: str
     db_username: str
+    grant_access_for_readonly_user: bool | None = None
 
 
 @dataclass
@@ -25,3 +27,4 @@ class PgConnectorInstanceSecretDto:
     password: str
     host: str
     port: int
+    readonly_username: str | None = None

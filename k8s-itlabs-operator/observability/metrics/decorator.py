@@ -90,6 +90,7 @@ def mutation_hook_monitoring(connector_type: str):
                 'connector_type': connector_type,
                 'used': status.label_is_used,
                 'success': status.label_is_success,
+                'owner': status.label_owner
             }
             app_mutation_admission_hook_latency_seconds.labels(**label_values).observe(process_time)
             connector_type_key = label_values.pop('connector_type')

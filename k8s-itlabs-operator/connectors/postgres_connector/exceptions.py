@@ -18,6 +18,14 @@ class PgConnectorCrdDoesNotExist(PostgresConnectorError):
     pass
 
 
+class PgConnectorReadonlyUsernameIsNotSet(PostgresConnectorError):
+    pass
+
+
+class PgConnectorReadonlyUsernameDoesNotExist(PostgresConnectorError):
+    pass
+
+
 class UnknownVaultPathInPgConnector(PostgresConnectorError):
     pass
 

@@ -14,6 +14,18 @@ class AbstractPostgresService:
     def create_database(self, db_cred: PgConnectorDbSecretDto):
         raise NotImplementedError
 
+    @abstractmethod
+    def is_user_exist(self, username: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def is_user_grantee(self, database: str, username: str) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def grant_access_on_select(self, grantor_name: str, grantee_name: str):
+        raise NotImplementedError
+
 
 class PostgresService(AbstractPostgresService):
     def __init__(self, pg_client: AbstractPostgresClient):
@@ -31,3 +43,12 @@ class PostgresService(AbstractPostgresService):
         else:
             self.pg_client.create_database(db_name=db_cred.db_name, user=db_cred.user)
         self.pg_client.grant_user_to_admin(user=db_cred.user)
+
+    def is_user_exist(self, username: str) -> bool:
+        return self.pg_client.is_user_exist(username)
+
+    def is_user_grantee(self, database: str, username: str) -> bool:
+        return self.pg_client.is_user_grantee(database, username)
+
+    def grant_access_on_select(self, grantor_name: str, grantee_name: str):
+        self.pg_client.grant_access_on_select(grantor_name, grantee_name)
