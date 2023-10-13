@@ -143,9 +143,13 @@ class PostgresClient(AbstractPostgresClient):
         self._execute_query_v2(query, identifiers=[user], values=[password])
 
     def create_database(self, db_name: str, user: str):
-        self._grant_user_to_atlas_user(user=user)
+        self._grant_user_to_another(
+            user=user, another_user=self.connection_data.user
+        )
         self._create_database(db_name=db_name, owner=user)
-        self._revoke_user_from_atlas(user=user)
+        self._revoke_user_from_another(
+            user=user, another_user=self.connection_data.user
+        )
         self.grant_all_privileges(db_name=db_name, user=user)
 
     def _create_database(self, db_name: str, owner: str):
@@ -159,22 +163,20 @@ class PostgresClient(AbstractPostgresClient):
     def grant_user_to_admin(self, user: str):
         self._grant_user_to_another(user=user, another_user='postgres')
 
-    def _grant_user_to_atlas_user(self, user: str):
-        query = """GRANT {} TO {};"""
-        self._execute_query_v2(query, identifiers=[user, self.connection_data.user])
-
     def _grant_user_to_another(self, user: str, another_user: str):
         query = """GRANT {} TO {};"""
         self._execute_query_v2(query, identifiers=[user, another_user])
 
-    def _revoke_user_from_atlas(self, user: str):
+    def _revoke_user_from_another(self, user: str, another_user: str):
         query = """REVOKE {} FROM {};"""
-        self._execute_query_v2(query, identifiers=[user, self.connection_data.user])
+        self._execute_query_v2(query, identifiers=[user, another_user])
 
     def grant_access_on_select(self, grantor_name: str, grantee_name: str):
-        self._grant_user_to_atlas_user(grantor_name)
+        self._grant_user_to_another(grantor_name, self.connection_data.user)
         self._grant_access_on_select(grantor_name, grantee_name)
-        self._revoke_user_from_atlas(grantor_name)
+        self._revoke_user_from_another(
+            user=grantor_name, another_user=self.connection_data.user
+        )
 
     def _grant_access_on_select(self, grantor_name: str, grantee_name: str):
         query = """

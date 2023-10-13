@@ -61,7 +61,7 @@ class PostgresConnectorService:
 
                 # Switch connection to application database for grant access
                 pg_access_cred = dataclasses.replace(
-                    pg_instance_cred, db_name=ms_pg_con.db_name
+                    pg_instance_cred, db_name=db_creds.db_name
                 )
                 pg_access_service = PostgresServiceFactory.create_pg_service(
                     pg_access_cred
