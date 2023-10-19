@@ -122,12 +122,13 @@ class PostgresClient(AbstractPostgresClient):
             UNION
             SELECT 1
             FROM pg_default_acl acl
-            join pg_namespace namespace on namespace.oid = acl.defaclnamespace
-            WHERE acl.defaclacl::text ILIKE %s;
+            JOIN pg_namespace namespace on namespace.oid = acl.defaclnamespace
+            WHERE acl.defaclacl::text ILIKE %s
+              AND acl.defaclacl::text ILIKE %s;
         """
         return bool(self._execute_query_v2(
             query,
-            values=[user, database, f"%{user}=r/{database}%"],
+            values=[user, database, f"%{user}%", f"%{database}%"],
         ))
 
     def is_database_exist(self, db_name: str) -> bool:
