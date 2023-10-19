@@ -92,8 +92,6 @@ def check_creation(annotations, name, labels, body, **_):
         not is_contain_required_envs
         or connector_dto.grant_access_for_readonly_user
     ):
-        status.is_success = False
-
         service = PostgresConnectorValidationServiceFactory.create()
         error_msg = (
             "Postgres Connector not applied by unknown reasons. "
@@ -103,6 +101,7 @@ def check_creation(annotations, name, labels, body, **_):
             reasons = "; ".join(str(e) for e in errors)
             error_msg = f"Postgres Connector not applied for next reasons: {reasons}"
         if error_msg:
+            status.is_success = False
             kopf.event(
                 body,
                 type="Error",
