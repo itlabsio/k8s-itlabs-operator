@@ -1,6 +1,70 @@
 version: '3.6'
 
+x-healthcheck-defaults: &healthcheck-defaults
+  interval: 3s
+  timeout: 3s
+  retries: 100
+  start_period: 20s
+
 services:
+
+  # Health checking external services that are listed in `links` section
+  healthchecker:
+    build:
+      context: ..
+      dockerfile: services/healtchecker/healthchecker.Dockerfile
+    container_name: services-healtchecker
+    networks:
+      - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    links:
+      - vault     # http://vault:8200/v1/sys/health
+      - keycloak  # http://keycloak:8080/health/ready
+      - sentry    # http://sentry:9000/_health/
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: [ "CMD", "./services-healthcheck.sh" ]
+
+  postgres:
+    build: ./postgres
+    container_name: postgres
+    networks:
+      - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: [ "CMD", "pg_isready" ]
+
+  rabbit:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    networks:
+      - kind
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: [ "CMD", "rabbitmq-diagnostics",  "-q", "ping" ]
+
+  redis:
+    image: redis
+    container_name: redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - kind
+    healthcheck:
+      <<: *healthcheck-defaults
+      test: [ "CMD", "redis-cli", "ping" ]
 
   vault:
     image: hashicorp/vault:1.14.0
@@ -19,29 +83,6 @@ services:
     cap_add:
       - IPC_LOCK
 
-  postgres:
-    build: ./postgres
-    container_name: postgres
-    networks:
-      - kind
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # задаем пароль для superuser postgres
-
-  rabbit:
-    image: rabbitmq:3.12-management
-    container_name: rabbitmq
-    networks:
-      - kind
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-
   keycloak:
     image: quay.io/keycloak/keycloak:21.1.0
     container_name: keycloak
@@ -54,16 +95,7 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-    command:
-      - start-dev
-
-  redis:
-    image: redis
-    container_name: redis
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - kind
+    command: start-dev --health-enabled=true
 
   sentry:
     platform: linux/x86_64
@@ -84,6 +116,9 @@ services:
       SENTRY_DB_USER: ${POSTGRES_USER}
       SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
       SENTRY_REDIS_HOST: redis
+    depends_on:
+      - redis
+      - postgres
 
 networks:
   kind:

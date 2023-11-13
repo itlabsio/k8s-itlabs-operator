@@ -33,8 +33,8 @@ will not send data to Sentry if this secret does not exist.
 For run e2e-tests locally, execute commands:
 
 ```shell
-chmod +x scripts/start_local_runner.sh
-./scripts/start_local_runner.sh
+chmod +x scripts/run-tests.sh
+./scripts/run-tests.sh
 ```
 
 ## Monitoring

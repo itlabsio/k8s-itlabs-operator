@@ -2,10 +2,10 @@
 
 prepare_image() {
   # build images of operator and fixture for preparing environment for tests
-  docker build -t $DOCKER_IMAGE -f docker/Dockerfile .
+  docker build -t "$DOCKER_IMAGE" -f docker/Dockerfile .
   docker build -t prepare_infra -f e2e_tests/preparejob/prepare.infra.Dockerfile .
   kind load docker-image prepare_infra
-  kind load docker-image $DOCKER_IMAGE
+  kind load docker-image "$DOCKER_IMAGE"
 }
 
 prepare_infrastructure() {
@@ -17,9 +17,9 @@ prepare_infrastructure() {
   export POSTGRES_DB='postgres'
   export OPERATOR_USER='operator'
   export OPERATOR_PASSWORD='operator_pwd'
-  docker-compose -p e2e-infrastructure -f e2e_tests/services/docker-compose-infra.yaml up -d
-  # wait additional time all containers will be ready to use
-  sleep 300
+  if ! docker-compose -p e2e-infrastructure -f e2e_tests/services/docker-compose-infra.yaml up -d --wait; then
+    exit 1;
+  fi
 
   envsubst < e2e_tests/preparejob/k8s-prepare-infrastructure-job.yaml > k8s-prepare-infrastructure-job-no-var.yaml
   kubectl apply -f e2e_tests/kind/e2e-rbac.yaml
@@ -31,7 +31,7 @@ prepare_infrastructure() {
 e2e_tests() {
   # check configmap is created with credentials for vault
   operator_configmap=`kubectl get configmap -n k8s-itlabs-operator k8s-itlabs-operator-config  --ignore-not-found`
-  if [[ -z "$operator_configmap" ]]; then
+  if [ -z "$operator_configmap" ]; then
     echo Configmap for k8s-itlabs-operator deployment was not created
     exit 1
   fi
@@ -50,9 +50,8 @@ e2e_tests() {
 
   kubectl get svc -n k8s-itlabs-operator k8s-itlabs-operator
   kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
-  time kubectl wait pods dnsutils --for condition=Ready --timeout=180s
+  time kubectl wait pods dnsutils --for condition=Ready --timeout=300s # up timeout
   kubectl exec -i -t dnsutils -- nslookup k8s-itlabs-operator.k8s-itlabs-operator
-
 
   # add secret with credential to sentry, token and organization have been taken from sentry db dump, that is why they
   # are not sensitive
@@ -67,40 +66,42 @@ e2e_tests() {
     --from-literal=username="admin" \
     --from-literal=password="admin"
 
-  sleep 300
-
   # start e2e tests
   envsubst < e2e_tests/tester/job-e2e-tests.yaml > job-e2e-tests-no-var.yaml
   kubectl apply -f job-e2e-tests-no-var.yaml
-  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=complete --timeout=360s && exit 0 &
+  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=complete --timeout=360s > /dev/null && exit 0 &
   completion_pid=$!
-  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=failed --timeout=360s && exit 1 &
+  kubectl wait job/e2e-tests -n k8s-itlabs-operator --for=condition=failed --timeout=360s > /dev/null && exit 1 &
   failure_pid=$!
 
-  while true; do
-    ps -p $failure_pid
-    f_run=$(echo $?)
-    if [[ $f_run == 0 ]] ; then
-      echo running f
-    else
-      exit_code=1
-      break
-    fi
-    ps -p $completion_pid
-    c_run=$(echo $?)
-    if [[ $c_run == 0 ]] ; then
-      echo running c
-    else
-      exit_code=0
-      break
-    fi
+
+
+  echo "Running tests"
+  is_tests_running=true
+  runtime_duration=0
+  exit_code=0
+  while "$is_tests_running"; do
     sleep 1
+
+    if ! ps -p $failure_pid > /dev/null; then
+      is_tests_running=false
+      exit_code=1
+    fi
+
+    if ! ps -p $completion_pid > /dev/null; then
+      is_tests_running=false
+    fi
+
+    runtime_duration=$((runtime_duration + 1))
+    printf "\truntime: %s" "$(date -d@$runtime_duration -u +%H:%M:%S)"
+    if [ $is_tests_running ]; then printf '\r'; else printf '\n'; fi
   done
-  if [[ "$exit_code" == "0" ]]; then
-    echo "Job succeeded"
+
+  if [ "$exit_code" = "0" ]; then
+    echo "Tests passed"
     pkill -P $failure_pid
   else
-    echo "Job failed"
+    echo "Tests failed"
     pkill -P $completion_pid
   fi
 
@@ -110,12 +111,15 @@ e2e_tests() {
   exit $exit_code
 }
 
-if [[ $VM_IP ]]; then
-  export REAL_IP=$VM_IP
+if [ "$VM_IP" ]; then
+  REAL_IP=$VM_IP
 else
-  export REAL_IP=$(ip route|awk '/default/ { print $3 }')
+  REAL_IP=$(ip route|awk '/default/ { print $3 }')
+
 fi
-echo REAL_IP $REAL_IP
+export REAL_IP
+echo REAL_IP "$REAL_IP"
+
 # prepare kubernetes cluster for tests
 chmod +x e2e_tests/kind/prepare-kind.sh
 ./e2e_tests/kind/prepare-kind.sh
