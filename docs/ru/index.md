@@ -34,6 +34,6 @@
 Для локального запуска e2e-тестов выполните команды:
 
 ```shell
-chmod +x scripts/start_local_runner.sh
-./scripts/start_local_runner.sh
+chmod +x scripts/run-tests.sh
+./scripts/run-tests.sh
 ```

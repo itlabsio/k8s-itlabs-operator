@@ -36,7 +36,7 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: admin
     healthcheck:
       <<: *healthcheck-defaults
       test: [ "CMD", "pg_isready" ]
@@ -113,8 +113,8 @@ services:
     environment:
       SENTRY_SECRET_KEY: '!!!SECRET!!!'
       SENTRY_POSTGRES_HOST: postgres
-      SENTRY_DB_USER: ${POSTGRES_USER}
-      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      SENTRY_DB_USER: postgres
+      SENTRY_DB_PASSWORD: admin
       SENTRY_REDIS_HOST: redis
     depends_on:
       - redis
