@@ -6,10 +6,10 @@ COPY . .
 
 RUN apk add --no-cache procps
 
-ENV KUBECTL v1.24.15
+ENV KUBECTL v1.27.3
 ENV KIND v0.20.0
 ENV VM_IP host.docker.internal
-ENV DOCKER_IMAGE operator:0.0.2
+ENV DOCKER_IMAGE operator
 ENV KUBE_NAMESPACE k8s-itlabs-operator
 ENV MANIFEST_FOLDER ./manifests
 
