@@ -48,19 +48,12 @@ startup() {
 }
 
 run() {
-  docker build -t operator -f e2e_tests/e2e.tests.Dockerfile .
+  docker build -t operator-test-stand -f e2e_tests/e2e.tests.Dockerfile .
   docker run -v /var/run/docker.sock:/var/run/docker.sock \
     --add-host=host.docker.internal:host-gateway \
-    --name=runner operator:latest
-}
-
-run_docker_compose() {
-  docker-compose -p test -f e2e_tests/services/docker-compose-test.yaml up -d --wait
-  echo "Docker-compose services are started."
-  docker-compose -p test -f e2e_tests/services/docker-compose-test.yaml down
+    --name=runner operator-test-stand:latest
 }
 
 startup "$@"
 run
-#run_docker_compose
 cleanup
