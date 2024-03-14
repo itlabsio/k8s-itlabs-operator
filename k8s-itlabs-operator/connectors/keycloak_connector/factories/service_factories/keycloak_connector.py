@@ -1,7 +1,9 @@
-from connectors.keycloak_connector.factories.service_factories.vault import \
-    VaultServiceFactory
-from connectors.keycloak_connector.services.keycloak_connector import \
-    KeycloakConnectorService
+from connectors.keycloak_connector.factories.service_factories.vault import (
+    VaultServiceFactory,
+)
+from connectors.keycloak_connector.services.keycloak_connector import (
+    KeycloakConnectorService,
+)
 
 
 class KeycloakConnectorServiceFactory:

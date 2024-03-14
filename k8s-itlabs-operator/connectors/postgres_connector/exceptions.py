@@ -1,5 +1,8 @@
-from validation.exceptions import AnnotationValidatorMissedRequiredException, AnnotationValidatorEmptyValueException, \
-    ConnectorError
+from validation.exceptions import (
+    AnnotationValidatorEmptyValueException,
+    AnnotationValidatorMissedRequiredException,
+    ConnectorError,
+)
 
 
 class PostgresConnectorError(ConnectorError):
@@ -38,9 +41,13 @@ class NotMatchingDbNames(PostgresConnectorError):
     pass
 
 
-class PgConnectorMissingRequiredAnnotationError(PostgresConnectorError, AnnotationValidatorMissedRequiredException):
+class PgConnectorMissingRequiredAnnotationError(
+    PostgresConnectorError, AnnotationValidatorMissedRequiredException
+):
     pass
 
 
-class PgConnectorAnnotationEmptyValueError(PostgresConnectorError, AnnotationValidatorEmptyValueException):
+class PgConnectorAnnotationEmptyValueError(
+    PostgresConnectorError, AnnotationValidatorEmptyValueException
+):
     pass

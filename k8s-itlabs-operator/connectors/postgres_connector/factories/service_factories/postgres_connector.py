@@ -1,5 +1,9 @@
-from connectors.postgres_connector.factories.service_factories.vault import VaultServiceFactory
-from connectors.postgres_connector.services.postgres_connector import PostgresConnectorService
+from connectors.postgres_connector.factories.service_factories.vault import (
+    VaultServiceFactory,
+)
+from connectors.postgres_connector.services.postgres_connector import (
+    PostgresConnectorService,
+)
 
 
 class PostgresConnectorServiceFactory:

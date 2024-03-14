@@ -1,4 +1,4 @@
-from clients.keycloak.dto import Token, ClientDto, Error
+from clients.keycloak.dto import ClientDto, Error, Token
 
 
 class TokenDtoFactory:

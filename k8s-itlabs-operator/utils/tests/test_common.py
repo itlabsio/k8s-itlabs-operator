@@ -1,6 +1,5 @@
 import pytest
-
-from utils.common import get_owner_reference, OwnerReferenceDto
+from utils.common import OwnerReferenceDto, get_owner_reference
 
 
 @pytest.mark.unit
@@ -22,15 +21,12 @@ class TestGettingOwnerName:
             }
         }
 
-        assert get_owner_reference(body) == \
-               OwnerReferenceDto(kind="ReplicaSet", name="firstOwner")
+        assert get_owner_reference(body) == OwnerReferenceDto(
+            kind="ReplicaSet", name="firstOwner"
+        )
 
     def test_return_none_on_empty_owner_references(self):
-        body = {
-            "metadata": {
-                "ownerReferences": []
-            }
-        }
+        body = {"metadata": {"ownerReferences": []}}
 
         assert get_owner_reference(body) is None
 

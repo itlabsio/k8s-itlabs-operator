@@ -1,5 +1,9 @@
-from connectors.rabbit_connector.factories.service_factories.vault import VaultServiceFactory
-from connectors.rabbit_connector.services.rabbit_connector import RabbitConnectorService
+from connectors.rabbit_connector.factories.service_factories.vault import (
+    VaultServiceFactory,
+)
+from connectors.rabbit_connector.services.rabbit_connector import (
+    RabbitConnectorService,
+)
 
 
 class RabbitConnectorServiceFactory:

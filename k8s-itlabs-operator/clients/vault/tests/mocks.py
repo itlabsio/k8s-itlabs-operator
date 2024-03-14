@@ -38,4 +38,7 @@ class MockedVaultClient(AbstractVaultClient):
 class VaultClientMocker:
     @staticmethod
     def mock_hvac_vault_client(mocker, value):
-        return mocker.patch("clients.vault.vaultclient.VaultClient._read_secret_version", return_value=value)
+        return mocker.patch(
+            "clients.vault.vaultclient.VaultClient._read_secret_version",
+            return_value=value,
+        )

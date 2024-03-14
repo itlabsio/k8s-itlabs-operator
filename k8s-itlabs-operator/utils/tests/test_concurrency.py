@@ -2,7 +2,6 @@ import asyncio
 import time
 
 import pytest
-
 from utils.concurrency import ConnectorSourceLock
 
 
@@ -12,7 +11,7 @@ class TestConnectorSourceLock:
     is_thread_2_done = False
     is_thread_3_done = False
 
-    thread_sleep_time = .2
+    thread_sleep_time = 0.2
 
     def run_thread_1_for_common_resource(self):
         with ConnectorSourceLock("common-resource"):

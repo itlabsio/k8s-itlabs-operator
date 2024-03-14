@@ -5,7 +5,7 @@ class TestEnabledLabelValues:
     def test_str(self):
         value = str(EnabledLabelValues.enabled)
         assert isinstance(value, str)
-        assert value == 'enabled'
+        assert value == "enabled"
 
 
 class TestConnectorStatus:

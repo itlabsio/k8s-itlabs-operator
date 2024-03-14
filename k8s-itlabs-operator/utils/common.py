@@ -44,8 +44,8 @@ def get_owner_reference(body: dict) -> Optional[OwnerReferenceDto]:
 
 
 def join(base: str, url: str):
-    if not base.endswith('/'):
-        base += '/'
+    if not base.endswith("/"):
+        base += "/"
 
     return urllib.parse.urljoin(base, url)
 
@@ -58,8 +58,8 @@ def strtobool(val):
     'val' is anything else.
     """
     val = val.lower()
-    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+    if val in ("y", "yes", "t", "true", "on", "1"):
         return 1
-    if val in ('n', 'no', 'f', 'false', 'off', '0'):
+    if val in ("n", "no", "f", "false", "off", "0"):
         return 0
     raise ValueError(f"invalid truth value {val}")

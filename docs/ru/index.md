@@ -16,7 +16,7 @@
     - vault_url;
     - vault_k8s_auth_method;
     - vault_k8s_role.
-  
+
   Пример:
 
   ```shell

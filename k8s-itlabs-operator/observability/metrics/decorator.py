@@ -1,13 +1,13 @@
 from timeit import default_timer
 from typing import Callable
 
+from observability.metrics.metrics import (
+    app_http_request_operator_latency_seconds,
+    app_mutation_admission_hook_latency_seconds,
+)
+from operators.dto import ConnectorStatus, MutationHookStatus
 from prometheus_client.context_managers import Timer
 from prometheus_client.decorator import decorate
-
-from observability.metrics.metrics import \
-    app_http_request_operator_latency_seconds, \
-    app_mutation_admission_hook_latency_seconds
-from operators.dto import ConnectorStatus, MutationHookStatus
 
 
 class LabeledTimer(Timer):
@@ -17,7 +17,9 @@ class LabeledTimer(Timer):
         self._start = 0
 
     def _new_timer(self):
-        return self.__class__(self._metric, self._callback_name, self._connector_type)
+        return self.__class__(
+            self._metric, self._callback_name, self._connector_type
+        )
 
     def __enter__(self):
         self._start = default_timer()
@@ -36,20 +38,22 @@ class LabeledTimer(Timer):
             with self._new_timer() as timer:
                 status = func(*args, **kwargs)
                 label_values = {
-                    'connector_type': self._connector_type,
-                    'enabled': status.label_is_enabled,
-                    'used': status.label_is_used,
-                    'exception': status.label_exception
+                    "connector_type": self._connector_type,
+                    "enabled": status.label_is_enabled,
+                    "used": status.label_is_used,
+                    "exception": status.label_exception,
                 }
                 timer.labels(**label_values)
-            connector_type_key = label_values.pop('connector_type')
+            connector_type_key = label_values.pop("connector_type")
             return {connector_type_key: label_values}
 
         return decorate(f, wrapped)
 
 
 def connector_time(connector_type: str):
-    return LabeledTimer(app_http_request_operator_latency_seconds, 'observe', connector_type)
+    return LabeledTimer(
+        app_http_request_operator_latency_seconds, "observe", connector_type
+    )
 
 
 def monitoring(connector_type: str):
@@ -65,13 +69,15 @@ def monitoring(connector_type: str):
             finally:
                 process_time = default_timer() - start_time
                 label_values = {
-                    'connector_type': connector_type,
-                    'enabled': status.label_is_enabled,
-                    'used': status.label_is_used,
-                    'exception': status.label_exception
+                    "connector_type": connector_type,
+                    "enabled": status.label_is_enabled,
+                    "used": status.label_is_used,
+                    "exception": status.label_exception,
                 }
-                app_http_request_operator_latency_seconds.labels(**label_values).observe(process_time)
-                connector_type_key = label_values.pop('connector_type')
+                app_http_request_operator_latency_seconds.labels(
+                    **label_values
+                ).observe(process_time)
+                connector_type_key = label_values.pop("connector_type")
                 return {connector_type_key: label_values}
 
         return wrapped
@@ -87,13 +93,15 @@ def mutation_hook_monitoring(connector_type: str):
             status: MutationHookStatus = func(*args, **kwargs)
             process_time = default_timer() - start_time
             label_values = {
-                'connector_type': connector_type,
-                'used': status.label_is_used,
-                'success': status.label_is_success,
-                'owner': status.label_owner
+                "connector_type": connector_type,
+                "used": status.label_is_used,
+                "success": status.label_is_success,
+                "owner": status.label_owner,
             }
-            app_mutation_admission_hook_latency_seconds.labels(**label_values).observe(process_time)
-            connector_type_key = label_values.pop('connector_type')
+            app_mutation_admission_hook_latency_seconds.labels(
+                **label_values
+            ).observe(process_time)
+            connector_type_key = label_values.pop("connector_type")
             return {connector_type_key: label_values}
 
         return wrapped

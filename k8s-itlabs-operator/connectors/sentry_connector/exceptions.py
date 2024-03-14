@@ -1,5 +1,8 @@
-from validation.exceptions import ConnectorError, AnnotationValidatorEmptyValueException, \
-    AnnotationValidatorMissedRequiredException
+from validation.exceptions import (
+    AnnotationValidatorEmptyValueException,
+    AnnotationValidatorMissedRequiredException,
+    ConnectorError,
+)
 
 
 class SentryConnectorError(ConnectorError):
@@ -22,9 +25,13 @@ class NonExistSecretForSentryConnector(SentryConnectorError):
     pass
 
 
-class SentryConnectorMissingRequiredAnnotationError(SentryConnectorError, AnnotationValidatorMissedRequiredException):
+class SentryConnectorMissingRequiredAnnotationError(
+    SentryConnectorError, AnnotationValidatorMissedRequiredException
+):
     pass
 
 
-class SentryConnectorAnnotationEmptyValueError(SentryConnectorError, AnnotationValidatorEmptyValueException):
+class SentryConnectorAnnotationEmptyValueError(
+    SentryConnectorError, AnnotationValidatorEmptyValueException
+):
     pass

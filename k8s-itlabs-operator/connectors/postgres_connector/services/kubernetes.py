@@ -5,10 +5,14 @@ from typing import Optional
 
 from clients.k8s.k8s_client import KubernetesClient
 from connectors.postgres_connector.dto import PgConnector
-from connectors.postgres_connector.factories.crd_factory import PostgresConnectorCrdFactory
-from connectors.postgres_connector.factories.dto_factory import PgConnectorFactory
+from connectors.postgres_connector.factories.crd_factory import (
+    PostgresConnectorCrdFactory,
+)
+from connectors.postgres_connector.factories.dto_factory import (
+    PgConnectorFactory,
+)
 
-logger = logging.getLogger('PgConnectorK8sService')
+logger = logging.getLogger("PgConnectorK8sService")
 
 
 class AbstractKubernetesService:

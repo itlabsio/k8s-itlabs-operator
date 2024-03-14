@@ -1,5 +1,8 @@
-from validation.exceptions import AnnotationValidatorEmptyValueException, AnnotationValidatorMissedRequiredException, \
-    ConnectorError
+from validation.exceptions import (
+    AnnotationValidatorEmptyValueException,
+    AnnotationValidatorMissedRequiredException,
+    ConnectorError,
+)
 
 
 class RabbitConnectorError(ConnectorError):
@@ -30,9 +33,13 @@ class NotMatchingVhostNames(RabbitConnectorError):
     pass
 
 
-class RabbitConnectorMissingRequiredAnnotationError(RabbitConnectorError, AnnotationValidatorMissedRequiredException):
+class RabbitConnectorMissingRequiredAnnotationError(
+    RabbitConnectorError, AnnotationValidatorMissedRequiredException
+):
     pass
 
 
-class RabbitConnectorAnnotationEmptyValueError(RabbitConnectorError, AnnotationValidatorEmptyValueException):
+class RabbitConnectorAnnotationEmptyValueError(
+    RabbitConnectorError, AnnotationValidatorEmptyValueException
+):
     pass

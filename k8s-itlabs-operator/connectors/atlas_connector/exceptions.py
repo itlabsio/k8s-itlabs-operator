@@ -20,6 +20,8 @@ class AtlasAnnotationsEmptyValueException(Exception):
 
 class AtlasAnnotationsGitlabProjectIdValueException(Exception):
     def __init__(self, id_str: str, ex: Exception):
-        message = f"Get annotation '{specifications.ANNOTATION_CI_PROJECT_ID}," \
-                  f" but received value is non-digital: '{id_str}'"
+        message = (
+            f"Get annotation '{specifications.ANNOTATION_CI_PROJECT_ID},"
+            f" but received value is non-digital: '{id_str}'"
+        )
         super().__init__(message, ex.args)

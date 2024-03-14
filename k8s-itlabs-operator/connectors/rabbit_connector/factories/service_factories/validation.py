@@ -1,7 +1,8 @@
 from clients.vault.factories.vault_client import VaultClientFactory
 from connectors.rabbit_connector.services.kubernetes import KubernetesService
-from connectors.rabbit_connector.services.validation import \
-    RabbitConnectorValidationService
+from connectors.rabbit_connector.services.validation import (
+    RabbitConnectorValidationService,
+)
 
 
 class RabbitConnectorValidationServiceFactory:

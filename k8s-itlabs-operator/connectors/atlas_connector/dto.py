@@ -2,8 +2,10 @@ from dataclasses import dataclass
 from typing import Optional
 
 from connectors.atlas_connector import specifications
-from connectors.atlas_connector.exceptions import AtlasAnnotationsEmptyValueException, \
-    AtlasAnnotationsGitlabProjectIdValueException
+from connectors.atlas_connector.exceptions import (
+    AtlasAnnotationsEmptyValueException,
+    AtlasAnnotationsGitlabProjectIdValueException,
+)
 
 
 @dataclass
@@ -39,19 +41,33 @@ class AtlasConnectorAnnotations:
     @property
     def ms_name(self) -> str:
         if self._annotations[specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION]:
-            return self._annotations[specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION]
-        raise AtlasAnnotationsEmptyValueException(annotation_name=specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION)
+            return self._annotations[
+                specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION
+            ]
+        raise AtlasAnnotationsEmptyValueException(
+            annotation_name=specifications.ATLAS_MICROSERVICE_NAME_ANNOTATION
+        )
 
     @property
     def gitlab_project_id(self) -> int:
         if not self._annotations[specifications.ANNOTATION_CI_PROJECT_ID]:
-            raise AtlasAnnotationsEmptyValueException(annotation_name=specifications.ANNOTATION_CI_PROJECT_ID)
+            raise AtlasAnnotationsEmptyValueException(
+                annotation_name=specifications.ANNOTATION_CI_PROJECT_ID
+            )
         try:
-            return int(self._annotations[specifications.ANNOTATION_CI_PROJECT_ID])
+            return int(
+                self._annotations[specifications.ANNOTATION_CI_PROJECT_ID]
+            )
         except ValueError as ex:
             raise AtlasAnnotationsGitlabProjectIdValueException(
-                id_str=self._annotations[specifications.ANNOTATION_CI_PROJECT_ID], ex=ex)
+                id_str=self._annotations[
+                    specifications.ANNOTATION_CI_PROJECT_ID
+                ],
+                ex=ex,
+            )
 
     @property
     def business_name(self) -> Optional[str]:
-        return self._annotations.get(specifications.ATLAS_BUSINESS_NAME_ANNOTATION)
+        return self._annotations.get(
+            specifications.ATLAS_BUSINESS_NAME_ANNOTATION
+        )

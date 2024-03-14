@@ -19,6 +19,6 @@ class TestKopfRequestWrapper:
                 pass
 
         try:
-            func_fail('1', '2')
+            func_fail("1", "2")
         except Exception as e:
-            assert e.args[0] == '2'
+            assert e.args[0] == "2"

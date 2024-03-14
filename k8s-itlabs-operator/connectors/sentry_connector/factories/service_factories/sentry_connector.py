@@ -1,5 +1,9 @@
-from connectors.sentry_connector.services.sentry_connector import SentryConnectorService
-from connectors.sentry_connector.factories.service_factories.vault import VaultServiceFactory
+from connectors.sentry_connector.factories.service_factories.vault import (
+    VaultServiceFactory,
+)
+from connectors.sentry_connector.services.sentry_connector import (
+    SentryConnectorService,
+)
 
 
 class SentryConnectorServiceFactory:
