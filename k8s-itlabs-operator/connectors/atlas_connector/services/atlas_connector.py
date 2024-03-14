@@ -44,7 +44,8 @@ class AtlasConnectorService:
         status.is_enabled = cls.is_atlas_connector_enabled()
         if not status.is_enabled:
             logging.info(
-                f"Atlas connector is not enabled, because no expected configmap: {specifications.CONFIGMAP_NAME}"
+                "Atlas connector is not enabled, because no expected "
+                "configmap: %s" % (specifications.CONFIGMAP_NAME,)
             )
             return status
         atlas_config_dto = KubernetesService.get_atlas_config()

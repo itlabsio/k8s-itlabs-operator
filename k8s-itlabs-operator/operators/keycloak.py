@@ -33,7 +33,7 @@ def create_pods(body, patch, spec, annotations, **_):
     owner_fmt = f"{owner_ref.kind}: {owner_ref.name}" if owner_ref else ""
 
     logging.info(
-        f"[{owner_fmt}] Keycloak mutate handler is called on pod creating"
+        "[%s] Keycloak mutate handler is called on pod creating" % (owner_fmt,)
     )
     status = ConnectorStatus()
     try:
@@ -41,12 +41,14 @@ def create_pods(body, patch, spec, annotations, **_):
     except KeycloakConnectorMissingRequiredAnnotationError as e:
         status.is_used = False
         logging.info(
-            f"[{owner_fmt}] Keycloak connector is not used, reason: {e.message}"
+            "[%(owner)s] Keycloak connector is not used, reason: %(error)s"
+            % {"owner": owner_fmt, "error": e.message}
         )
         return status
     except KeycloakConnectorAnnotationEmptyValueError as e:
         logging.error(
-            f"[{owner_fmt}] Problem with Keycloak connector: {e.message}",
+            "[%(owner)s] Problem with Keycloak connector: %(error)s"
+            % {"owner": owner_fmt, "error": e.message},
             exc_info=e,
         )
         status.is_used = True
@@ -54,22 +56,23 @@ def create_pods(body, patch, spec, annotations, **_):
         return status
     status.is_used = True
     kk_conn_service = KeycloakConnectorServiceFactory.create()
-    logging.info(f"[{owner_fmt}] Keycloak connector service is created")
+    logging.info("[%s] Keycloak connector service is created" % (owner_fmt,))
     try:
         kk_conn_service.on_create_deployment(ms_keycloak_conn)
         logging.info(
-            f"[{owner_fmt}] Keycloak connector service was processed in infrastructure"
+            "[%s] Keycloak connector service was processed in infrastructure"
+            % (owner_fmt,)
         )
     except KeycloakConnectorError as e:
         logging.error(
-            f"[{owner_fmt}] Problem with Keycloak connector", exc_info=e
+            "[%s] Problem with Keycloak connector" % (owner_fmt,), exc_info=e
         )
         status.is_enabled = False
         status.exception = e
     except InfrastructureServiceProblem as e:
         logging.error(
-            f"[{owner_fmt}] Problem with infrastructure, "
-            "some changes couldn't be applied",
+            "[%s] Problem with infrastructure, some changes couldn't be applied"
+            % (owner_fmt,),
             exc_info=e,
         )
         status.is_enabled = True
@@ -80,8 +83,9 @@ def create_pods(body, patch, spec, annotations, **_):
             patch.spec["containers"] = spec.get("containers", [])
             patch.spec["initContainers"] = spec.get("initContainers", [])
             logging.info(
-                f"[{owner_fmt}] Keycloak connector service patched containers, "
-                f"patch.spec: {patch.spec}"
+                "[%(owner)s] Keycloak connector service patched containers, "
+                "patch.spec: %(spec)s"
+                % {"owner": owner_fmt, "spec": patch.spec}
             )
     return status
 
@@ -97,7 +101,9 @@ def check_creation(annotations, name, body, **_):
         return status
     except KeycloakConnectorAnnotationEmptyValueError as e:
         logging.error(
-            f"[{name}] Problem with Keycloak connector: {e.message}", exc_info=e
+            "[%(name)s] Problem with Keycloak connector: %(error)s"
+            % {"name": name, "error": e.message},
+            exc_info=e,
         )
         status.is_used = True
         status.exception = e

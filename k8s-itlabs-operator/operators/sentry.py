@@ -33,7 +33,7 @@ def create_pods(body, patch, spec, labels, annotations, **_):
     owner_fmt = f"{owner_ref.kind}: {owner_ref.name}" if owner_ref else ""
 
     logging.info(
-        f"[{owner_fmt}] Sentry mutate handler is called on pod creating"
+        "[%s] Sentry mutate handler is called on pod creating" % (owner_fmt,)
     )
     status = ConnectorStatus()
     try:
@@ -45,12 +45,14 @@ def create_pods(body, patch, spec, labels, annotations, **_):
     except AnnotationValidatorMissedRequiredException as e:
         status.is_used = False
         logging.info(
-            f"[{owner_fmt}] Sentry connector is not used, reason: {e.message}"
+            "[%(owner)s] Sentry connector is not used, reason: %(error)s"
+            % {"owner": owner_fmt, "error": e.message}
         )
         return status
     except AnnotationValidatorEmptyValueException as e:
         logging.error(
-            f"[{owner_fmt}] Problem with Sentry connector: {e.message}",
+            "[%(owner)s] Problem with Sentry connector: %(error)s"
+            % {"owner": owner_fmt, "error": e.message},
             exc_info=e,
         )
         status.is_used = True
@@ -60,21 +62,23 @@ def create_pods(body, patch, spec, labels, annotations, **_):
     sentry_conn_service = (
         SentryConnectorServiceFactory.create_sentry_connector_service()
     )
-    logging.info(f"[{owner_fmt}] Sentry connector service is created")
+    logging.info("[%s] Sentry connector service is created" % (owner_fmt,))
     try:
         sentry_conn_service.on_create_deployment(ms_sentry_conn)
         logging.info(
-            f"[{owner_fmt}] Sentry connector service was processed in infrastructure"
+            "[%s] Sentry connector service was processed in infrastructure"
+            % (owner_fmt,)
         )
     except SentryConnectorError as e:
         logging.error(
-            f"[{owner_fmt}] Problem with Sentry connector", exc_info=e
+            "[%s] Problem with Sentry connector" % (owner_fmt,), exc_info=e
         )
         status.is_enabled = False
         status.exception = e
     except InfrastructureServiceProblem as e:
         logging.error(
-            f"[{owner_fmt}] Problem with infrastructure, some changes may not be applied",
+            "[%s] Problem with infrastructure, some changes may not be applied"
+            % (owner_fmt,),
             exc_info=e,
         )
         status.is_enabled = True
@@ -85,7 +89,9 @@ def create_pods(body, patch, spec, labels, annotations, **_):
             patch.spec["containers"] = spec.get("containers", [])
             patch.spec["initContainers"] = spec.get("initContainers", [])
             logging.info(
-                f"[{owner_fmt}] Sentry connector service patched containers, patch.spec: {patch.spec}"
+                "[%(owner)s] Sentry connector service patched containers, "
+                "patch.spec: %(spec)s"
+                % {"owner": owner_fmt, "spec": patch.spec}
             )
     return status
 
@@ -103,12 +109,15 @@ def check_creation(annotations, name, labels, body, **_):
     except AnnotationValidatorMissedRequiredException as e:
         status.is_used = False
         logging.info(
-            f"[{name}] Sentry connector is not used, reason: {e.message}"
+            "[%(name)s] Sentry connector is not used, reason: %(error)s"
+            % {"name": name, "error": e.message}
         )
         return status
     except AnnotationValidatorEmptyValueException as e:
         logging.error(
-            f"[{name}] Problem with Sentry connector: {e.message}", exc_info=e
+            "[%(name)s] Problem with Sentry connector: %(error)s"
+            % {"name": name, "error": e.message},
+            exc_info=e,
         )
         status.is_used = True
         status.exception = e

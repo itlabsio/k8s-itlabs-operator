@@ -1,5 +1,4 @@
 import abc
-import logging
 from abc import ABCMeta
 from typing import Optional
 
@@ -11,8 +10,6 @@ from connectors.postgres_connector.factories.crd_factory import (
 from connectors.postgres_connector.factories.dto_factory import (
     PgConnectorFactory,
 )
-
-logger = logging.getLogger("PgConnectorK8sService")
 
 
 class AbstractKubernetesService:

@@ -36,7 +36,7 @@ def create_pods(body, patch, spec, annotations, labels, **_):
     owner_fmt = f"{owner_ref.kind}: {owner_ref.name}" if owner_ref else ""
 
     logging.info(
-        f"[{owner_fmt}] A rabbit mutate handler is called on pod creating"
+        "[%s] A rabbit mutate handler is called on pod creating" % (owner_fmt,)
     )
     status = ConnectorStatus()
 
@@ -49,12 +49,14 @@ def create_pods(body, patch, spec, annotations, labels, **_):
     except AnnotationValidatorMissedRequiredException as e:
         status.is_used = False
         logging.info(
-            f"[{owner_fmt}] Rabbit connector is not used, reason: {e.message}"
+            "[%(owner)s] Rabbit connector is not used, reason: %(error)s"
+            % {"owner": owner_fmt, "error": e.message}
         )
         return status
     except AnnotationValidatorEmptyValueException as e:
         logging.error(
-            f"[{owner_fmt}] Problem with Rabbit connector: {e.message}",
+            "[%(owner)s] Problem with Rabbit connector: %(error)s"
+            % {"owner": owner_fmt, "error": e.message},
             exc_info=e,
         )
         status.is_used = True
@@ -64,24 +66,26 @@ def create_pods(body, patch, spec, annotations, labels, **_):
     rabbit_con_service = (
         RabbitConnectorServiceFactory.create_rabbit_connector_service()
     )
-    logging.info(f"[{owner_fmt}] Rabbit connector service is created")
+    logging.info("[%s] Rabbit connector service is created" % (owner_fmt,))
     try:
         rabbit_con_service.on_create_deployment(ms_rabbit_con)
         logging.info(
-            f"[{owner_fmt}] Rabbit connector service was processed in infrastructure"
+            "[%s] Rabbit connector service was processed in infrastructure"
+            % (owner_fmt,)
         )
     except (
         RabbitConnectorCrdDoesNotExist,
         UnknownVaultPathInRabbitConnector,
     ) as e:
         logging.error(
-            f"[{owner_fmt}] Problem with Rabbit connector", exc_info=e
+            "[%s] Problem with Rabbit connector" % (owner_fmt,), exc_info=e
         )
         status.is_enabled = False
         status.exception = e
     except InfrastructureServiceProblem as e:
         logging.error(
-            f"[{owner_fmt}] Problem with infrastructure, some changes may not be applied",
+            "[%s] Problem with infrastructure, some changes may not be applied"
+            % (owner_fmt,),
             exc_info=e,
         )
         status.is_enabled = True
@@ -92,7 +96,9 @@ def create_pods(body, patch, spec, annotations, labels, **_):
             patch.spec["containers"] = spec.get("containers", [])
             patch.spec["initContainers"] = spec.get("initContainers", [])
             logging.info(
-                f"[{owner_fmt}] Rabbit connector service patched containers, patch.spec: {patch.spec}"
+                "[%(owner)s] Rabbit connector service patched containers, "
+                "patch.spec: %(spec)s"
+                % {"owner": owner_fmt, "spec": patch.spec}
             )
     return status
 
@@ -110,12 +116,15 @@ def check_creation(annotations, name, labels, body, **_):
     except AnnotationValidatorMissedRequiredException as e:
         status.is_used = False
         logging.info(
-            f"[{name}] Rabbit connector is not used, reason: {e.message}"
+            "[%(name)s] Rabbit connector is not used, reason: %(error)s"
+            % {"name": name, "error": e.message}
         )
         return status
     except AnnotationValidatorEmptyValueException as e:
         logging.error(
-            f"[{name}] Problem with Rabbit connector: {e.message}", exc_info=e
+            "[%(name)s] Problem with Rabbit connector: %(error)s"
+            % {"name": name, "error": e.message},
+            exc_info=e,
         )
         status.is_used = True
         status.exception = e

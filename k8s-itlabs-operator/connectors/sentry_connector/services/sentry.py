@@ -1,4 +1,3 @@
-import logging
 from abc import ABCMeta, abstractmethod
 
 from clients.sentry.sentryclient import AbstractSentryClient
@@ -6,8 +5,6 @@ from connectors.sentry_connector.dto import (
     SentryConnectorMicroserviceDto,
     SentryMsSecretDto,
 )
-
-app_logger = logging.getLogger("sentry_connector_sentry_service")
 
 
 class AbstractSentryService:

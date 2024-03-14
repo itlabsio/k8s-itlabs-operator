@@ -33,7 +33,8 @@ class RabbitService(AbstractRabbitService):
             Rights will not be rewritten is user already has it.
         """
         app_logger.info(
-            f"Configuring rabbit user '{secret.broker_user}', vhost '{secret.broker_vhost}'"
+            "Configuring rabbit user '%(user)s', vhost '%(host)s'"
+            % {"user": secret.broker_user, "host": secret.broker_vhost}
         )
 
         rabbit_user_response = self.rabbit_client.get_rabbit_user(
@@ -41,7 +42,8 @@ class RabbitService(AbstractRabbitService):
         )
         if rabbit_user_response:
             app_logger.warning(
-                f"User '{secret.broker_user}' already exist, password ignored."
+                "User '%s' already exist, password ignored."
+                % (secret.broker_user,)
             )
         else:
             self.rabbit_client.create_rabbit_user(
@@ -50,7 +52,9 @@ class RabbitService(AbstractRabbitService):
 
         rabbit_vhost_response = self.rabbit_client.get_rabbit_vhost("vhost")
         if rabbit_vhost_response:
-            app_logger.warning(f"Vhost '{secret.broker_vhost}' already exist.")
+            app_logger.warning(
+                "Vhost '%s' already exist." % (secret.broker_vhost,)
+            )
         else:
             self.rabbit_client.create_rabbit_vhost(vhost=secret.broker_vhost)
 
@@ -61,8 +65,9 @@ class RabbitService(AbstractRabbitService):
         )
         if rabbit_permissions_response:
             app_logger.warning(
-                f"User '{secret.broker_user}' already have configured permissions to vhost "
-                f"'{secret.broker_vhost}', permission granting ignored."
+                "User '%(user)s' already have configured permissions to vhost "
+                "'%(host)s', permission granting ignored."
+                % {"user": secret.broker_user, "host": secret.broker_vhost}
             )
         else:
             self.rabbit_client.create_user_vhost_permissions(
