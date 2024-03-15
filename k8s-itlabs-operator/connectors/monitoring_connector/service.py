@@ -36,9 +36,9 @@ class KubernetesService:
                 )
             except ResourceNotFoundError:
                 logger.warning(
-                    "CRD with api_version=%(api_version)s and "
-                    "kind=%(kind)s was not found"
-                    % {"api_version": api_version, "kind": kind}
+                    "CRD with api_version=%s and kind=%s was not found",
+                    api_version,
+                    kind,
                 )
         return self._sm_resource
 
@@ -116,9 +116,10 @@ class KubernetesService:
         except ApiException as e:
             if e.status != http.HTTPStatus.NOT_FOUND:
                 logger.error(
-                    "Couldn't delete ServiceMonitor with name=%(name)s "
-                    "and namespace=%(namespace)s: %(error)s"
-                    % {"name": name, "namespace": namespace, "error": e}
+                    "Couldn't delete ServiceMonitor with name=%s and namespace=%s: %s",
+                    name,
+                    namespace,
+                    e,
                 )
 
 

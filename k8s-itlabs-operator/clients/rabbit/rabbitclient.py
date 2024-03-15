@@ -59,20 +59,14 @@ class RabbitClient(AbstractRabbitClient):
         return self._send_rabbit_request(endpoint=f"/users/{user}")
 
     def create_rabbit_user(self, user: str, password: str):
-        app_logger.info(
-            "Creating user '%(user)s' in rabbit '%(url)s'"
-            % {"user": user, "url": self.url}
-        )
+        app_logger.info("Creating user '%s' in rabbit '%s'", user, self.url)
         data = {"password": password, "tags": ""}
         return self._send_rabbit_request(
             endpoint=f"/users/{user}", method="PUT", data=data
         )
 
     def delete_rabbit_user(self, user: str):
-        app_logger.info(
-            "Deleting user '%(user)s' in rabbit '%(url)s'"
-            % {"user": user, "url": self.url}
-        )
+        app_logger.info("Deleting user '%s' in rabbit '%s'", user, self.url)
         self._send_rabbit_request(
             endpoint=f"/users/{user}", method="DELETE", data={}
         )
@@ -81,19 +75,13 @@ class RabbitClient(AbstractRabbitClient):
         return self._send_rabbit_request(endpoint=f"/vhosts/{vhost}")
 
     def create_rabbit_vhost(self, vhost: str):
-        app_logger.info(
-            "Creating vhost '%(host)s' in rabbit %(url)s"
-            % {"host": vhost, "url": self.url}
-        )
+        app_logger.info("Creating vhost '%s' in rabbit %s", vhost, self.url)
         return self._send_rabbit_request(
             endpoint=f"/vhosts/{vhost}", method="PUT", data={}
         )
 
     def delete_rabbit_vhost(self, vhost: str):
-        app_logger.info(
-            "Creating vhost '%(host)s' in rabbit %(url)s"
-            % {"host": vhost, "url": self.url}
-        )
+        app_logger.info("Creating vhost '%s' in rabbit %s", vhost, self.url)
         self._send_rabbit_request(
             endpoint=f"/vhosts/{vhost}", method="DELETE", data={}
         )
@@ -105,9 +93,10 @@ class RabbitClient(AbstractRabbitClient):
 
     def create_user_vhost_permissions(self, user, vhost):
         app_logger.info(
-            "Configuring user '%(user)s' privileges to vhost '%(host)s' "
-            "in rabbit '%(url)s'"
-            % {"user": user, "host": vhost, "url": self.url}
+            "Configuring user '%s' privileges to vhost '%s' in rabbit '%s'",
+            user,
+            vhost,
+            self.url,
         )
         data = {"configure": ".*", "write": ".*", "read": ".*"}
         return self._send_rabbit_request(

@@ -33,8 +33,9 @@ class RabbitService(AbstractRabbitService):
             Rights will not be rewritten is user already has it.
         """
         app_logger.info(
-            "Configuring rabbit user '%(user)s', vhost '%(host)s'"
-            % {"user": secret.broker_user, "host": secret.broker_vhost}
+            "Configuring rabbit user '%s', vhost '%s'",
+            secret.broker_user,
+            secret.broker_vhost,
         )
 
         rabbit_user_response = self.rabbit_client.get_rabbit_user(
@@ -42,8 +43,7 @@ class RabbitService(AbstractRabbitService):
         )
         if rabbit_user_response:
             app_logger.warning(
-                "User '%s' already exist, password ignored."
-                % (secret.broker_user,)
+                "User '%s' already exist, password ignored.", secret.broker_user
             )
         else:
             self.rabbit_client.create_rabbit_user(
@@ -52,9 +52,7 @@ class RabbitService(AbstractRabbitService):
 
         rabbit_vhost_response = self.rabbit_client.get_rabbit_vhost("vhost")
         if rabbit_vhost_response:
-            app_logger.warning(
-                "Vhost '%s' already exist." % (secret.broker_vhost,)
-            )
+            app_logger.warning("Vhost '%s' already exist.", secret.broker_vhost)
         else:
             self.rabbit_client.create_rabbit_vhost(vhost=secret.broker_vhost)
 
@@ -65,9 +63,10 @@ class RabbitService(AbstractRabbitService):
         )
         if rabbit_permissions_response:
             app_logger.warning(
-                "User '%(user)s' already have configured permissions to vhost "
-                "'%(host)s', permission granting ignored."
-                % {"user": secret.broker_user, "host": secret.broker_vhost}
+                "User '%s' already have configured permissions to vhost "
+                "'%s', permission granting ignored.",
+                secret.broker_user,
+                secret.broker_vhost,
             )
         else:
             self.rabbit_client.create_user_vhost_permissions(

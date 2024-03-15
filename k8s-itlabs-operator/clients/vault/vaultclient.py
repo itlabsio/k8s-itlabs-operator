@@ -71,10 +71,7 @@ class VaultClient(AbstractVaultClient):
         secured_data = {
             k: self._get_secured_value(k, v) for k, v in data.items()
         }
-        logger.info(
-            "Write secret '%(path)s' to Vault: %(data)s"
-            % {"path": vault_path, "data": secured_data}
-        )
+        logger.info("Write secret '%s' to Vault: %s", vault_path, secured_data)
         try:
             cas = None if update_allowed else 0
             result = self.client.secrets.kv.v2.create_or_update_secret(
@@ -91,7 +88,7 @@ class VaultClient(AbstractVaultClient):
         """
         Get last secret version from Vault (kv2) by path /{mount_point}/data/{path}.
         """
-        logger.info("Started reading Vault secret version: %s" % (vault_path,))
+        logger.info("Started reading Vault secret version: %s", vault_path)
         result = None
         try:
             result = self.client.secrets.kv.v2.read_secret_version(
@@ -99,12 +96,12 @@ class VaultClient(AbstractVaultClient):
             )
         except hvac.v1.exceptions.InvalidPath:
             logger.info(
-                "Error while Read Vault secret version: %s - invalid path"
-                % (vault_path,)
+                "Error while Read Vault secret version: %s - invalid path",
+                vault_path,
             )
         except Exception as e:
             raise InfrastructureServiceProblem("Vault", e)
-        logger.info("Ended reading Vault secret version: %s" % (vault_path,))
+        logger.info("Ended reading Vault secret version: %s", vault_path)
         return result
 
     def _read_secret(self, vault_path: VaultPath) -> Optional[dict]:
@@ -133,7 +130,7 @@ class VaultClient(AbstractVaultClient):
 
     def delete_secret(self, path: str):
         try:
-            logger.info("Delete secret '%s' from Vault" % (path,))
+            logger.info("Delete secret '%s' from Vault", path)
             vault_path = VaultPathFactory.path_from_str(vault_path=path)
             self.client.secrets.kv.v2.delete_metadata_and_all_versions(
                 path=vault_path.path, mount_point=vault_path.mount_point

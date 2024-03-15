@@ -37,8 +37,8 @@ class PostgresService(AbstractPostgresService):
                 user=db_cred.user, password=db_cred.password
             )
             logger.warning(
-                "User '%s' already exist, password set from credentials."
-                % (db_cred.user,)
+                "User '%s' already exist, password set from credentials.",
+                db_cred.user,
             )
         else:
             self.pg_client.create_user(
@@ -46,7 +46,7 @@ class PostgresService(AbstractPostgresService):
             )
 
         if self.pg_client.is_database_exist(db_name=db_cred.db_name):
-            logger.warning("Database '%s' already exist." % (db_cred.db_name,))
+            logger.warning("Database '%s' already exist.", db_cred.db_name)
         else:
             self.pg_client.create_database(
                 db_name=db_cred.db_name, user=db_cred.user
