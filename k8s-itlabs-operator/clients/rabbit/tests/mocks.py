@@ -35,8 +35,12 @@ class MockedRabbitClient(AbstractRabbitClient):
 
 class RabbitClientFactoryMocker:
     @staticmethod
-    def mock_create_rabbit_client(mocker, rabbit_client: Optional[AbstractRabbitClient] = None):
+    def mock_create_rabbit_client(
+        mocker, rabbit_client: Optional[AbstractRabbitClient] = None
+    ):
         if not rabbit_client:
             rabbit_client = MockedRabbitClient()
-        return mocker.patch('services.rabbit.factories.client_factory.RabbitClientFactory.create_rabbit_client',
-                            return_value=rabbit_client)
+        return mocker.patch(
+            "services.rabbit.factories.client_factory.RabbitClientFactory.create_rabbit_client",
+            return_value=rabbit_client,
+        )

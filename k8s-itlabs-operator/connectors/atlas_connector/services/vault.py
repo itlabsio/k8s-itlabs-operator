@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
-from connectors.atlas_connector.specifications import ATLAS_TOKEN_NAME_KEY
 from clients.vault.vaultclient import AbstractVaultClient
+from connectors.atlas_connector.specifications import ATLAS_TOKEN_NAME_KEY
 
 
 class AbstractVaultService:

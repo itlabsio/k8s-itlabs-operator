@@ -1,7 +1,9 @@
 from clients.keycloak.client import AbstractKeycloakClient
 from clients.keycloak.dto import ClientDto
-from connectors.keycloak_connector.dto import KeycloakConnectorMicroserviceDto, \
-    KeycloakMsSecretDto
+from connectors.keycloak_connector.dto import (
+    KeycloakConnectorMicroserviceDto,
+    KeycloakMsSecretDto,
+)
 
 
 class KeycloakService:
@@ -12,7 +14,9 @@ class KeycloakService:
         client = self._client.get_client(client_id=client_id)
         return client is not None
 
-    def configure_kk(self, config: KeycloakConnectorMicroserviceDto) -> KeycloakMsSecretDto:
+    def configure_kk(
+        self, config: KeycloakConnectorMicroserviceDto
+    ) -> KeycloakMsSecretDto:
         data = ClientDto(client_id=config.client_id, name=config.client_id)
         self._client.create_client(data)
 

@@ -1,8 +1,13 @@
 from typing import Optional
 
-from connectors.rabbit_connector.dto import RabbitMsSecretDto, RabbitApiSecretDto, RabbitConnector
-from connectors.rabbit_connector.services.kubernetes import \
-    AbstractKubernetesService
+from connectors.rabbit_connector.dto import (
+    RabbitApiSecretDto,
+    RabbitConnector,
+    RabbitMsSecretDto,
+)
+from connectors.rabbit_connector.services.kubernetes import (
+    AbstractKubernetesService,
+)
 from connectors.rabbit_connector.services.rabbit import AbstractRabbitService
 from connectors.rabbit_connector.services.vault import AbstractVaultService
 
@@ -23,8 +28,8 @@ class RabbitServiceFactoryMocker:
     @staticmethod
     def mock_create_rabbit_service(mocker):
         return mocker.patch(
-            'connectors.rabbit_connector.factories.service_factories.rabbit.RabbitServiceFactory.create_rabbit_service',
-            return_value=MockedRabbitService()
+            "connectors.rabbit_connector.factories.service_factories.rabbit.RabbitServiceFactory.create_rabbit_service",
+            return_value=MockedRabbitService(),
         )
 
 
@@ -36,23 +41,29 @@ class MockedVaultService(AbstractVaultService):
     def get_rabbit_ms_credentials(self, vault_path: str) -> RabbitMsSecretDto:
         pass
 
-    def create_ms_rabbit_credentials(self, vault_path: str, rabbit_ms_cred: RabbitMsSecretDto):
+    def create_ms_rabbit_credentials(
+        self, vault_path: str, rabbit_ms_cred: RabbitMsSecretDto
+    ):
         pass
 
     def get_vault_env_value(self, vault_path: str, vault_key: str) -> str:
         self.get_vault_env_value_call_count += 1
-        return f'{vault_path}#{vault_key}'
+        return f"{vault_path}#{vault_key}"
 
-    def unvault_rabbit_connector(self, rabbit_connector: RabbitConnector) -> Optional[RabbitApiSecretDto]:
+    def unvault_rabbit_connector(
+        self, rabbit_connector: RabbitConnector
+    ) -> Optional[RabbitApiSecretDto]:
         return self.rabbit_api_cred
 
 
 class KubernetesServiceMocker:
     @staticmethod
-    def mock_get_rabbit_connector(mocker, rabbit_connector: Optional[RabbitConnector] = None):
+    def mock_get_rabbit_connector(
+        mocker, rabbit_connector: Optional[RabbitConnector] = None
+    ):
         return mocker.patch(
-            'connectors.rabbit_connector.services.kubernetes.KubernetesService.get_rabbit_connector',
-            return_value=rabbit_connector
+            "connectors.rabbit_connector.services.kubernetes.KubernetesService.get_rabbit_connector",
+            return_value=rabbit_connector,
         )
 
 
@@ -66,4 +77,3 @@ class MockKubernetesService(AbstractKubernetesService):
             username="vault:secret/data/infrastructure/rabbit#USERNAME",
             password="vault:secret/data/infrastructure/rabbit#PASSWORD",
         )
-

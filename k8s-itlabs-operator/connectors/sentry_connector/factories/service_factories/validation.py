@@ -1,7 +1,8 @@
 from clients.vault.factories.vault_client import VaultClientFactory
 from connectors.sentry_connector.services.kubernetes import KubernetesService
-from connectors.sentry_connector.services.validation import \
-    SentryConnectorValidationService
+from connectors.sentry_connector.services.validation import (
+    SentryConnectorValidationService,
+)
 
 
 class SentryConnectorValidationServiceFactory:

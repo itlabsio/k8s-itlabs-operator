@@ -1,6 +1,5 @@
-from kubernetes import client
-
 from connectors.monitoring_connector.service import KubernetesService
+from kubernetes import client
 
 
 class KubernetesServiceFactory:

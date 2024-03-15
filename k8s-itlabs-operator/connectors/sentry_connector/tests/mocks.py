@@ -1,23 +1,33 @@
 from typing import Optional
 
-from connectors.sentry_connector.dto import SentryConnector, SentryMsSecretDto, SentryApiSecretDto
-from connectors.sentry_connector.services.kubernetes import \
-    AbstractKubernetesService
+from connectors.sentry_connector.dto import (
+    SentryApiSecretDto,
+    SentryConnector,
+    SentryMsSecretDto,
+)
+from connectors.sentry_connector.services.kubernetes import (
+    AbstractKubernetesService,
+)
 from connectors.sentry_connector.services.vault import AbstractVaultService
 
 
 class KubernetesServiceMocker:
     @staticmethod
-    def mock_get_sentry_connector(mocker, sentry_connector: Optional[SentryConnector] = None):
+    def mock_get_sentry_connector(
+        mocker, sentry_connector: Optional[SentryConnector] = None
+    ):
         return mocker.patch(
             "connectors.sentry_connector.services.kubernetes.KubernetesService.get_sentry_connector",
-            return_value=sentry_connector
+            return_value=sentry_connector,
         )
 
 
 class MockedVaultService(AbstractVaultService):
-    def __init__(self, sentry_api_token: Optional[str] = None,
-                 sentry_ms_secret: Optional[SentryMsSecretDto] = None):
+    def __init__(
+        self,
+        sentry_api_token: Optional[str] = None,
+        sentry_ms_secret: Optional[SentryMsSecretDto] = None,
+    ):
         self.sentry_api_token = sentry_api_token
         self.sentry_ms_secret = sentry_ms_secret
 
@@ -33,10 +43,14 @@ class MockedVaultService(AbstractVaultService):
         self.get_vault_env_value_calls_total += 1
         return f"{vault_path}#{vault_key}"
 
-    def create_ms_sentry_credentials(self, vault_path: str, sentry_ms_cred: SentryMsSecretDto):
+    def create_ms_sentry_credentials(
+        self, vault_path: str, sentry_ms_cred: SentryMsSecretDto
+    ):
         self.create_ms_sentry_credentials_calls_total += 1
 
-    def unvault_sentry_connector(self, sentry_connector: SentryConnector) -> Optional[SentryApiSecretDto]:
+    def unvault_sentry_connector(
+        self, sentry_connector: SentryConnector
+    ) -> Optional[SentryApiSecretDto]:
         pass
 
 

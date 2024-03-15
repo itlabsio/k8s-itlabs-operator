@@ -1,10 +1,12 @@
-PG_CON_GROUP = 'itlabs.io'
+PG_CON_GROUP = "itlabs.io"
 
-PG_INSTANCE_NAME_ANNOTATION = 'postgres.connector.itlabs.io/instance-name'
-VAULTPATH_NAME_ANNOTATION = 'postgres.connector.itlabs.io/vault-path'
-DB_NAME_ANNOTATION = 'postgres.connector.itlabs.io/db-name'
-USER_NAME_ANNOTATION = 'postgres.connector.itlabs.io/db-username'
-GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION = 'postgres.connector.itlabs.io/grant-access-for-readonly-user'
+PG_INSTANCE_NAME_ANNOTATION = "postgres.connector.itlabs.io/instance-name"
+VAULTPATH_NAME_ANNOTATION = "postgres.connector.itlabs.io/vault-path"
+DB_NAME_ANNOTATION = "postgres.connector.itlabs.io/db-name"
+USER_NAME_ANNOTATION = "postgres.connector.itlabs.io/db-username"
+GRANT_ACCESS_FOR_READONLY_USER_ANNOTATION = (
+    "postgres.connector.itlabs.io/grant-access-for-readonly-user"
+)
 
 PG_CON_ANNOTATION_NAMES = (
     PG_INSTANCE_NAME_ANNOTATION,
@@ -18,7 +20,7 @@ PG_CON_REQUIRED_ANNOTATION_NAMES = (
     VAULTPATH_NAME_ANNOTATION,
 )
 
-APP_NAME_LABEL = 'app'
+APP_NAME_LABEL = "app"
 
 DATABASE_NAME_KEY = "DATABASE_NAME"
 DATABASE_USER_KEY = "DATABASE_USER"
@@ -36,9 +38,9 @@ REQUIRED_POSTGRES_SECRET_KEYS = (
 )
 
 DATABASE_VAR_NAMES = (
-    ('POSTGRES_DB_NAME', DATABASE_NAME_KEY),
-    ('POSTGRES_DB_USER', DATABASE_USER_KEY),
-    ('POSTGRES_DB_PASSWORD', DATABASE_PASSWORD_KEY),
-    ('POSTGRES_DB_HOST', DATABASE_HOST_KEY),
-    ('POSTGRES_DB_PORT', DATABASE_PORT_KEY),
+    ("POSTGRES_DB_NAME", DATABASE_NAME_KEY),
+    ("POSTGRES_DB_USER", DATABASE_USER_KEY),
+    ("POSTGRES_DB_PASSWORD", DATABASE_PASSWORD_KEY),
+    ("POSTGRES_DB_HOST", DATABASE_HOST_KEY),
+    ("POSTGRES_DB_PORT", DATABASE_PORT_KEY),
 )

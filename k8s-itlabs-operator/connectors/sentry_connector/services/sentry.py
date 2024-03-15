@@ -1,10 +1,10 @@
-import logging
 from abc import ABCMeta, abstractmethod
 
 from clients.sentry.sentryclient import AbstractSentryClient
-from connectors.sentry_connector.dto import SentryMsSecretDto, SentryConnectorMicroserviceDto
-
-app_logger = logging.getLogger("sentry_connector_sentry_service")
+from connectors.sentry_connector.dto import (
+    SentryConnectorMicroserviceDto,
+    SentryMsSecretDto,
+)
 
 
 class AbstractSentryService:
@@ -15,7 +15,9 @@ class AbstractSentryService:
         raise NotImplementedError
 
     @abstractmethod
-    def configure_sentry(self, sentry_config: SentryConnectorMicroserviceDto) -> SentryMsSecretDto:
+    def configure_sentry(
+        self, sentry_config: SentryConnectorMicroserviceDto
+    ) -> SentryMsSecretDto:
         raise NotImplementedError
 
 
@@ -30,10 +32,14 @@ class SentryService(AbstractSentryService):
                 return True
         return False
 
-    def configure_sentry(self, sentry_config: SentryConnectorMicroserviceDto) -> SentryMsSecretDto:
+    def configure_sentry(
+        self, sentry_config: SentryConnectorMicroserviceDto
+    ) -> SentryMsSecretDto:
         team = self.sentry_client.get_sentry_team(sentry_config.team)
         if not team:
-            team = self.sentry_client.create_sentry_team(team_name=sentry_config.team)
+            team = self.sentry_client.create_sentry_team(
+                team_name=sentry_config.team
+            )
 
         project = self.sentry_client.get_sentry_project(sentry_config.project)
         if not project:

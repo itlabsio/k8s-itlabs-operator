@@ -1,13 +1,10 @@
-from clients.sentry.dto import SentryTeam, SentryProject, SentryProjectKey
+from clients.sentry.dto import SentryProject, SentryProjectKey, SentryTeam
 
 
 class SentryTeamDtoFactory:
     @staticmethod
     def dto_from_dict(team: dict) -> SentryTeam:
-        return SentryTeam(
-            name=team.get("name"),
-            slug=team.get("slug")
-        )
+        return SentryTeam(name=team.get("name"), slug=team.get("slug"))
 
     @staticmethod
     def dict_from_dto(team: SentryTeam) -> dict:
@@ -20,10 +17,7 @@ class SentryTeamDtoFactory:
 class SentryProjectDtoFactory:
     @staticmethod
     def dto_from_dict(project: dict) -> SentryProject:
-        return SentryProject(
-            name=project.get("name"),
-            slug=project.get("slug")
-        )
+        return SentryProject(name=project.get("name"), slug=project.get("slug"))
 
     @staticmethod
     def dict_from_dto(project: SentryProject):
@@ -38,6 +32,5 @@ class SentryProjectKeyDtoFactory:
     def dto_from_dict(project_key: dict) -> SentryProjectKey:
         dsn = project_key.get("dsn")
         return SentryProjectKey(
-            name=project_key.get("name"),
-            dsn=dsn.get("public")
+            name=project_key.get("name"), dsn=dsn.get("public")
         )

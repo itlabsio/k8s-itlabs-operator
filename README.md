@@ -15,7 +15,7 @@ Please check that next points are done before deploying operator:
     - vault_url;
     - vault_k8s_auth_method;
     - vault_k8s_role.
-  
+
   Example:
 
   ```shell
@@ -43,5 +43,5 @@ To collect operator's metrics, you can send request to service in k8s-cluster
 to named port `metrics` or `8080`
 
 Collected metrics:
-- app_http_request_operator_latency_seconds - to measure incoming requests 
+- app_http_request_operator_latency_seconds - to measure incoming requests
 - app_http_request_operator_client_latency_seconds - to measure outgoing requests

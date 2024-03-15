@@ -22,6 +22,32 @@ environs = "9.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.15.10"
+pre-commit = "^3.6.0"
+
+[tool.isort]
+profile = "black"
+line_length = 80
+force_grid_wrap = 0
+multi_line_output = 3
+combine_as_imports = "True"
+include_trailing_comma = "True"
+
+[tool.black]
+line-length = 80
+include = '\.pyi?$'
+exclude = '''
+(
+    /(
+        docs
+        | var
+        | env
+        | \.env
+        | venv
+        | \.venv
+        | \.git
+    )/
+)
+'''
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

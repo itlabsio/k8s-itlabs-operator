@@ -4,27 +4,27 @@ from typing import Optional
 
 
 class EnabledLabelValues(str, Enum):
-    undefined = 'undefined'
-    enabled = 'enabled'
-    disabled = 'disabled'
+    undefined = "undefined"
+    enabled = "enabled"
+    disabled = "disabled"
 
     def __str__(self) -> str:
         return str(self.value)
 
 
 class UsedLabelValues(str, Enum):
-    undefined = 'undefined'
-    used = 'used'
-    unused = 'unused'
+    undefined = "undefined"
+    used = "used"
+    unused = "unused"
 
     def __str__(self) -> str:
         return str(self.value)
 
 
 class SuccessLabelValues(str, Enum):
-    undefined = 'undefined'
-    success = 'success'
-    failure = 'failure'
+    undefined = "undefined"
+    success = "success"
+    failure = "failure"
 
 
 @dataclass
@@ -55,13 +55,13 @@ class ConnectorStatus:
 
     @property
     def label_exception(self) -> str:
-        exception_str = ''
+        exception_str = ""
         if self.exception:
             module = self.exception.__class__.__module__
             if module is None or module == str.__class__.__module__:
                 exception_str = self.exception.__class__.__name__
             else:
-                exception_str = module + '.' + self.exception.__class__.__name__
+                exception_str = module + "." + self.exception.__class__.__name__
         return exception_str
 
 

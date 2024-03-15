@@ -6,15 +6,15 @@ from clients.vault import specifications
 class VaultPathMeta(type):
     @property
     def scheme(cls):
-        return getattr(cls, '_scheme')
+        return getattr(cls, "_scheme")
 
     @property
     def data_separator(cls):
-        return getattr(cls, '_data_separator')
+        return getattr(cls, "_data_separator")
 
     @property
     def key_separator(cls):
-        return getattr(cls, '_key_separator')
+        return getattr(cls, "_key_separator")
 
 
 class VaultPath(metaclass=VaultPathMeta):
@@ -47,7 +47,9 @@ class VaultPath(metaclass=VaultPathMeta):
         return bool(self.key)
 
     def __str__(self) -> str:
-        vault_path = f"{self._scheme}{self.mount_point}{self._data_separator}{self.path}"
+        vault_path = (
+            f"{self._scheme}{self.mount_point}{self._data_separator}{self.path}"
+        )
         if self.key:
             vault_path = f"{vault_path}{self._key_separator}{self.key}"
         return vault_path

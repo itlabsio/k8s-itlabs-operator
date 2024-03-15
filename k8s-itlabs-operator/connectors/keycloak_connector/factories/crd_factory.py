@@ -1,6 +1,8 @@
+from connectors.keycloak_connector.crd import (
+    KeycloakConnectorCrd,
+    KeycloakConnectorSpec,
+)
 from kubernetes.client import V1ObjectMeta
-
-from connectors.keycloak_connector.crd import KeycloakConnectorCrd, KeycloakConnectorSpec
 from utils.common import deserialize_dict_to_kubeobj
 
 
@@ -10,8 +12,10 @@ class KeycloakConnectorCrdFactory:
         return KeycloakConnectorCrd(
             api_version=crd.get("apiVersion"),
             kind=crd.get("kind"),
-            metadata=deserialize_dict_to_kubeobj(crd.get("metadata"), V1ObjectMeta),
-            spec=cls._connector_spec_from_dict(crd.get("spec"))
+            metadata=deserialize_dict_to_kubeobj(
+                crd.get("metadata"), V1ObjectMeta
+            ),
+            spec=cls._connector_spec_from_dict(crd.get("spec")),
         )
 
     @staticmethod

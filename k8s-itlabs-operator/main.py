@@ -2,17 +2,22 @@ import logging
 
 import kopf
 import sentry_sdk
-from prometheus_client import start_http_server
-from sentry_sdk.integrations.aiohttp import AioHttpIntegration
-
-from clients.k8s.k8s_client import KubernetesClient
-from utils import logger
 import settings as operator_settings
+from clients.k8s.k8s_client import KubernetesClient
 from observability.metrics.metrics import app_up
 from observability.metrics.request_wrapper import wrap_request
-
-from operators import atlasconnector, postgresconnector, rabbitconnector, \
-    monitoringconnector, sentry, keycloak, healthz  # pylint: disable=unused-import
+from operators import (  # pylint: disable=unused-import
+    atlasconnector,
+    healthz,
+    keycloak,
+    monitoringconnector,
+    postgresconnector,
+    rabbitconnector,
+    sentry,
+)
+from prometheus_client import start_http_server
+from sentry_sdk.integrations.aiohttp import AioHttpIntegration
+from utils import logger
 
 if operator_settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -31,9 +36,9 @@ if operator_settings.SENTRY_DSN:
 @kopf.on.startup()
 def configure(settings: kopf.OperatorSettings, **_):
     settings.admission.server = kopf.WebhookServer(
-        cafile='/certs/ca',
-        certfile='/certs/cert',
-        pkeyfile='/certs/key',
+        cafile="/certs/ca",
+        certfile="/certs/cert",
+        pkeyfile="/certs/key",
         addr=operator_settings.AWH_ADDR,
         host=operator_settings.AWH_HOST,
         port=operator_settings.AWH_PORT,
@@ -46,6 +51,6 @@ def configure(settings: kopf.OperatorSettings, **_):
 
 
 wrap_request()
-app_up.labels(application='k8s-itlabs-operator').set(1)
+app_up.labels(application="k8s-itlabs-operator").set(1)
 start_http_server(8080)
 KubernetesClient.configure_kubernetes()

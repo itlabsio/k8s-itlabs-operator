@@ -1,8 +1,9 @@
 from typing import Optional
 
 from connectors.keycloak_connector.dto import KeycloakConnector
-from connectors.keycloak_connector.services.kubernetes import \
-    AbstractKubernetesService
+from connectors.keycloak_connector.services.kubernetes import (
+    AbstractKubernetesService,
+)
 
 
 class MockKubernetesService(AbstractKubernetesService):

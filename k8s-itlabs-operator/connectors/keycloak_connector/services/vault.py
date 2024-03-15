@@ -1,8 +1,15 @@
 from typing import Optional
 
 from clients.vault.vaultclient import AbstractVaultClient
-from connectors.keycloak_connector.dto import KeycloakMsSecretDto, KeycloakApiSecretDto, KeycloakConnector
-from connectors.keycloak_connector.factories.dto_factory import KeycloakMsSecretDtoFactory, KeycloakApiSecretDtoFactory
+from connectors.keycloak_connector.dto import (
+    KeycloakApiSecretDto,
+    KeycloakConnector,
+    KeycloakMsSecretDto,
+)
+from connectors.keycloak_connector.factories.dto_factory import (
+    KeycloakApiSecretDtoFactory,
+    KeycloakMsSecretDtoFactory,
+)
 
 
 class VaultService:
@@ -23,14 +30,18 @@ class VaultService:
     def get_vault_env_value(path: str, key: str) -> str:
         return f"{path}#{key}"
 
-    def unvault_keycloak_connector(self, kk_connector: KeycloakConnector) -> Optional[KeycloakApiSecretDto]:
+    def unvault_keycloak_connector(
+        self, kk_connector: KeycloakConnector
+    ) -> Optional[KeycloakApiSecretDto]:
         kk_connector = self.client.unvault_object(obj=kk_connector)
 
         if not (
-                kk_connector.url and
-                kk_connector.realm and
-                kk_connector.username and
-                kk_connector.password
+            kk_connector.url
+            and kk_connector.realm
+            and kk_connector.username
+            and kk_connector.password
         ):
             return None
-        return KeycloakApiSecretDtoFactory.api_secret_dto_from_connector(kk_connector)
+        return KeycloakApiSecretDtoFactory.api_secret_dto_from_connector(
+            kk_connector
+        )

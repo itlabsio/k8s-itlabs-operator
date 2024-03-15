@@ -2,9 +2,13 @@ import time
 from typing import Optional
 
 import pytest
-from kubernetes.client import CustomObjectsApi, ApiException, CoreV1Api, ApiClient
-
 from connectors.monitoring_connector.service import KubernetesService
+from kubernetes.client import (
+    ApiClient,
+    ApiException,
+    CoreV1Api,
+    CustomObjectsApi,
+)
 
 APP_DEPLOYMENT_NAMESPACE = "k8s-itlabs-operator"
 
@@ -46,9 +50,7 @@ def simple_service(app_name) -> dict:
         "metadata": {
             "name": app_name,
             "namespace": APP_DEPLOYMENT_NAMESPACE,
-            "labels": {
-                "app": app_name
-            }
+            "labels": {"app": app_name},
         },
         "spec": {
             "selector": {
@@ -76,14 +78,8 @@ def simple_servicemonitor(app_name) -> dict:
             "namespace": APP_DEPLOYMENT_NAMESPACE,
         },
         "spec": {
-            "endpoints": [{
-                "port": "metrics"
-            }],
-            "selector": {
-                "matchLabels": {
-                    "app": app_name
-                }
-            }
+            "endpoints": [{"port": "metrics"}],
+            "selector": {"matchLabels": {"app": app_name}},
         },
     }
 
@@ -108,18 +104,17 @@ def servicemonitor_by_operator(simple_servicemonitor) -> dict:
 @pytest.fixture
 def deploy_app(k8s, app_manifest):
     CoreV1Api(k8s).create_namespaced_service(
-        namespace=app_manifest["metadata"].get("namespace"),
-        body=app_manifest
+        namespace=app_manifest["metadata"].get("namespace"), body=app_manifest
     )
     yield
     CoreV1Api(k8s).delete_namespaced_service(
         name=app_manifest["metadata"].get("name"),
-        namespace=app_manifest["metadata"].get("namespace")
+        namespace=app_manifest["metadata"].get("namespace"),
     )
 
 
 def get_service_monitor(
-        k8s: ApiClient, name: str, namespace: str, timeout: int = 30
+    k8s: ApiClient, name: str, namespace: str, timeout: int = 30
 ) -> Optional[object]:
     deadline = time.time() + timeout
     while time.time() <= deadline:
@@ -137,7 +132,9 @@ def get_service_monitor(
 
 @pytest.mark.e2e
 @pytest.mark.usefixtures("deploy_app")
-def test_monitoring_was_created_on_deploy_application_with_enabled_annotations(k8s, app_manifest):
+def test_monitoring_was_created_on_deploy_application_with_enabled_annotations(
+    k8s, app_manifest
+):
     app_name = app_manifest["metadata"].get("name")
     app_namespace = app_manifest["metadata"].get("namespace")
 
@@ -151,7 +148,9 @@ def test_monitoring_was_created_on_deploy_application_with_enabled_annotations(k
 
 @pytest.mark.e2e
 @pytest.mark.usefixtures("deploy_app")
-def test_monitoring_was_deleted_on_redeploy_application_with_disabled_annotations(k8s, app_manifest):
+def test_monitoring_was_deleted_on_redeploy_application_with_disabled_annotations(
+    k8s, app_manifest
+):
     app_name = app_manifest["metadata"].get("name")
     app_namespace = app_manifest["metadata"].get("namespace")
 
@@ -242,7 +241,9 @@ def test_monitoring_on_deleting_simple_service(k8s, simple_case):
 
 @pytest.mark.e2e
 @pytest.mark.usefixtures("deploy_app")
-def test_monitoring_was_changed_on_redeploy_application_with_changed_annotations(k8s, app_manifest):
+def test_monitoring_was_changed_on_redeploy_application_with_changed_annotations(
+    k8s, app_manifest
+):
     app_name = app_manifest["metadata"].get("name")
     app_namespace = app_manifest["metadata"].get("namespace")
 
@@ -277,7 +278,12 @@ def test_monitoring_was_changed_on_redeploy_application_with_changed_annotations
             f"in namespace {app_namespace}"
         )
 
-    endpoint = service_monitor.get("spec", {}).get("endpoints", [None, ])[0]
+    endpoint = service_monitor.get("spec", {}).get(
+        "endpoints",
+        [
+            None,
+        ],
+    )[0]
     if endpoint is None:
         pytest.fail(
             f"ServiceMonitor {app_name} in namespace {app_namespace} "

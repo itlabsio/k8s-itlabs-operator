@@ -3,13 +3,12 @@ from abc import ABCMeta, abstractmethod
 from typing import Iterable
 
 import psycopg2
-from psycopg2 import sql
-
 from clients.postgres.dto import PgConnectorDbSecretDto
 from clients.postgres.exceptions import PgQueryValidationError
 from exceptions import InfrastructureServiceProblem
+from psycopg2 import sql
 
-logger = logging.getLogger('postgresclient')
+logger = logging.getLogger("postgresclient")
 
 
 class AbstractPostgresClient:
@@ -57,8 +56,13 @@ class PostgresClient(AbstractPostgresClient):
     def __init__(self, pg_connector_secret_dto: PgConnectorDbSecretDto):
         self.connection_data = pg_connector_secret_dto
 
-    def _execute_query_v2(self, query: str, *, identifiers: Iterable[str] = None,
-                          values: Iterable[str] = None):
+    def _execute_query_v2(
+        self,
+        query: str,
+        *,
+        identifiers: Iterable[str] = None,
+        values: Iterable[str] = None,
+    ):
         """
         Execute sql-query in database and returns execution result.
 
@@ -80,17 +84,21 @@ class PostgresClient(AbstractPostgresClient):
             query = sql.SQL(query)
         else:
             if not identifiers:
-                raise PgQueryValidationError(f'sql identifiers are mandatory but empty. '
-                                             f'Please check variables name in Vault, identifiers: {identifiers}')
+                raise PgQueryValidationError(
+                    f"sql identifiers are mandatory but empty. "
+                    f"Please check variables name in Vault, identifiers: {identifiers}"
+                )
             query_identifiers = [sql.Identifier(i) for i in identifiers]
             query = sql.SQL(query).format(*query_identifiers)
         try:
-            logger.info('Connecting to the PostgreSQL database...')
-            conn = psycopg2.connect(database=self.connection_data.db_name,
-                                    user=self.connection_data.user,
-                                    password=self.connection_data.password,
-                                    host=self.connection_data.host,
-                                    port=self.connection_data.port)
+            logger.info("Connecting to the PostgreSQL database...")
+            conn = psycopg2.connect(
+                database=self.connection_data.db_name,
+                user=self.connection_data.user,
+                password=self.connection_data.password,
+                host=self.connection_data.host,
+                port=self.connection_data.port,
+            )
             conn.autocommit = True
             cursor = conn.cursor()
 
@@ -101,13 +109,13 @@ class PostgresClient(AbstractPostgresClient):
             except psycopg2.ProgrammingError:
                 results = []
         except (Exception, psycopg2.DatabaseError) as e:
-            raise InfrastructureServiceProblem('Postgres', e)
+            raise InfrastructureServiceProblem("Postgres", e)
         else:
             return results
         finally:
             if conn is not None:
                 conn.close()
-                logger.info('Database connection closed.')
+                logger.info("Database connection closed.")
 
     def is_user_exist(self, user: str) -> bool:
         query = """SELECT * FROM pg_catalog.pg_user u WHERE u.usename = %s;"""
@@ -126,13 +134,17 @@ class PostgresClient(AbstractPostgresClient):
             WHERE acl.defaclacl::text ILIKE %s
               AND acl.defaclacl::text ILIKE %s;
         """
-        return bool(self._execute_query_v2(
-            query,
-            values=[user, database, f"%{user}%", f"%{database}%"],
-        ))
+        return bool(
+            self._execute_query_v2(
+                query,
+                values=[user, database, f"%{user}%", f"%{database}%"],
+            )
+        )
 
     def is_database_exist(self, db_name: str) -> bool:
-        query = """SELECT * FROM pg_catalog.pg_database db WHERE db.datname = %s;"""
+        query = (
+            """SELECT * FROM pg_catalog.pg_database db WHERE db.datname = %s;"""
+        )
         return bool(self._execute_query_v2(query, values=[db_name]))
 
     def create_user(self, user: str, password: str):
@@ -162,7 +174,7 @@ class PostgresClient(AbstractPostgresClient):
         self._execute_query_v2(query, identifiers=[db_name, user])
 
     def grant_user_to_admin(self, user: str):
-        self._grant_user_to_another(user=user, another_user='postgres')
+        self._grant_user_to_another(user=user, another_user="postgres")
 
     def _grant_user_to_another(self, user: str, another_user: str):
         query = """GRANT {} TO {};"""

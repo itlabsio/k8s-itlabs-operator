@@ -1,7 +1,6 @@
 import factory
+from clients.sentry.dto import SentryProject, SentryProjectKey, SentryTeam
 from factory import Factory
-
-from clients.sentry.dto import SentryTeam, SentryProject, SentryProjectKey
 
 
 class SentryTeamTestFactory(Factory):

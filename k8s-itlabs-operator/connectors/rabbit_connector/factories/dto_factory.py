@@ -1,16 +1,24 @@
 from connectors.rabbit_connector import specifications
 from connectors.rabbit_connector.crd import RabbitConnectorCrd
-from connectors.rabbit_connector.dto import RabbitConnectorMicroserviceDto, RabbitApiSecretDto, RabbitMsSecretDto, \
-    RabbitConnector
-from connectors.rabbit_connector.exceptions import RabbitConnectorMissingRequiredAnnotationError, \
-    RabbitConnectorAnnotationEmptyValueError
+from connectors.rabbit_connector.dto import (
+    RabbitApiSecretDto,
+    RabbitConnector,
+    RabbitConnectorMicroserviceDto,
+    RabbitMsSecretDto,
+)
+from connectors.rabbit_connector.exceptions import (
+    RabbitConnectorAnnotationEmptyValueError,
+    RabbitConnectorMissingRequiredAnnotationError,
+)
 from utils.passgen import generate_password
 from validation.annotations_validator import AnnotationValidator
 
 
 class RabbitApiSecretDtoFactory:
     @classmethod
-    def api_secret_dto_from_connector(cls, rabbit_connector: RabbitConnector) -> RabbitApiSecretDto:
+    def api_secret_dto_from_connector(
+        cls, rabbit_connector: RabbitConnector
+    ) -> RabbitApiSecretDto:
         return RabbitApiSecretDto(
             broker_host=rabbit_connector.broker_host,
             broker_port=rabbit_connector.broker_port,
@@ -21,29 +29,45 @@ class RabbitApiSecretDtoFactory:
 
 
 class RabbitAnnotationValidator(AnnotationValidator):
-    required_annotation_names = specifications.RABBIT_CONNECTOR_REQUIRED_ANNOTATIONS
-    on_missing_required_annotation_error = RabbitConnectorMissingRequiredAnnotationError
+    required_annotation_names = (
+        specifications.RABBIT_CONNECTOR_REQUIRED_ANNOTATIONS
+    )
+    on_missing_required_annotation_error = (
+        RabbitConnectorMissingRequiredAnnotationError
+    )
     not_empty_annotation_names = specifications.RABBIT_CONNECTOR_ANNOTATIONS
     on_empty_value_annotation_error = RabbitConnectorAnnotationEmptyValueError
 
 
 class RabbitConnectorMicroserviceDtoFactory:
     @classmethod
-    def dto_from_annotations(cls, annotations: dict, labels: dict) -> RabbitConnectorMicroserviceDto:
+    def dto_from_annotations(
+        cls, annotations: dict, labels: dict
+    ) -> RabbitConnectorMicroserviceDto:
         rabbit_annotations = {}
         default_name = labels.get(specifications.APP_NAME_LABEL, "")
         for key in specifications.RABBIT_CONNECTOR_ANNOTATIONS:
             if key == specifications.USER_NAME_ANNOTATION:
-                rabbit_annotations[key] = annotations.get(specifications.USER_NAME_ANNOTATION, default_name)
+                rabbit_annotations[key] = annotations.get(
+                    specifications.USER_NAME_ANNOTATION, default_name
+                )
             elif key == specifications.VHOST_NAME_ANNOTATION:
-                rabbit_annotations[key] = annotations.get(specifications.VHOST_NAME_ANNOTATION, default_name)
+                rabbit_annotations[key] = annotations.get(
+                    specifications.VHOST_NAME_ANNOTATION, default_name
+                )
             elif key in annotations:
                 rabbit_annotations[key] = annotations[key]
         RabbitAnnotationValidator.validate(annotations=rabbit_annotations)
         return RabbitConnectorMicroserviceDto(
-            rabbit_instance_name=rabbit_annotations.get(specifications.RABBIT_INSTANCE_NAME_ANNOTATION),
-            vault_path=rabbit_annotations.get(specifications.VAULTPATH_NAME_ANNOTATION),
-            username=rabbit_annotations.get(specifications.USER_NAME_ANNOTATION),
+            rabbit_instance_name=rabbit_annotations.get(
+                specifications.RABBIT_INSTANCE_NAME_ANNOTATION
+            ),
+            vault_path=rabbit_annotations.get(
+                specifications.VAULTPATH_NAME_ANNOTATION
+            ),
+            username=rabbit_annotations.get(
+                specifications.USER_NAME_ANNOTATION
+            ),
             vhost=rabbit_annotations.get(specifications.VHOST_NAME_ANNOTATION),
         )
 
@@ -61,18 +85,23 @@ class RabbitMsSecretDtoFactory:
         )
 
     @classmethod
-    def dto_from_ms_rabbit_con(cls, rabbit_api_cred: RabbitApiSecretDto,
-                               ms_rabbit_con: RabbitConnectorMicroserviceDto) -> RabbitMsSecretDto:
+    def dto_from_ms_rabbit_con(
+        cls,
+        rabbit_api_cred: RabbitApiSecretDto,
+        ms_rabbit_con: RabbitConnectorMicroserviceDto,
+    ) -> RabbitMsSecretDto:
         password = generate_password()
-        broker_url = f'amqp://{ms_rabbit_con.username}:{password}' \
-                     f'@{rabbit_api_cred.broker_host}:{rabbit_api_cred.broker_port}/{ms_rabbit_con.vhost}'
+        broker_url = (
+            f"amqp://{ms_rabbit_con.username}:{password}"
+            f"@{rabbit_api_cred.broker_host}:{rabbit_api_cred.broker_port}/{ms_rabbit_con.vhost}"
+        )
         return RabbitMsSecretDto(
             broker_host=rabbit_api_cred.broker_host,
             broker_port=rabbit_api_cred.broker_port,
             broker_user=ms_rabbit_con.username,
             broker_password=password,
             broker_vhost=ms_rabbit_con.vhost,
-            broker_url=broker_url
+            broker_url=broker_url,
         )
 
     @classmethod
@@ -89,7 +118,9 @@ class RabbitMsSecretDtoFactory:
 
 class RabbitConnectorFactory:
     @classmethod
-    def dto_from_rabbit_con_crds(cls, rabbit_con_crd: RabbitConnectorCrd) -> RabbitConnector:
+    def dto_from_rabbit_con_crds(
+        cls, rabbit_con_crd: RabbitConnectorCrd
+    ) -> RabbitConnector:
         return RabbitConnector(
             broker_host=rabbit_con_crd.spec.broker_host,
             broker_port=rabbit_con_crd.spec.broker_port,

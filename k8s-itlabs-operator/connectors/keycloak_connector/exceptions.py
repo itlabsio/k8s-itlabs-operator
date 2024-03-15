@@ -1,5 +1,8 @@
-from validation.exceptions import AnnotationValidatorMissedRequiredException, AnnotationValidatorEmptyValueException, \
-    ConnectorError
+from validation.exceptions import (
+    AnnotationValidatorEmptyValueException,
+    AnnotationValidatorMissedRequiredException,
+    ConnectorError,
+)
 
 
 class KeycloakConnectorError(ConnectorError):
@@ -22,10 +25,13 @@ class NonExistSecretForKeycloakConnector(KeycloakConnectorError):
     pass
 
 
-class KeycloakConnectorMissingRequiredAnnotationError(KeycloakConnectorError,
-                                                      AnnotationValidatorMissedRequiredException):
+class KeycloakConnectorMissingRequiredAnnotationError(
+    KeycloakConnectorError, AnnotationValidatorMissedRequiredException
+):
     pass
 
 
-class KeycloakConnectorAnnotationEmptyValueError(KeycloakConnectorError, AnnotationValidatorEmptyValueException):
+class KeycloakConnectorAnnotationEmptyValueError(
+    KeycloakConnectorError, AnnotationValidatorEmptyValueException
+):
     pass
